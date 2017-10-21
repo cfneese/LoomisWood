@@ -10,7 +10,7 @@
 
 #pragma rtGlobals = 1			// Use modern global access method.
 #pragma IgorVersion = 6.37
-#pragma Version = 3.00
+#pragma Version = 3.00.03
 #pragma ModuleName = LWA
 
 // Changes 3.00:
