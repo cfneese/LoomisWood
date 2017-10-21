@@ -14,7 +14,39 @@
 #pragma ModuleName = LWA
 
 // Changes 3.00:
-// Rewrote Calculation of triangles to eliminate the need for regions 
+// Rewrote the calculation of triangles to eliminate the need for regions.
+//		This is a major change:
+//		There is now a frequency span for each row set by StarDeltaNu and EndDeltaNu in the plot folder.
+//		Limiting the frequency span is useful as a full 2B span may be too wide to produce a meaningful plot.
+//		ChangeRange now sets a vertical (M) and a horizontal (DeltaNu) range.
+//		A line can now appear at multiple values of M.
+//		The mapping of Nu to (dNu, M) is no longer bijective, so it is difficult to center the graph on a specific point.
+//		As a result the cursor can "get lost" while panning and zooming, and a lot of panning may be necessary after 
+//		updating the fit model.
+// Rewrote the code to use DFREFs instead of Strings where possible.
+// Added RetrieveOrCreateTable() so that tables are initialized and named in a standard way.
+// GetLwInfo() replaces GetFolders for retrieving data from the Window note.
+// Added mouse wheel support.
+// Added shift-cursor key support for panning.  PgDn and PgUp still pan vertically.
+// Added horizontal panning.
+// Removed superfluous dM display
+
+// ToDo List:
+//		Replace window note retrieved with GetWindow with custom user data retrieved with GetUserData()
+//		More structures for manipulating the plot folder.
+//		Modify color support to use color index wave instead of RGB color wave.  Add alpha channel to colors.
+//		Improve cursor movement on zoom/pan/jump 
+
+// Igor 7 Bugs:
+// Bug 1: (Reported to WM)
+//     Setting a window note on tables prints 
+//  BUG: WMDisposePtr: Attempt to dispose invalid pointer.
+//  	Stack Trace:
+//  		Stack trace is not available
+//  when the table is killed
+//
+// Bug 2: (Reported to WM)
+//		The original dependency formula for SeriesOrder causes the Set Variable control to unbind from SeriesOrder. 
 
 
 // Changes 2.10:
@@ -78,21 +110,22 @@ static constant EC_Modified = 8
 static constant EC_EnableMenu = 9
 static constant EC_Menu = 10
 static constant EC_Keyboard = 11
+static constant EC_MouseWheel = 22
 
 Static Constant VK_BACK = 0x08	//Backspace
-Static Constant VK_TAB =  0x09
-Static Constant VK_RETURN =  0x0D
-Static Constant VK_ESCAPE =  0x1B
-Static Constant VK_SPACE =  0x20
-Static Constant VK_PGUP =  0x0B	//Page Up
+Static Constant VK_TAB = 0x09
+Static Constant VK_RETURN = 0x0D
+Static Constant VK_ESCAPE = 0x1B
+Static Constant VK_SPACE = 0x20
+Static Constant VK_PGUP = 0x0B	//Page Up
 Static Constant VK_PGDN = 0x0C	//Page Down
-Static Constant VK_END =  0x04
-Static Constant VK_HOME =  0x01
-Static Constant VK_LEFT =  0x1C
-Static Constant VK_UP =  0x1E
-Static Constant VK_RIGHT =  0x1D
-Static Constant VK_DOWN =  0x1F
-Static Constant VK_DELETE =  0x7F
+Static Constant VK_END = 0x04
+Static Constant VK_HOME = 0x01
+Static Constant VK_LEFT = 0x1C
+Static Constant VK_UP = 0x1E
+Static Constant VK_RIGHT = 0x1D
+Static Constant VK_DOWN = 0x1F
+Static Constant VK_DELETE = 0x7F
 
 /// String Table (Makes translation/corrections easier)
 // NOTE: There are also strings in the Menu "Loomis-Wood" command  below
@@ -251,7 +284,7 @@ end
 static function/S OnLWmenuBuild()
 // Any commands in this function will be executed whenever the LoomisWood menu is built.
 // This is a good place for global initializations.
-	string saveDF = GetDataFolder(1)
+	DFREF saveDF = GetDataFolderDFR()
 	SetDataFolder root:
 	NewDataFolder/O $BASE_FOLDER
 	SetDataFolder saveDF
@@ -472,7 +505,7 @@ static function/C bound_poly(coeff, order, theX)
 		return cmplx(NaN, NaN)
 	endif
 	 
-	string SaveDF = GetDataFolder(1)
+	DFREF SaveDF = GetDataFolderDFR()
 	NewDataFolder/O/S root:Packages
 	NewDataFolder/O/S root:Packages:bound_poly
 
@@ -514,7 +547,7 @@ static function FindPolyExtrema(coeff, order)
 		return NaN
 	endif
 	 
-	string SaveDF = GetDataFolder(1)
+	DFREF SaveDF = GetDataFolderDFR()
 	NewDataFolder/O/S root:Packages
 	NewDataFolder/O/S root:Packages:bound_poly
 
@@ -557,7 +590,7 @@ static function inv_poly(coeff, order, theY, Xmin, Xmax)
 		return NaN
 	endif
 	 
-	string SaveDF = GetDataFolder(1)
+	DFREF SaveDF = GetDataFolderDFR()
 	NewDataFolder/O/S root:Packages
 	NewDataFolder/O/S root:Packages:inv_poly
 
@@ -700,100 +733,90 @@ static function/S GetPlotFolderList()
 	return output
 end
 
-static function GetFoldersDFR(theWinType, DataSet, PlotFolder)
-	variable theWinType
-	DFREF &DataSet, &PlotFolder
-	
-	string DataSetName, PlotFolderName
-	GetFolders(theWinType, DataSetName, PlotFolderName)
-	DFREF DataSet = $(DataSetName)
-	DFREF PlotFolder = $(PlotFolderName)
-end
-
-static function GetFolders(theWinType, DataSet, PlotFolder)
-	variable theWinType
-	string &DataSet, &PlotFolder
-// This function tests to see if the top window is a Loomis-Wood plot.
-// If the top window is a Loomis-Wood plot, it will contain "LoomisWood=ver" in its note.
-// Use theWinType = 1 if only the top GRAPH needs to be a Loomis-Wood plot
-// Use theWinType = 3 if the top GRAPH or TABLE needs to be a Loomis-Wood plot or associated Table
-// Use theWinType = -1 if the overall top WINDOW needs to be a Loomis-Wood plot
-	DataSet = ""
-	PlotFolder = ""
-
-	string TopWinName = WinName(0, theWinType < 0 ? -1 : theWinType)
-
-	if (!cmpstr(TopWinName,""))	//This is necessary b/c this function may be called when there are no active windows.
-		Beep
-		Print LW_ERROR3
-		return 0
-	endif
-	
-	if (theWinType < 0)
-		if (cmpstr(TopWinName, WinName(0, -theWinType)))
-			// Topmost window is wrong type
-			Beep
-			Print LW_ERROR3
-			return 0
-		endif
-	endif
-
-	GetWindow $TopWinName, note
-	variable theVersion = NumberByKey("LoomisWood",S_Value,"=",",")
-
-	if (theVersion > 0)
-		DataSet = StringByKey("DataSet",S_Value,"=",",")
-		PlotFolder = StringByKey("PlotFolder",S_Value,"=",",")
-		return 1
-	else
-		Beep
-		Print LW_ERROR3
-		return 0
-	endif
-end
-
-static function/DF GetPlotDFR(theWinType)
-	variable theWinType
-
-	string DataSet, PlotFolder
-// This function tests to see if the top window is a Loomis-Wood plot.
-// If the top window is a Loomis-Wood plot, it will contain "LoomisWood=ver" in its note.
-// Use theWinType = 1 if only the top GRAPH needs to be a Loomis-Wood plot
-// Use theWinType = 3 if the top GRAPH or TABLE needs to be a Loomis-Wood plot or associated Table
-// Use theWinType = -1 if the overall top WINDOW needs to be a Loomis-Wood plot
-	DataSet = ""
-	PlotFolder = ""
-
-	string TopWinName = WinName(0, theWinType < 0 ? -1 : theWinType)
-
-	if (!cmpstr(TopWinName,""))	//This is necessary b/c this function may be called when there are no active windows.
-		Beep
-		Print LW_ERROR3
-		return $""
-	endif
-	
-	if (theWinType < 0)
-		if (cmpstr(TopWinName, WinName(0, -theWinType)))
-			// Topmost window is wrong type
-			Beep
-			Print LW_ERROR3
-			return $""
-		endif
-	endif
-
-	GetWindow $TopWinName, note
-	variable theVersion = NumberByKey("LoomisWood",S_Value,"=",",")
-
-	if (theVersion > 0)
-		DataSet = StringByKey("DataSet",S_Value,"=",",")
-		PlotFolder = StringByKey("PlotFolder",S_Value,"=",",")
-		return $(PlotFolder)
-	else
-		Beep
-		Print LW_ERROR3
-		return $""
-	endif
-end
+//static function GetFolders(theWinType, DataSet, PlotFolder)
+//	variable theWinType
+//	string &DataSet, &PlotFolder
+//// This function tests to see if the top window is a Loomis-Wood plot.
+//// If the top window is a Loomis-Wood plot, it will contain "LoomisWood=ver" in its note.
+//// Use theWinType = 1 if only the top GRAPH needs to be a Loomis-Wood plot
+//// Use theWinType = 3 if the top GRAPH or TABLE needs to be a Loomis-Wood plot or associated Table
+//// Use theWinType = -1 if the overall top WINDOW needs to be a Loomis-Wood plot
+//	DataSet = ""
+//	PlotFolder = ""
+//
+//	string TopWinName = WinName(0, theWinType < 0 ? -1 : theWinType)
+//
+//	if (!cmpstr(TopWinName,""))	//This is necessary b/c this function may be called when there are no active windows.
+//		Beep
+//		Print LW_ERROR3
+//		return 0
+//	endif
+//	
+//	if (theWinType < 0)
+//		if (cmpstr(TopWinName, WinName(0, -theWinType)))
+//			// Topmost window is wrong type
+//			Beep
+//			Print LW_ERROR3
+//			return 0
+//		endif
+//	endif
+//
+//	GetWindow $TopWinName, note
+//	variable theVersion = NumberByKey("LoomisWood",S_Value,"=",",")
+//
+//	if (theVersion > 0)
+//		DataSet = StringByKey("DataSet",S_Value,"=",",")
+//		PlotFolder = StringByKey("PlotFolder",S_Value,"=",",")
+//		return 1
+//	else
+//		Beep
+//		Print LW_ERROR3
+//		return 0
+//	endif
+//end
+//
+//static function/DF GetPlotDFR(theWinType)
+//	variable theWinType
+//
+//	string DataSet, PlotFolder
+//// This function tests to see if the top window is a Loomis-Wood plot.
+//// If the top window is a Loomis-Wood plot, it will contain "LoomisWood=ver" in its note.
+//// Use theWinType = 1 if only the top GRAPH needs to be a Loomis-Wood plot
+//// Use theWinType = 3 if the top GRAPH or TABLE needs to be a Loomis-Wood plot or associated Table
+//// Use theWinType = -1 if the overall top WINDOW needs to be a Loomis-Wood plot
+//	DataSet = ""
+//	PlotFolder = ""
+//
+//	string TopWinName = WinName(0, theWinType < 0 ? -1 : theWinType)
+//
+//	if (!cmpstr(TopWinName,""))	//This is necessary b/c this function may be called when there are no active windows.
+//		Beep
+//		Print LW_ERROR3
+//		return $""
+//	endif
+//	
+//	if (theWinType < 0)
+//		if (cmpstr(TopWinName, WinName(0, -theWinType)))
+//			// Topmost window is wrong type
+//			Beep
+//			Print LW_ERROR3
+//			return $""
+//		endif
+//	endif
+//
+//	GetWindow $TopWinName, note
+//	variable theVersion = NumberByKey("LoomisWood",S_Value,"=",",")
+//
+//	if (theVersion > 0)
+//		DataSet = StringByKey("DataSet",S_Value,"=",",")
+//		PlotFolder = StringByKey("PlotFolder",S_Value,"=",",")
+//		return $(PlotFolder)
+//	else
+//		Beep
+//		Print LW_ERROR3
+//		return $""
+//	endif
+//end
 
 static function ValidateSourceFolder (DataSet)
 // Makes sure that the DataSet string is valid.
@@ -802,7 +825,7 @@ static function ValidateSourceFolder (DataSet)
  	string &DataSet
 
 	variable theRes = 0
-	string saveDF = GetDataFolder(1)
+	DFREF SaveDF = GetDataFolderDFR()
 		
 	// DataSet may be relative to BASE_FOLDER, absolute, or invalid
 	string temp = DataSet + "::"
@@ -845,7 +868,7 @@ function NewLWDataSet()
 	endif
 	
 	// Create DataSet and copy peakfinder waves to it.
-	if (NewLinesFolder(SaveDF, DataSet))
+	if (NewLinesFolder(saveDF, DataSet))
 		DataSet += ":"
 	
 		NewSeriesFolder(DataSet)
@@ -910,7 +933,7 @@ static function/S GetNewLWDataFolder()
 // DIALOG
 	String DataSet
 	//Save current folder name
-	String SaveDF = GetDataFolder(1)
+	DFREF SaveDF = GetDataFolderDFR()
 
 	//Ask for New DataSet.
 	Prompt DataSet, LW_STRING1
@@ -976,22 +999,22 @@ static function GetPeakfinderWaves(Line_Frequency, Line_Intensity, Line_Width)
 	Prompt Line_W, LW_STRING4, popup "_constant_;" + Real1DWaveList("*", ";", "")
 	DoPrompt LW_TITLE, Line_F, Line_I, Line_W
 	
-	Line_Frequency = GetDataFolder(1)+Line_F
+	string df = GetDataFolder(1)
+	Line_Frequency = df+Line_F
 
 	if (cmpstr(Line_I,"_constant_"))
-		Line_Intensity= GetDataFolder(1)+Line_I
+		Line_Intensity= df+Line_I
 	else
 		Line_Intensity = Line_I
 	endif
 
 	if (cmpstr(Line_W,"_constant_"))
-		Line_Width= GetDataFolder(1)+Line_W		
+		Line_Width= df+Line_W		
 	else
 		Line_Width = Line_W
 	endif
 
 	return V_Flag
-
 end
 
 static function VerifyInputWaveDims(Line_Frequencies, Line_Intensities, Line_Widths)
@@ -1025,7 +1048,7 @@ end
 
 static function NewLinesFolder(SourceDF, LWDF)
 	String SourceDF, LWDF
-	String SaveDF = GetDataFolder(1)
+	DFREF SaveDF = GetDataFolderDFR()
 
 	String Frequencies = ""
 	String Intensities = ""
@@ -1107,7 +1130,7 @@ end
 static function NewSeriesFolder(DataSet)
 	String DataSet
 	
-	String saveDF = GetDataFolder(1)
+	DFREF SaveDF = GetDataFolderDFR()
 	SetDataFolder DataSet
 	NewDataFolder/O/S Series
 	
@@ -1163,9 +1186,9 @@ end
 
 function DeleteLWPlotFolder(PlotFolder)
 // OPTIONAL DIALOG
-	string PlotFolder
+	DFREF PlotFolder
 
-	string saveDF = GetDataFolder(1)
+	DFREF saveDF = GetDataFolderDFR()
 	SetDataFolder PlotFolder
 	//First, remove all dependencies in plot folders
 	SetFormula $("BandCoeffUpdate"), ""
@@ -1175,67 +1198,46 @@ function DeleteLWPlotFolder(PlotFolder)
 	SetFormula $("SeriesOrder"), ""
 	SetDataFolder saveDF
 	
-	string cmd = "KillDataFolder "+Plotfolder
+	string cmd = "KillDataFolder "+GetDataFolder(1,plotFolder)
+	print cmd
 	// Then, kill the folder
-	//KillDataFolder $PlotFolder
 	Execute/P/Q/Z cmd
 end
 
 function ViewLineList()
-	String DataSet, PlotFolder
-	if (!GetFolders(1,DataSet, PlotFolder))
+	Struct LwInfo info
+	if (!GetLwInfo(1, info))
 		return 0
 	endif
 
 	Struct LinesStruct lines
-	GetLinesStruct(DataSet, lines)
+	GetLinesStruct(info.data, lines)
 
-	String DataSetName = StringFromList(ItemsInList(DataSet,":")-1,DataSet,":")
-	String WindowName = DataSetName + "_LL"
-	
-	DoWindow/F $WindowName
-	
-	if (!V_flag)
-		String Title
-		sprintf Title, "LWA: %s, Line List", DataSetName
-	
-		Edit/K=1 lines.Frequency,lines.Intensity, lines.Width, lines.Assignments as Title
-		DoWindow/C $WindowName
-		SetWindow kwTopWin,note="LoomisWood=2.0,DataSet="+DataSet+",PlotFolder="+PlotFolder+","
+	if (RetrieveOrCreateTable(info, "_LL", "Line List"))
+		AppendToTable lines.Frequency,lines.Intensity, lines.Width, lines.Assignments
 		ModifyTable width(Point)=35, format=3, digits=4, format(Point)=0
 	endif
 end
 
 function EditColors()
-	String DataSet, PlotFolder
-	if (!GetFolders(1,DataSet, PlotFolder))
+	Struct LwInfo info
+	if (!GetLwInfo(1, info))
 		return 0
 	endif
 	
-	string saveDF = GetDataFolder(1)
-	SetDataFolder DataSet
-	WAVE Colors
-	SetDataFolder saveDF
+	WAVE/SDFR=info.data Colors
 
-	String DataSetName = StringFromList(ItemsInList(DataSet,":")-1,DataSet,":")
-	String WindowName = DataSetName + "_CT"
-	
-	DoWindow/F $WindowName
-	
-	if (!V_flag)
-		String Title
-		sprintf Title, "LWA: %s, Colors", StringFromList(ItemsInList(DataSet,":")-1,DataSet,":")
-
-		Edit/K=1 Colors.ld As Title
-		DoWindow/C $WindowName
-		SetWindow kwTopWin,note="LoomisWood=2.0,DataSet="+DataSet+",PlotFolder="+PlotFolder+","
-	endif
-
+	if (RetrieveOrCreateTable(info, "_CT", "Colors"))
+		AppendToTable Colors.ld
+	endif	
 end
  
 function NewLWPlot(DataSet, PlotFolder)
 // OPTIONAL DIALOG
 	String DataSet, PlotFolder
+
+	DFREF dataDFR =$DataSet
+
 	
 	if (cmpstr(DataSet,"") || cmpstr(PlotFolder,""))
 		if (ValidateSourceFolder(DataSet))
@@ -1255,17 +1257,17 @@ function NewLWPlot(DataSet, PlotFolder)
 		DataSet = BASE_FOLDER + ":" + DataSet + ":"
 	endif
 	
-	String temp
-	String SaveDF=GetDataFolder(1)
+	DFREF SaveDF = GetDataFolderDFR()
 	
 	SetDataFolder DataSet
+		
 	Struct LinesStruct lines
-	GetLinesStruct(DataSet, lines)
+	GetLinesStruct(dataDFR, lines)
 
 	Struct SeriesStruct series
-	GetSeriesStruct(DataSet, series)
+	GetSeriesStruct(dataDFR, series)
 
-	//TODO: Validate PlotFolder
+//	//TODO: Validate PlotFolder
 	NewDataFolder/O/S Plots
 	NewDataFolder/O/S $PlotFolder
 	PlotFolder = GetDatafolder(1)
@@ -1277,7 +1279,7 @@ function NewLWPlot(DataSet, PlotFolder)
 	Variable/G startDeltaNu = -50, endDeltaNu = 50
 	
 	Variable/G DataUpdate
-	temp = "DoDataUpdate(CombX, StartM, EndM, StartDeltaNu, EndDeltaNu)"
+	string temp = "DoDataUpdate(CombX, StartM, EndM, StartDeltaNu, EndDeltaNu)"
 	SetFormula DataUpdate, temp
 	
 	// Create persistant data
@@ -1296,8 +1298,8 @@ function NewLWPlot(DataSet, PlotFolder)
 	Variable/G lastTriangle
 
 	Variable/G Zoom=1
-	Variable/G lwCursor_p, lwCursor_m, lwCursor_Nu, lwCursor_I, lwCursor_W, lwCursor_dM, lwCursor_dNu
-	Variable/G lwCursor_pnt
+	Variable/G lwCursor_p, lwCursor_m, lwCursor_Nu, lwCursor_I, lwCursor_W, lwCursor_dNu
+	Variable/G lwCursor_pnt, lwCursor_hide
 	
 	//String/G lwCursor_assignments
 	Variable/G startM = -10, endM = 10 // 01/17/07 Changed
@@ -1310,6 +1312,7 @@ function NewLWPlot(DataSet, PlotFolder)
 
 	Variable/G SeriesOrder
 	temp = "DoSeriesOrderUpdate("+DataSet+"Series:Order,"+PlotFolder+"CurrentSeries)"
+	temp = DataSet+"Series:Order["+PlotFolder+"CurrentSeries]"
 	SetFormula SeriesOrder, temp
 
 	Variable/G SeriesNameUpdate
@@ -1333,7 +1336,7 @@ function NewLWPlot(DataSet, PlotFolder)
 
 	// Setup the axes
 	SetAxis/R left  EndM + 0.5, StartM -0.5
-	SetAxis/A/N=0/E=2 bottom
+	SetAxis/A/E=0 bottom
 	ModifyGraph standoff(left)=0 // Changed 01/17/07
 	ModifyGraph manTick(left)={0,1,0,0}, manMinor(left)={1,2}  // Changed 01/17/07
 	ModifyGraph btLen(left)=0.1, stLen(left)=5, ftLen(left)=0.1 // Changed 01/17/07
@@ -1385,7 +1388,6 @@ function NewLWPlot(DataSet, PlotFolder)
 	SetVariable display_width, pos={2,20}, size={100,18}, title="W", fSize=12, format="%8.6f"
 	SetVariable display_intensity, size={70,18},title="I", fSize=12, format="%5.3f"
 	SetVariable display_m, size={70,18}, title="M", fSize=12, format="%d"
-	SetVariable display_delta_m, size={80,18}, title="dM", fSize=12, format="%5.3f"
 
 	SetVariable display_p, value=lwCursor_p, limits={-inf,inf,0}, noedit=1
 	SetVariable display_frequency, value=lwCursor_Nu, limits={-inf,inf,0}, noedit=1
@@ -1393,7 +1395,6 @@ function NewLWPlot(DataSet, PlotFolder)
 	SetVariable display_intensity, value=lwCursor_I, limits={-inf,inf,0}, noedit=1
 	SetVariable display_width, value=lwCursor_W, limits={-inf,inf,0}, noedit=1
 	SetVariable display_m, value=lwCursor_m, limits={-inf,inf,0}, noedit=1
-	SetVariable display_delta_m, value=lwCursor_dM, limits={-inf,inf,0}, noedit=1
 
 	GetWindow #, wSize
 	variable width=max(V_right - V_left - 472, 100)
@@ -1425,7 +1426,7 @@ function DoBandCoeffUpdate(BandCoeff)
 	variable start_time = ticks
 
 	string PlotFolder = GetWavesDataFolder(BandCoeff,1)
-	string SaveDF = GetDataFolder(1)
+	DFREF SaveDF = GetDataFolderDFR()
 	SetDataFolder PlotFolder
 	WAVE PolyCoeff
 	SetDataFolder :::
@@ -1474,9 +1475,18 @@ function DoSeriesOrderUpdate(Series_Order, CurrentSeries)
 // DO NOT DECLARE AS STATIC!
 	wave Series_Order
 	variable CurrentSeries
-
-	return Series_Order[CurrentSeries]
-end
+	
+	variable npnts = numpnts(Series_Order)
+	if (npnts<= 0)
+		return 0
+	else
+		CurrentSeries = limit(Currentseries,0,npnts-1)
+	endif 
+	
+	variable res=Series_Order[CurrentSeries]
+	print "Here", res
+	return res
+end  
 
 function DoSeriesNameUpdate(Series_Name, CurrentSeries)
 // DO NOT DECLARE AS STATIC!
@@ -1502,10 +1512,10 @@ function DoDataUpdate(comb, StartM, EndM, StartDeltaNu, EndDeltaNu)
 	DFREF PlotFolder = GetWavesDataFolderDFR(comb)
 	SetDataFolder PlotFolder
 	SetDataFolder :::
-	DFREF DataSet = GetDataFolderDFR()
+	DFREF dataDFR = GetDataFolderDFR()
 	
 	Struct LinesStruct lines
-	GetLinesStruct(GetDataFolder(1,DataSet), lines)
+	GetLinesStruct(dataDFR, lines)
 
 	variable nrows = abs(endM - startM + 1)
 
@@ -1606,9 +1616,10 @@ function DoTriangleUpdate(DataP, DataX, DataM, Assignments, Series_Color, Series
 	SetDataFolder ::
 	String DataSet = GetDataFolder(1)
 	WAVE Colors
-	
+	DFREF data =$DataSet
+
 	Struct LinesStruct lines
-	GetLinesStruct(DataSet, lines)
+	GetLinesStruct(data, lines)
 
 	DFREF PlotFolder = GetWavesDataFolderDFR(DataP)
 	cd PlotFolder
@@ -1733,169 +1744,6 @@ function DoTriangleUpdate(DataP, DataX, DataM, Assignments, Series_Color, Series
 	return (StopMSTimer(-2) - start_time)*1e-6
 end
 
-
-//function DoTriangleUpdate(LWm, Assignments, Series_Color, Series_Shape, StartM, EndM, Zoom)
-//// This procedure recalculates Triangle_X, Triangle_Yup, Triangle_Ydown, and Triangle_Color, StartP, EndP, StartFrequency, and EndFrequency
-//// whenever LWm, Assignments, Line_Shape, Series_Color, Series_Shape, StartM, or EndM  change.
-//// DO NOT DECLARE AS STATIC!
-//	Wave LWm
-//	Wave/T Assignments
-//	Wave Series_Color, Series_Shape
-//	Variable startM, endM, Zoom
-//
-//	Variable start_time = StopMSTimer(-2)
-//
-//	String SaveDF = GetDataFolder(1)
-//	SetDataFolder GetWavesDataFolder(Assignments,1)
-//	SetDataFolder ::
-//	String DataSet = GetDataFolder(1)
-//	WAVE Colors
-//	
-//	Struct LinesStruct lines
-//	GetLinesStruct(DataSet, lines)
-//
-//	SetDataFolder GetWavesDataFolder(LWm,1)
-//	String PlotFolder = GetDataFolder(1)
-//	WAVE PolyCoeff
-//	WAVE Line_DF
-//	WAVE Triangle_X
-//	WAVE Triangle_Yup
-//	WAVE Triangle_Ydown
-//	WAVE Triangle_Color
-//	WAVE Triangle_Color2
-//	
-//	If (!WaveExists(Triangle_Color2))
-//		Duplicate/O Triangle_Color, Triangle_Color2
-//	endif
-//	If (DimSize(Colors,1)!=6)
-//		Redimension/N=(-1,6) Colors
-//		Colors[][3,5]=Colors[p][q-3]
-//	EndIf
-//
-//	NVAR minM
-//	NVAR maxM
-//	NVAR lastTriangle
-//	NVAR lwCursor_p
-////	SetDataFolder SaveDF
-//
-//	CheckM(StartM, EndM, minM, maxM)
-//
-//	
-////	SetDataFolder PlotFolder
-//	Variable/G ZoomW
-//	ZoomW = (numtype(ZoomW) || ZoomW <= 0) ? 1 : ZoomW
-//	Variable/G MinInt
-//	
-//	Variable/G startNu = poly(PolyCoeff, startM)
-//	Variable/G endNu = poly(PolyCoeff, endM)
-//
-//	// Now Find StartP and EndP
-//	Variable/G startP = BinarySearch2(LWm, startM - 0.5)
-//	Variable/G endP = BinarySearch2(LWm, endM + 0.5)
-//	SetDataFolder SaveDF
-//
-//	if (startP > endP)
-//		K0 = startP
-//		startP = endP + 1
-//		endP = K0
-//	else
-//		startP += 1
-//	endif
-//	endP = min(endP, StartP + 0.2*FIVEMAX_PEAKS_PER_PLOT - 1)
-//	
-//	// Now, calculate the Triangles
-//	Variable base, center, color, height, fiveindex, shape, width, scale_width,  scale_height, WidthMin, index
-//	Variable total_height, clip_width
-//	Variable colorR, colorB, colorG
-//	Variable colorR2, colorB2, colorG2
-//	Variable series_num
-//		
-//	scale_width = 2*ZoomW //(lines.maxWidth-lines.minWidth > 0) ? 0.045 * PolyCoeff[1] / (lines.maxWidth - lines.minWidth) : 0
-//	//WidthMin = 0.005 * PolyCoeff[1]
-// 	//Variable avgM = 0.5*(startM + endM)
-// 	//WidthMin = 0.005 *abs(poly(PolyCoeff,avgM)-poly(PolyCoeff,avgM+1))//PolyCoeff[1]
-// 	WidthMin = 0.005 *abs(poly(PolyCoeff,startM)-poly(PolyCoeff,endM))/(abs(startM-endM))
-//	//print lines.maxWidth, lines.minWidth, scale_width, WidthMin
-//	
-//	//scale_height = (lines.maxIntensity-lines.minIntensity > 0) ? 0.80 / (lines.maxIntensity - lines.minIntensity) : 0
-//	scale_height = (lines.maxIntensity-lines.minIntensity > 0) ? 0.90 / max(lines.maxIntensity, lines.minIntensity) : 1
-//	scale_height *= Zoom
-//	
-//	for (index = startP ; index <= endP ; index += 1)
-//		fiveindex = 5*(index-startP)
-//		series_num = str2num(StringFromList(0,Assignments[index],";"))
-//		if (numtype(series_num))
-//			series_num = 0
-//		endif
-//		shape = Series_Shape[series_num]
-//		shape = abs(lines.Intensity [index]) > minInt ?Series_Shape[series_num] : -1
-//
-//		base = LWm[index] + 0.5  // 1/17/07 + 0.5 is new
-//		center = Line_DF[index]
-//
-//		//total_height = (lines.Intensity[index] - lines.minIntensity) *scale_height + 0.1
-//		total_height = lines.Intensity[index]*scale_height
-//		base -= total_height < 0
-//
-//		height = shape<0 ? NaN : sign(total_height)*min(abs(total_height), 0.90)  // New Version 2.01
-//		width =  lines.width[index]//*scale_width//(lines.width[index] -lines.minWidth)*scale_width + WidthMin
-//		width = numtype(width) ? WidthMin : width
-//		width *= scale_width
-//		clip_width = (1-height/total_height)*width
-//		
-//		
-//		color = Series_Color[series_num]
-//		colorR = Colors[color][0]
-//		colorG = Colors[color][1]
-//		colorB = Colors[color][2]
-//		colorR2 = Colors[color][3]
-//		colorG2 = Colors[color][4]
-//		colorB2 = Colors[color][5]
-//		shape = shape!=0
-//		
-//		Triangle_X[fiveindex] = center - width
-//		Triangle_Yup[fiveindex] = base
-//		Triangle_Ydown[fiveindex] = base
-//		Triangle_Color[fiveindex] = {{colorR},{colorG},{colorB}}
-//		Triangle_Color2[fiveindex] = {{colorR2},{colorG2},{colorB2}}
-//
-//		fiveindex += 1
-//		Triangle_X[fiveindex] = center - clip_width
-//		Triangle_Yup[fiveindex] = base-height
-//		Triangle_Ydown[fiveindex] = base-(1-shape)*height
-//		Triangle_Color[fiveindex] = {{colorR},{colorG},{colorB}}
-//		Triangle_Color2[fiveindex] = {{colorR2},{colorG2},{colorB2}}
-//
-//		fiveindex += 1
-//		Triangle_X[fiveindex] = center + clip_width
-//		Triangle_Yup[fiveindex] = base-height
-//		Triangle_Ydown[fiveindex] = base-(1-shape)*height
-//		Triangle_Color[fiveindex] = {{colorR},{colorG},{colorB}}
-//		Triangle_Color2[fiveindex] = {{colorR2},{colorG2},{colorB2}}
-//
-//		fiveindex += 1
-//		Triangle_X[fiveindex] = center + width
-//		Triangle_Yup[fiveindex] = base
-//		Triangle_Ydown[fiveindex] = base
-//		Triangle_Color[fiveindex] = {{colorR},{colorG},{colorB}}
-//		Triangle_Color2[fiveindex] = {{colorR2},{colorG2},{colorB2}}
-//
-//	endfor
-//	fiveindex += 2
-//	Triangle_X[fiveindex,lastTriangle] = NaN
-//	//Triangle_Yup[fiveindex,lastTriangle] = NaN
-//	//Triangle_Ydown[fiveindex,lastTriangle] = NaN
-//	//Triangle_Color[fiveindex,lastTriangle] = NaN
-//	lastTriangle = fiveindex + 2
-//	if (isTopWinLWPlot(1))
-//		UpdateCursor()
-//	endif
-//
-//	// This update time should be under 3 ticks (0.05 sec) for good user interaction
-//	//printf "Triangle update took %d ms.\r" ticks - start_time
-//	return (StopMSTimer(-2) - start_time)*1e-6
-//end
-
 /// Loomis-Wood plot hook functions:
 function LWHookFunction(s)
 	STRUCT WMWinHookStruct &s
@@ -1931,16 +1779,37 @@ function LWHookFunction(s)
 				VerticalScroll(LinesPerFrame())
 				return 1
 			case VK_LEFT:
-				HMoveCursor(-1)
+				if (s.eventMod & 0x02)	// Shift
+					HorizontalScroll(-0.2)
+				else
+					HMoveCursor(-1)
+				endif
 				return 1 
 			case VK_UP:
-				VMoveCursor(-1)
+				if (s.eventMod & 0x02)	// Shift
+					VerticalScroll(-floor(0.2*LinesPerFrame()))
+				else
+					VMoveCursor(-1)
+				endif
 				return 1
 			case VK_RIGHT:
-				HMoveCursor(1)
+				if (s.eventMod & 0x02)	// Shift
+					HorizontalScroll(0.2)
+				else
+					HMoveCursor(1)
+				endif
 				return 1 
 			case VK_DOWN:
-				VMoveCursor(1)
+				if (s.eventMod & 0x02)	// Shift
+					VerticalScroll(floor(0.2*LinesPerFrame()))
+				else
+					VMoveCursor(1)
+				endif
+				return 1
+			case 0x48:
+			case 0x68:
+				print s.keycode, s.eventMod
+				ShowHideCursor()
 				return 1
 			case 0x4B:
 			case 0x6B:
@@ -1978,6 +1847,10 @@ function LWHookFunction(s)
 				//print s.keycode
 				return 0
 			endswitch
+		case EC_MouseWheel:
+			VerticalScroll(s.wheelDy)
+			HorizontalScroll(0.005*s.wheelDx)
+			return 1
 		case EC_MouseDown:
 			//do not handle mouse events that occur outside the graph area
 			if (s.mouseLoc.v < 0 || s.mouseLoc.h < 0) //TOP_BAR_HEIGHT
@@ -1986,12 +1859,11 @@ function LWHookFunction(s)
 				SetActiveSubwindow $WinName(0,1)  // 01/17/07
 				theP = HitTest(s)
 				if (theP >= 0)
-					//MoveCursor(theP)
-					
 					UpdateCursor(theP=theP)
+					return 1
 	 			endif
 	 		endif
- 			return 1
+ 			return 0
 		//case "mousedblclk":
 		//	theP = HitTest(InfoStr)
 		//	if (theP >= 0)
@@ -2009,9 +1881,6 @@ function LWHookFunction(s)
  				endif
  			endif
  			break
-		//case "mousewheel":
-		//	VerticalScroll( sign(NumberByKey("DELTA",InfoStr)) )
-		//	return 1
 		case EC_Resize: //Resize
 			SetActiveSubwindow $WinName(0,1)
 			SetActiveSubwindow #pTop
@@ -2044,62 +1913,50 @@ function LWHookFunction(s)
 			SetActiveSubwindow ##
 			break
 		case EC_Activate:
-			if (!GetFolders(1,DataSet, PlotFolder))
-				break
+			Struct LwInfo info
+			if (!GetLwInfo(1, info))
+				return 0
 			endif
 			ControlInfo CurrentSeriesPopup
-			NVAR CurrentSeries = $(PlotFolder+"CurrentSeries")
+			NVAR/SDFR=info.plot CurrentSeries
 			if (V_flag)
 				PopupMenu CurrentSeriesPopup, mode=CurrentSeries	
 			endif
 			break
 		case EC_Kill:
-			if (!GetFolders(1,DataSet, PlotFolder))
-				break
-			endif
-			DeleteLWPlotFolder(PlotFolder)
+			OnKill()
 			break
 		default:
 			return 0		
 	endswitch
 end
 
-function OrderSetVarProc(ctrlName,varNum,varStr,varName) : SetVariableControl
-	string ctrlName
-	variable varNum
-	string varStr
-	string varName
-
-	String DataSet, PlotFolder
-	if (!GetFolders(1,DataSet, PlotFolder))
+static function OnKill()
+	Struct LwInfo info
+	if (!GetLwInfo(1, info))
 		return 0
 	endif
-	
-	Struct SeriesStruct series
-	GetSeriesStruct(DataSet, series)
-
-	NVAR CurrentSeries = $(PlotFolder+"CurrentSeries")
-	
-	series.Order[CurrentSeries] = varNum
+	DeleteLWPlotFolder(info.plot)
 end
+
 
 function CurrentSeriesPopupMenuControl(ctrlName,popNum,popStr) : PopupMenuControl
 	String ctrlName
 	Variable popNum
 	String popStr
 	
-	String DataSet, PlotFolder
-	if (!GetFolders(1,DataSet, PlotFolder))
+	Struct LwInfo info
+	if (!GetLwInfo(1, info))
 		return 0
 	endif
-	
+
 	Struct SeriesStruct series
-	GetSeriesStruct(DataSet, series)
+	GetSeriesStruct(info.data, series)
 	
 	if (popNum > series.Count)
 		if(AddSeries())
 			//User canceled AddSeries:
-			NVAR CurrentSeries = $(PlotFolder+"CurrentSeries")
+			NVAR/SDFR=info.plot CurrentSeries
 			popNum = CurrentSeries
 		endif
 		DoUpdate	// Must force update here to make the popup display correctly
@@ -2114,29 +1971,31 @@ function ListBoxProc(LB_Struct) : ListBoxControl
 	//5=cell select with shift key, 6=begin edit, 7=end
 
 	if ((LB_Struct.eventCode==1 && LB_Struct.col>=2 && LB_Struct.col <= 4) || LB_Struct.eventCode==7)
-		String DataSet, PlotFolder
-		if (GetFolders(1,DataSet, PlotFolder))
-			WAVE/T AssignmentListText = $(PlotFolder+"AssignmentListText")
-			WAVE AssignmentListSel = $(PlotFolder+"AssignmentListSel")
-
-			Struct LinesStruct lines
-			GetLinesStruct(DataSet, lines)
-			
-			Variable Point = CursorPosition()
-			Variable Series = str2num(StringFromList(0,StringFromList(LB_Struct.row,lines.Assignments[Point],";"),":"))
-			Variable M = str2num(AssignmentListText[LB_Struct.row][1])
-			Variable LW = (AssignmentListSel[LB_Struct.row][2] & 0x10)!=0
-			Variable US = (AssignmentListSel[LB_Struct.row][3] & 0x10)!=0
-			Variable LS = (AssignmentListSel[LB_Struct.row][4] & 0x10)!=0
-			String Notes = AssignmentListText[LB_Struct.row][5]
-			
-			if (numType(M)==0)
-				AssignLine(Point, Series, M, LW, US, LS, Notes)
-			else
-				UpdateCursor()
-			endif
-			SetActiveSubwindow $WinName(0,1)
+		Struct LwInfo info
+		if (!GetLwInfo(1, info))
+			return 0
 		endif
+
+		WAVE/SDFR=info.plot/T AssignmentListText
+		WAVE/SDFR=info.plot AssignmentListSel
+
+		Struct LinesStruct lines
+		GetLinesStruct(info.data, lines)
+			
+		Variable Point = CursorPosition()
+		Variable Series = str2num(StringFromList(0,StringFromList(LB_Struct.row,lines.Assignments[Point],";"),":"))
+		Variable M = str2num(AssignmentListText[LB_Struct.row][1])
+		Variable LW = (AssignmentListSel[LB_Struct.row][2] & 0x10)!=0
+		Variable US = (AssignmentListSel[LB_Struct.row][3] & 0x10)!=0
+		Variable LS = (AssignmentListSel[LB_Struct.row][4] & 0x10)!=0
+		String Notes = AssignmentListText[LB_Struct.row][5]
+			
+		if (numType(M)==0)
+			AssignLine(Point, Series, M, LW, US, LS, Notes)
+		else
+			UpdateCursor()
+		endif
+		SetActiveSubwindow $WinName(0,1)
 	endif
 	return 0
 end
@@ -2185,17 +2044,14 @@ static function NearestPeak(theX, theY)
 // Finds the peak nearest a set of cartesian coordinates in a Loomis-Wood plot.
 	variable theX, theY
 	
-//	variable theM, minP, maxP
-
-	String DataSet, PlotFolder
-	if (!GetFolders(1,DataSet, PlotFolder))
+	Struct LwInfo info
+	if (!GetLwInfo(1, info))
 		return 0
 	endif
-	DFREF dfr=$(PlotFolder)
 
-	WAVE/SDFR=dfr DataM
-	WAVE/SDFR=dfr DataDeltaNu
-	WAVE/SDFR=dfr DataP
+	WAVE/SDFR=info.plot DataM
+	WAVE/SDFR=info.plot DataDeltaNu
+	WAVE/SDFR=info.plot DataP
 	GetAxis/Q bottom
 
 	Duplicate/FREE DataM, DataMfrac
@@ -2211,44 +2067,61 @@ static function VerticalScroll(Amount)
 // Scrolls a Loomis-wood plot vertically
 	Variable Amount
 
-	//Variable Delta
-	
-	//GetAxis/Q left
-	//Delta = Amount+.5
-
-	String DataSet, PlotFolder
-	if (!GetFolders(1,DataSet, PlotFolder))
+	Struct LwInfo info
+	if (!GetLwInfo(1, info))
 		return 0
 	endif
 
-	NVAR startM = $(PlotFolder+"startM")
-	NVAR endM = $(PlotFolder+"endM")
-
-	//StartM = min(V_min,V_max) + Delta
-	//EndM = max(V_min,V_max) + Delta
+	NVAR/SDFR=info.plot startM
+	NVAR/SDFR=info.plot endM
 
 	startM += Amount
 	endM += Amount
 
-	// 01/17/07
 	SetAxis/R left  EndM + 0.5, StartM -0.5
-	//SetAxis/R left (floor(EndM)),(floor(StartM))
+end
+
+static function HorizontalScroll(Amount)
+// Scrolls a Loomis-wood plot vertically
+	Variable Amount
+
+	Struct LwInfo info
+	if (!GetLwInfo(1, info))
+		return 0
+	endif
+
+	NVAR/SDFR=info.plot startDeltaNu
+	NVAR/SDFR=info.plot endDeltaNu
+
+	variable range = (endDeltaNu - startDeltaNu)*Amount
+
+
+	startDeltaNu += range
+	endDeltaNu += range
 end
 
 static function LinesPerFrame()
-	GetAxis/Q left
-	Return abs(V_min-V_max)
+	Struct LwInfo info
+	if (!GetLwInfo(1, info))
+		return 0
+	endif
+
+	NVAR/SDFR=info.plot startM
+	NVAR/SDFR=info.plot endM
+	
+	return abs(endM-startM)+1
 end
 
 function ShowHideCursor()
 	String DataSet, PlotFolder
 
-	if (!GetFolders(1,DataSet, PlotFolder))
+	Struct LwInfo info
+	if (!GetLwInfo(1, info))
 		return 0
 	endif
 	
-	Variable hide=NumVarOrDefault(PlotFolder+"lwCursor_hide", 0)
-	Variable/G $(PlotFolder+"lwCursor_hide") = !hide
+	NVAR/SDFR=info.plot lwCursor_hide
+	lwCursor_hide = !lwCursor_hide
 
 	UpdateCursor()
 end
@@ -2258,12 +2131,12 @@ static function UpdateCursor([theP])
 
 	Variable temp
 
-	String DataSet, PlotFolder
-	if (!GetFolders(1,DataSet, PlotFolder))
+	Struct LwInfo info
+	if (!GetLwInfo(1, info))
 		return 0
 	endif
 
-	DFREF PlotDFR = $(PlotFolder)
+	DFREF PlotDFR = info.plot
 	
 	NVAR/SDFR=PlotDFR lwCursor_pnt
 	NVAR/SDFR=PlotDFR lwCursor_p 
@@ -2271,16 +2144,14 @@ static function UpdateCursor([theP])
 	NVAR/SDFR=PlotDFR lwCursor_Nu
 	NVAR/SDFR=PlotDFR lwCursor_I
 	NVAR/SDFR=PlotDFR lwCursor_W
-	NVAR/SDFR=PlotDFR lwCursor_dM
 	NVAR/SDFR=PlotDFR lwCursor_dNu
-	Variable hide=NumVarOrDefault(PlotFolder+"lwCursor_hide", 0)
-	Variable/G $(PlotFolder+"lwCursor_hide") =  hide
+	NVAR/SDFR=PlotDFR lwCursor_hide
 	
 	Struct LinesStruct lines
-	GetLinesStruct(DataSet, lines)
+	GetLinesStruct(info.data, lines)
 
 	Struct SeriesStruct series
-	GetSeriesStruct(DataSet, series)
+	GetSeriesStruct(info.data, series)
 
 	WAVE/SDFR=PlotDFR Triangle_X
 	WAVE/SDFR=PlotDFR Triangle_Yup
@@ -2309,11 +2180,9 @@ static function UpdateCursor([theP])
  	temp = limit(5*lwCursor_pnt,0,numpnts(Triangle_X)-4)
 	LWCursorX[0] = Triangle_X[temp]
 	LWCursorX[1] = Triangle_X[temp+3]
-	LWCursorYdown = hide ? NaN : Triangle_Yup[temp]
-	LWCursorYup = hide ? NaN : Triangle_Yup[temp]-0.8*sign(lwCursor_I)
+	LWCursorYdown = lwCursor_hide ? NaN : Triangle_Yup[temp]
+	LWCursorYup = lwCursor_hide ? NaN : Triangle_Yup[temp]-0.8*sign(lwCursor_I)
 	
-	lwCursor_dM = Triangle_X[temp+1]
-
 	AssignmentString2ListBoxWaves(lines.Assignments[lwCursor_p], series.Name, AssignmentListText, AssignmentListSel)
 end
 
@@ -2340,140 +2209,130 @@ static function AssignmentString2ListBoxWaves(str, seriesNames, tw, sw)
 	endif
 end
 
-static function MoveCursor(theP)
-// Moves the cursor on a Loomis-Wood plot.
-	Variable theP
-	if (numtype(theP)==-2)
-		// theP is -INF, INF, or NaN, so do nothing.
-		return 0
-	endif
-
-	Variable temp
-
-	String DataSet, PlotFolder
-	if (!GetFolders(1,DataSet, PlotFolder))
-		return 0
-	endif
-
-	NVAR maxP = $(PlotFolder+"maxP")
-	NVAR minP = $(PlotFolder+"minP")
-	NVAR lwCursor_p = $(PlotFolder+"lwCursor_p")
-	NVAR StartP = $(PlotFolder+"StartP")
-	NVAR EndP = $(PlotFolder+"EndP")
-
-	NVAR maxM = $(PlotFolder+"maxM")
-	NVAR minM = $(PlotFolder+"minM")
-	NVAR StartM = $(PlotFolder+"StartM")
-	NVAR EndM = $(PlotFolder+"EndM")
-
-	theP = limit(theP,min(maxP,minP),max(maxP,minP))
-//	if ((theP > max(maxP,minP)) || (theP < min(maxP,minP)))
-//		//Trying to move out of bounds
-//		if (lwCursor_p > max(maxP,minP))
-//			// Cursor is already out of bounds, so bring it back
-//			theP = max(maxP,minP)
-//		elseif (lwCursor_p < min(maxP,minP))
-//			// Cursor is already out of bounds, so bring it back
-//			theP = min(maxP,minP)
-//		else
-//			//Trying to move out of bounds, so do nothing
-//			//Printf "Trying to move cursor out of bounds.  theP=%d; maxP=%d; minP=%d\r", theP, maxP, minP
-//			return 0
-//		endif
+//static function MoveCursor(theP)
+//// Moves the cursor on a Loomis-Wood plot.
+//	Variable theP
+//	if (numtype(theP)==-2)
+//		// theP is -INF, INF, or NaN, so do nothing.
+//		return 0
 //	endif
-
-	Struct LinesStruct lines
-	GetLinesStruct(DataSet, lines)
-
-	Struct SeriesStruct series
-	GetSeriesStruct(DataSet, series)
-
-	WAVE Line_LWm = $(PlotFolder+"Line_LWm")
-
-	variable shift = 0 
-	if (theP < StartP)
-		shift = round(Line_LWm[theP])-StartM//round(Line_LWm[StartP])
-	elseif (theP > EndP)
-		shift = round(Line_LWm[theP])-EndM//-round(Line_LWm[EndP])
-	endif
-	
-	if (numtype(shift)!=0)
-		WaveStats/Q Line_LWm
-		NVAR startM = $(PlotFolder+"startM")
-		NVAR endM = $(PlotFolder+"endM")
-
-		printf "Trying to shift plot illegally.  shift=%d\r", shift
-	elseif (shift)
-		VerticalScroll(shift)
-		DoUpdate
-	endif
-	lwCursor_p = theP
-
-	UpdateCursor()
-end
+//
+//	Variable temp
+//
+//	Struct LwInfo info
+//	if (!GetLwInfo(1, info))
+//		return 0
+//	endif
+//	string PlotFolder = GetDataFolder(1,info.plot)
+//
+//
+//	NVAR maxP = $(PlotFolder+"maxP")
+//	NVAR minP = $(PlotFolder+"minP")
+//	NVAR lwCursor_p = $(PlotFolder+"lwCursor_p")
+//	NVAR StartP = $(PlotFolder+"StartP")
+//	NVAR EndP = $(PlotFolder+"EndP")
+//
+//	NVAR maxM = $(PlotFolder+"maxM")
+//	NVAR minM = $(PlotFolder+"minM")
+//	NVAR StartM = $(PlotFolder+"StartM")
+//	NVAR EndM = $(PlotFolder+"EndM")
+//
+//	theP = limit(theP,min(maxP,minP),max(maxP,minP))
+////	if ((theP > max(maxP,minP)) || (theP < min(maxP,minP)))
+////		//Trying to move out of bounds
+////		if (lwCursor_p > max(maxP,minP))
+////			// Cursor is already out of bounds, so bring it back
+////			theP = max(maxP,minP)
+////		elseif (lwCursor_p < min(maxP,minP))
+////			// Cursor is already out of bounds, so bring it back
+////			theP = min(maxP,minP)
+////		else
+////			//Trying to move out of bounds, so do nothing
+////			//Printf "Trying to move cursor out of bounds.  theP=%d; maxP=%d; minP=%d\r", theP, maxP, minP
+////			return 0
+////		endif
+////	endif
+//
+//	Struct LinesStruct lines
+//	GetLinesStruct(info.data, lines)
+//
+//	Struct SeriesStruct series
+//	GetSeriesStruct(info.data, series)
+//
+//	WAVE Line_LWm = $(PlotFolder+"Line_LWm")
+//
+//	variable shift = 0 
+//	if (theP < StartP)
+//		shift = round(Line_LWm[theP])-StartM//round(Line_LWm[StartP])
+//	elseif (theP > EndP)
+//		shift = round(Line_LWm[theP])-EndM//-round(Line_LWm[EndP])
+//	endif
+//	
+//	if (numtype(shift)!=0)
+//		WaveStats/Q Line_LWm
+//		NVAR startM = $(PlotFolder+"startM")
+//		NVAR endM = $(PlotFolder+"endM")
+//
+//		printf "Trying to shift plot illegally.  shift=%d\r", shift
+//	elseif (shift)
+//		VerticalScroll(shift)
+//		DoUpdate
+//	endif
+//	lwCursor_p = theP
+//
+//	UpdateCursor()
+//end
 
 static function CursorPosition()
-	String DataSet, PlotFolder
-	if (!GetFolders(1,DataSet, PlotFolder))
+	Struct LwInfo info
+	if (!GetLwInfo(1, info))
 		return 0
 	endif
-	DFREF PlotDFR = $(PlotFolder)
-	NVAR/SDFR=PlotDFR lwCursor_p
+
+	NVAR/SDFR=info.plot lwCursor_p
 	Return lwCursor_p
 end
 
 static function CursorM()
-	String DataSet, PlotFolder
-	if (!GetFolders(1,DataSet, PlotFolder))
+	Struct LwInfo info
+	if (!GetLwInfo(1, info))
 		return 0
 	endif
-	DFREF PlotDFR = $(PlotFolder)
-	NVAR/SDFR=PlotDFR lwCursor_m
+
+	NVAR/SDFR=info.plot lwCursor_m
 	Return lwCursor_m
 end
 
 static function VMoveCursor(Amount)
 	Variable Amount
 
-	String DataSet, PlotFolder
-	if (!GetFolders(1,DataSet, PlotFolder))
+	Struct LwInfo info
+	if (!GetLwInfo(1, info))
 		return 0
 	endif
-	DFREF PlotDFR = $PlotFolder
 	
+	NVAR/SDFR=info.plot lwCursor_pnt
+	NVAR/SDFR=info.plot lwCursor_dNu
+	NVAR/SDFR=info.plot lwCursor_m
 	
-	NVAR/SDFR=PlotDFR lwCursor_pnt
-	NVAR/SDFR=PlotDFR lwCursor_dNu
-	NVAR/SDFR=PlotDFR lwCursor_m
-	
-	Variable pnt = NearestPeak(lwCursor_dNu, lwCursor_m + Amount) // 01/17/07 lwCursor_m was Triangle_Yup[temp]
+	Variable pnt = NearestPeak(lwCursor_dNu, lwCursor_m + Amount)
 	lwCursor_pnt = pnt
 	UpdateCursor()
 	
-//	if (temp == CursorPosition())
-//		MoveCursor(temp+Amount)
-//	else
-//		MoveCursor(temp)
-//	endif
 end
 
 static function HMoveCursor(Amount)
 	Variable Amount
 	
-	String DataSet, PlotFolder
-	if (!GetFolders(1,DataSet, PlotFolder))
+	Struct LwInfo info
+	if (!GetLwInfo(1, info))
 		return 0
 	endif
-	DFREF PlotDFR = $PlotFolder
 	
-	NVAR/SDFR=PlotDFR lwCursor_pnt
-
+	NVAR/SDFR=info.plot lwCursor_pnt
 
 	lwCursor_pnt += Amount
 	UpdateCursor()
-
-	
-//	MoveCursor(CursorPosition() + Amount)
 end
 
 function ChangeRange(theMin, theMax, left, right)	// F11
@@ -2481,15 +2340,15 @@ function ChangeRange(theMin, theMax, left, right)	// F11
 // Changes the left axis scaling of a Loomis-Wood plot.
 	variable theMin, theMax, left, right
 
-	DFREF PlotDFR = GetPlotDFR(1)
-	if (!DataFolderRefStatus(PlotDFR))
+	Struct LwInfo info
+	if (!GetLwInfo(1, info))
 		return 0
 	endif
 
-	NVAR/SDFR=PlotDFR StartM
-	NVAR/SDFR=PlotDFR EndM
-	NVAR/SDFR=PlotDFR StartDeltaNu
-	NVAR/SDFR=PlotDFR EndDeltaNu
+	NVAR/SDFR=info.plot StartM
+	NVAR/SDFR=info.plot EndM
+	NVAR/SDFR=info.plot StartDeltaNu
+	NVAR/SDFR=info.plot EndDeltaNu
 
 	if ((theMin==0) && (theMax==0))
 		do
@@ -2542,18 +2401,16 @@ end
 /// Series related functions:
 function AddSeries()	// F2
 // NON-OPTIONAL DIALOG
-	String DataSet, PlotFolder
-	if (!GetFolders(1,DataSet, PlotFolder))
+	Struct LwInfo info
+	if (!GetLwInfo(1, info))
 		return 0
 	endif
 
-	string saveDF = GetDataFolder(1)
-	SetDataFolder DataSet
-	WAVE Colors
-	SetDataFolder saveDF
+	DFREF SaveDF = GetDataFolderDFR()
+	WAVE/SDFR=info.data Colors
 
 	Struct SeriesStruct series
-	GetSeriesStruct(DataSet, series)
+	GetSeriesStruct(info.data, series)
 			
 	string SeriesName
 	variable SeriesColor = Mod(series.Count+1,DimSize(Colors,0)-1)+1
@@ -2581,13 +2438,13 @@ end
 
 function SelectSeries()	// F3
 // NON-OPTIONAL DIALOG
-	String DataSet, PlotFolder
-	if (!GetFolders(1,DataSet, PlotFolder))
+	Struct LwInfo info
+	if (!GetLwInfo(1, info))
 		return 0
 	endif
 
 	Struct SeriesStruct series
-	GetSeriesStruct(DataSet, series)
+	GetSeriesStruct(info.data, series)
 
 	variable theSeries
 	prompt theSeries, LW_STRING12, popup TextWave2List(Series.Name)+"_Create_New_Series_;"
@@ -2602,14 +2459,15 @@ end
 static function ChangeCurrentSeries(theSeries)
 	Variable theSeries
 
-	String DataSet, PlotFolder
-	if (!GetFolders(1,DataSet, PlotFolder))
+	Struct LwInfo info
+	if (!GetLwInfo(1, info))
 		return 0
 	endif
+
 	Struct SeriesStruct series
-	GetSeriesStruct(DataSet, series)
+	GetSeriesStruct(info.data, series)
 	
-	NVAR CurrentSeries = $(PlotFolder+"CurrentSeries")
+	NVAR/SDFR=info.plot CurrentSeries
 
 	if ((theSeries > 0) && (theSeries <= series.Count))
 		CurrentSeries = theSeries
@@ -2621,16 +2479,16 @@ end
 
 function DeleteSeries()	// F4
 // NON-OPTIONAL DIALOG
-	String DataSet, PlotFolder
-	if (!GetFolders(1,DataSet, PlotFolder))
+	Struct LwInfo info
+	if (!GetLwInfo(1, info))
 		return 0
 	endif
-
+	
 	Struct LinesStruct lines
-	GetLinesStruct(DataSet, lines)
+	GetLinesStruct(info.data, lines)
 
 	Struct SeriesStruct series
-	GetSeriesStruct(DataSet, series)
+	GetSeriesStruct(info.data, series)
 	
 	variable theSeries
 	prompt theSeries, LW_STRING13, popup TextWave2List(series.Name)
@@ -2670,6 +2528,7 @@ function DeleteSeries()	// F4
 	SynchronizeLines2Series()
 	
 	// Now cycle through all plots and adjust CurrentSeries as needed
+	string DataSet = GetDataFolder(1,info.data)
 	string plots = FolderList(DataSet+"Plots")
 	variable numPlots = ItemsInList(plots)
 	string thePlot
@@ -2690,14 +2549,15 @@ end
 
 function GetCurrentSeriesNumber()
 // DO NOT MAKE STATIC
-	String DataSet, PlotFolder
-	if (!GetFolders(1,DataSet, PlotFolder))
+	Struct LwInfo info
+	if (!GetLwInfo(1, info))
 		return 0
 	endif
-	NVAR CurrentSeries = $(PlotFolder+"CurrentSeries")
+
+	NVAR/SDFR=info.plot CurrentSeries
 
 	Struct SeriesStruct series
-	GetSeriesStruct(DataSet, series)
+	GetSeriesStruct(info.data, series)
 
 	if ((CurrentSeries > series.Count) || (CurrentSeries < 1))
 		// A valid series is not currently selected
@@ -2721,11 +2581,11 @@ function/S FitSeries(theSeries)	// F5
 
 	string total_message=""
 
-	String DataSet, PlotFolder
-	if (!GetFolders(1,DataSet, PlotFolder))
+	Struct LwInfo info
+	if (!GetLwInfo(1, info))
 		return ""
 	endif
-	
+
 	if (theSeries < 0 || numtype(theSeries))
 		Beep
 		return LW_ERROR6
@@ -2733,18 +2593,18 @@ function/S FitSeries(theSeries)	// F5
 
 	variable order
 
-	string saveDF=GetDataFolder(1)
+	DFREF SaveDF = GetDataFolderDFR()
 
-	SetDataFolder PlotFolder
+	SetDataFolder info.plot
 	WAVE BandCoeff
 	Duplicate/O BandCoeff, LastCoeff
 
-	SetDataFolder DataSet
+	SetDataFolder info.data
 	WAVE Poly2Band
 	WAVE/T BandCoeffLabels
 
 	Struct SeriesStruct series
-	GetSeriesStruct(DataSet, series)
+	GetSeriesStruct(info.data, series)
 
 	if (theSeries > series.Count)
 		Beep
@@ -2865,13 +2725,13 @@ function/S GetFitRes(s)
 end
 
 function FitAll()
-	String DataSet, PlotFolder
-	if (!GetFolders(1,DataSet, PlotFolder))
+	Struct LwInfo info
+	if (!GetLwInfo(1, info))
 		return 0
 	endif
 
 	Struct SeriesStruct series
-	GetSeriesStruct(DataSet, series)
+	GetSeriesStruct(info.data, series)
 
 	DoWindow/F LWresults
 	if (V_Flag)
@@ -2881,13 +2741,13 @@ function FitAll()
 		Notebook LWResults font="Courier New"
 	endif
 
-	string DF = GetDataFolder(1)
-	SetDataFolder DataSet
+	DFREF SaveDF = GetDataFolderDFR()
+	SetDataFolder info.data
 	SetDataFolder Series
 	Make/O/D/N=(series.Count+1, MAX_FIT_ORDER) BandCoeffTable = NaN
-	SetDataFolder PlotFolder
+	SetDataFolder info.plot
 	WAVE BandCoeff
-	SetDataFolder DF
+	SetDataFolder SaveDF
 	
 	Variable i
 	for (i=1 ; i<= series.Count ; i +=1)
@@ -2897,13 +2757,13 @@ function FitAll()
 end
 
 function/S UndoFit()	// Shift-F5
-	String DataSet, PlotFolder
-	if (!GetFolders(1,DataSet, PlotFolder))
+	Struct LwInfo info
+	if (!GetLwInfo(1, info))
 		return ""
 	endif
 
-	string saveDF=GetDataFolder(1)
-	SetDataFolder PlotFolder
+	DFREF SaveDF = GetDataFolderDFR()
+	SetDataFolder info.plot
 	WAVE BandCoeff
 	WAVE LastCoeff
 	SetDataFolder saveDF
@@ -2921,22 +2781,22 @@ static function FetchSeries(theSeries, s)
 //FetchSeries creates the SeriesFit folder and fills the structure s.
 	variable theSeries
 	STRUCT SeriesFitStruct &s
-	string saveDF = GetDataFolder(1)
-	String DataSet, PlotFolder
-	if (!GetFolders(1,DataSet, PlotFolder))
+	DFREF saveDF = GetDataFolderDFR()
+	Struct LwInfo info
+	if (!GetLwInfo(1, info))
 		return 0
 	endif
 
 	Struct LinesStruct lines
-	GetLinesStruct(DataSet, lines)
+	GetLinesStruct(info.data, lines)
 
 	Struct SeriesStruct series
-	GetSeriesStruct(DataSet, series)
+	GetSeriesStruct(info.data, series)
 
-	SetDataFolder PlotFolder
+	SetDataFolder info.plot
 	WAVE CombX
 
-	SetDataFolder DataSet
+	SetDataFolder info.data
 	WAVE/T s.Labels =  BandCoeffLabels
 	NewDataFolder/O/S SeriesFit
 	Variable npnts = ItemsInList(series.Data[theSeries])
@@ -2968,8 +2828,8 @@ static function FetchSeries(theSeries, s)
 	
 	// Rename the Current Series Table if necessary
 	String Title = series.Name[theSeries]
-	sprintf Title, "LWA: %s, \"%s\"", StringFromList(ItemsInList(DataSet,":")-1,DataSet,":"), Title
-	String DataSetName = StringFromList(ItemsInList(DataSet,":")-1,DataSet,":")
+	String DataSetName = GetDataFolder(0,info.data)
+	sprintf Title, "LWA: %s, \"%s\"", DataSetName, Title
 	String WindowName = DataSetName + "_CS"
 	DoWindow/T $WindowName, Title
 
@@ -2981,8 +2841,8 @@ function ShiftSeries(theSeries, theShift, autoFixConstants)	// F6
 // M-Shifts a series.
 	Variable theSeries, theShift, autoFixConstants
 
-	String DataSet, PlotFolder
-	if (!GetFolders(1,DataSet, PlotFolder))
+	Struct LwInfo info
+	if (!GetLwInfo(1, info))
 		return 0
 	endif
 
@@ -2996,7 +2856,7 @@ function ShiftSeries(theSeries, theShift, autoFixConstants)	// F6
 	endif
 	
 	Struct SeriesStruct series
-	GetSeriesStruct(DataSet, series)
+	GetSeriesStruct(info.data, series)
 	
 	Variable npnts = ItemsInList(series.Data[theSeries])
 	Struct AssignmentStruct assignment
@@ -3019,13 +2879,13 @@ end
 function FlipSeries(theSeries, autoFixConstants)	// Shift-F6
 	Variable theSeries, autoFixConstants
 
-	String DataSet, PlotFolder
-	if (!GetFolders(1,DataSet, PlotFolder))
+	Struct LwInfo info
+	if (!GetLwInfo(1, info))
 		return 0
 	endif
 
 	Struct SeriesStruct series
-	GetSeriesStruct(DataSet, series)
+	GetSeriesStruct(info.data, series)
 	
 	Variable npnts = ItemsInList(series.Data[theSeries])
 	Struct AssignmentStruct assignment
@@ -3051,8 +2911,8 @@ static function ShiftConstants(theShift)
 // This function M-Shifts BandCoeff
 	variable theShift
 
-	String DataSet, PlotFolder
-	if (!GetFolders(1,DataSet, PlotFolder))
+	Struct LwInfo info
+	if (!GetLwInfo(1, info))
 		return 0
 	endif
 
@@ -3065,9 +2925,9 @@ static function ShiftConstants(theShift)
 		endif
 	endif
 	
-	WAVE PolyCoeff = $(PlotFolder + "PolyCoeff")
-	WAVE BandCoeff = $(PlotFolder + "BandCoeff")
-	WAVE Poly2Band = $(DataSet + "Poly2Band")
+	WAVE/SDFR=info.plot PolyCoeff
+	WAVE/SDFR=info.plot BandCoeff
+	WAVE/SDFR=info.data Poly2Band
 
 	Make/D/O/N=(MAX_FIT_ORDER,MAX_FIT_ORDER) M_Temp
 	M_Temp = ((p+q) <= 6)*binomial(p+q,p)*PolyCoeff[p+q]
@@ -3089,14 +2949,14 @@ end
 static function FlipConstants()
 	variable theShift
 
-	String DataSet, PlotFolder
-	if (!GetFolders(1,DataSet, PlotFolder))
+	Struct LwInfo info
+	if (!GetLwInfo(1, info))
 		return 0
 	endif
 	
-	WAVE PolyCoeff = $(PlotFolder + "PolyCoeff")
-	WAVE BandCoeff = $(PlotFolder + "BandCoeff")
-	WAVE Poly2Band = $(DataSet + "Poly2Band")
+	WAVE/SDFR=info.plot PolyCoeff
+	WAVE/SDFR=info.plot BandCoeff
+	WAVE/SDFR=info.data Poly2Band
 
 	PolyCoeff[1,;2] *= -1
 
@@ -3111,35 +2971,28 @@ end
 
 function ViewSeries(theSeries)	// F7
 	Variable theSeries
-	String DataSet, PlotFolder
-	if (!GetFolders(1,DataSet, PlotFolder))
+
+	Struct LwInfo info
+	if (!GetLwInfo(1, info))
 		return 0
 	endif
 
 	STRUCT SeriesFitStruct s
 	FetchSeries(theSeries, s)
 	
-	string saveDF = getDataFolder(1)
+	DFREF saveDF = GetDataFolderDFR()
 
 	Struct SeriesStruct series
-	GetSeriesStruct(DataSet, series)
+	GetSeriesStruct(info.data, series)
 
-	SetDataFolder DataSet
+	SetDataFolder info.data
 	SetDataFolder SeriesFit
 
-	String Title = series.Name[theSeries]
-	sprintf Title, "LWA: %s, \"%s\"", StringFromList(ItemsInList(DataSet,":")-1,DataSet,":"), Title
-
-	String DataSetName = StringFromList(ItemsInList(DataSet,":")-1,DataSet,":")
-	String WindowName = DataSetName + "_CS"
-	
-	DoWindow/F $WindowName
-	
-	if (!V_flag)
-		Edit/K=1/W=(3,0,338.25,404)  s.theM, s.Frequency, s.Residual, s.Mask, s.Intensity, s.Width As Title[0,39]
-		DoWindow/C $WindowName
+	if (RetrieveOrCreateTable(info, "_CS", series.Name[theSeries]))
+		MoveWindow 3,0,338.25,404
+		AppendToTable s.theM, s.Frequency, s.Residual, s.Mask, s.Intensity, s.Width
 		ModifyTable showParts=254
-		SetWindow kwTopWin,note="LoomisWood=2.0,DataSet="+DataSet+",PlotFolder="+PlotFolder+","
+
 		ModifyTable width(Point)=18,width(s.theM)=24,title(s.theM)="M",format(s.Frequency)=3
 		ModifyTable digits(s.Frequency)=6,width(s.Frequency)=68,title(s.Frequency)="Frequency"
 		ModifyTable format(s.Residual)=3,digits(s.Residual)=6,width(s.Residual)=62
@@ -3147,32 +3000,25 @@ function ViewSeries(theSeries)	// F7
 		ModifyTable format(s.Intensity)=3,width(s.Intensity)=59,title(s.Intensity)="Intensity"
 		ModifyTable format(s.Width)=3,digits(s.Width)=6,width(s.Width)=51
 		ModifyTable title(s.Width)="Width" 
-	else
-		DoWindow/T $WindowName, Title
-	endif
+	endif	
+	
 	SetDataFolder saveDF
 end
 
 function ViewSeriesList()	// F8
-	String DataSet, PlotFolder
-	if (!GetFolders(1,DataSet, PlotFolder))
+	Struct LwInfo info
+	if (!GetLwInfo(1, info))
 		return 0
 	endif
 
-	Struct SeriesStruct series
-	GetSeriesStruct(DataSet, series)
+	if (RetrieveOrCreateTable(info, "_SL", "Series List"))
+		Struct SeriesStruct series
+		GetSeriesStruct(info.data, series)
 
-	String DataSetName = StringFromList(ItemsInList(DataSet,":")-1,DataSet,":")
-	String WindowName = DataSetName + "_SL"
-	
-	DoWindow/F $WindowName
-	if (!V_Flag)
-		String Title
-		sprintf Title, "LWA: %s, Series List", StringFromList(ItemsInList(DataSet,":")-1,DataSet,":")
-		
-		Edit/K=1/W=(5.25,42.5,802.5,236) series.Name,series.Color,series.Shape,series.Order, series.LegendShape, series.LegendText, series.Data as Title
-		DoWindow/C $WindowName
-		SetWindow kwTopWin,note="LoomisWood=2.0,DataSet="+DataSet+",PlotFolder="+PlotFolder+","
+		MoveWindow 5.25,42.5,802.5,236
+		AppendToTable series.Name,series.Color,series.Shape,series.Order, series.LegendShape, series.LegendText, series.Data
+		ModifyTable showParts=254
+
 		ModifyTable font(series.Name)="Fixedsys"
 		ModifyTable width(Point)=36,width(series.Name)=210,title(series.Name)="Name"
 		ModifyTable width(series.Color)=32,title(series.Color)="Color"
@@ -3181,39 +3027,34 @@ function ViewSeriesList()	// F8
 		ModifyTable width(series.LegendText)=210,title(series.LegendText)="Legend Text"
 		ModifyTable width(series.LegendShape)=31,title(series.LegendShape)="Legend Shape"
 		ModifyTable width(series.Data)=200,title(series.Data)="Data"
-	endif
+	endif	
 end
 
-function EditFitFunc()	// F12
+function EditFitFunc()
 // NON-OPTIONAL DIALOG
-	String DataSet, PlotFolder
-	if (!GetFolders(1,DataSet, PlotFolder))
+	Struct LwInfo info
+	if (!GetLwInfo(1, info))
 		return 0
 	endif
+
+	if (RetrieveOrCreateTable(info, "_FF", "Fit Function"))
 	
-	string saveDF = GetDataFolder(1)
-	SetDataFolder DataSet
-	WAVE BandCoeff, Band2Poly, Poly2Band
-	SetDataFolder DataSet
-	WAVE/T BandCoeffLabels
-	SetDataFolder saveDF
+		WAVE/SDFR=info.data Band2Poly, Poly2Band
+		WAVE/SDFR=info.data/T BandCoeffLabels
 	
-	Edit BandCoeffLabels, Band2Poly, Poly2Band
+		AppendToTable BandCoeffLabels, Band2Poly, Poly2Band
+	endif
 End
 
 function EditBandConstants()	// F12
 // NON-OPTIONAL DIALOG
-	String DataSet, PlotFolder
-	if (!GetFolders(1,DataSet, PlotFolder))
+	Struct LwInfo info
+	if (!GetLwInfo(1, info))
 		return 0
 	endif
 	
-	string saveDF = GetDataFolder(1)
-	SetDataFolder PlotFolder
-	WAVE BandCoeff
-	SetDataFolder DataSet
-	WAVE/T BandCoeffLabels
-	SetDataFolder saveDF
+	WAVE/SDFR=info.plot BandCoeff
+	WAVE/T/SDFR=info.data BandCoeffLabels
 	
 	variable const0 = BandCoeff[0]
 	variable const1 = BandCoeff[1]
@@ -3233,8 +3074,10 @@ function EditBandConstants()	// F12
 	if (V_flag)
 		return 0
 	endif
-	SetDataFolder PlotFolder
-		Duplicate/O BandCoeff, LastCoeff
+
+	DFREF saveDF = GetDataFolderDFR()
+	SetDataFolder info.plot
+	Duplicate/O BandCoeff, LastCoeff
 	SetDataFolder saveDF
 
 	BandCoeff[0] = const0
@@ -3261,16 +3104,16 @@ static function ReadAssignment(theP, theSeries, s)
 	variable theP, theSeries
 	STRUCT AssignmentStruct &s
 
-	String DataSet, PlotFolder
-	if (!GetFolders(1,DataSet, PlotFolder))
+	Struct LwInfo info
+	if (!GetLwInfo(1, info))
 		return 0
 	endif
 
 	Struct LinesStruct lines
-	GetLinesStruct(DataSet, lines)
+	GetLinesStruct(info.data, lines)
 
 	Struct SeriesStruct series
-	GetSeriesStruct(DataSet, series)
+	GetSeriesStruct(info.data, series)
 	
 	string data = StringByKey( num2istr(theSeries) , lines.assignments[theP] )
 	if (CmpStr(data,"")!=0)
@@ -3305,16 +3148,16 @@ static function AssignLine(theP, theSeries, theM, LWmask, USmask, LSmask, Notes)
 	Variable theA
 	Variable otherP
 	
-	String DataSet, PlotFolder
-	if (!GetFolders(1,DataSet, PlotFolder))
+	Struct LwInfo info
+	if (!GetLwInfo(1, info))
 		return 0
 	endif
 
 	Struct LinesStruct lines
-	GetLinesStruct(DataSet, lines)
+	GetLinesStruct(info.data, lines)
 
 	Struct SeriesStruct series
-	GetSeriesStruct(DataSet, series)
+	GetSeriesStruct(info.data, series)
 	
 	string data
 	sprintf data, "%d,%d,%d,%d,%s", theM,  LWmask, USmask, LSmask, Notes
@@ -3328,16 +3171,16 @@ end
 static function UnAssignLine(theP, theSeries)
 	Variable theP, theSeries
 	
-	String DataSet, PlotFolder
-	if (!GetFolders(1,DataSet, PlotFolder))
+	Struct LwInfo info
+	if (!GetLwInfo(1, info))
 		return 0
 	endif
 	
 	Struct LinesStruct lines
-	GetLinesStruct(DataSet, lines)
+	GetLinesStruct(info.data, lines)
 
 	Struct SeriesStruct series
-	GetSeriesStruct(DataSet, series)
+	GetSeriesStruct(info.data, series)
 
 	series.data[theSeries] = RemoveByKey( num2istr(theP) , series.data[theSeries] )
 	lines.Assignments[theP] = RemoveByKey( num2istr(theSeries), lines.Assignments[theP] )
@@ -3349,19 +3192,19 @@ end
 function ExtractAssignments(functionName)	// F9
 	string functionName
 	
-	String DataSet, PlotFolder
-	if (!GetFolders(1,DataSet, PlotFolder))
+	Struct LwInfo info
+	if (!GetLwInfo(1, info))
 		return 0
 	endif
 	
 	Struct LinesStruct lines
-	GetLinesStruct(DataSet, lines)
+	GetLinesStruct(info.data, lines)
 
 	Struct SeriesStruct series
-	GetSeriesStruct(DataSet, series)
+	GetSeriesStruct(info.data, series)
 
-	string saveDF=GetDataFolder(1)
-	SetDataFolder DataSet
+	DFREF saveDF = GetDataFolderDFR()
+	SetDataFolder info.data
 
 	SVAR S_AssignmentFunction
 	if (!SVAR_Exists(S_AssignmentFunction))
@@ -3452,17 +3295,9 @@ function ExtractAssignments(functionName)	// F9
 	endif
 	
 	if (!skipTable)
-		String DataSetName = StringFromList(ItemsInList(DataSet,":")-1,DataSet,":")
-		String WindowName = DataSetName + "_AL"
-		
-		DoWindow/F $WindowName
-		if (!V_Flag)
-			String Title
-			sprintf Title, "LWA: %s, Assignments", StringFromList(ItemsInList(DataSet,":")-1,DataSet,":")
-		
-			Edit/K=1/W=(5,5,700,400) Assignment, USmask, LSmask, Frequency, Intensity, Width,SeriesIndex, theM, theP, LWmask As Title
-			DoWindow/C $WindowName
-			SetWindow kwTopWin,note="LoomisWood=2.0,DataSet="+DataSet+",PlotFolder="+PlotFolder+","
+		if (RetrieveOrCreateTable(info, "_AL", "Assignments"))
+			AppendToTable Assignment, USmask, LSmask, Frequency, Intensity, Width,SeriesIndex, theM, theP, LWmask
+			MoveWindow 5,5,700,400
 			ModifyTable width = 35
 			ModifyTable width(Assignment)=200
 			ModifyTable width(Frequency)=80,format(Frequency)=3,digits(Frequency)=6
@@ -3471,6 +3306,33 @@ function ExtractAssignments(functionName)	// F9
 		endif
 	endif
 	SetDataFolder saveDF
+end
+
+function RetrieveOrCreateTable(info, key, title2)
+	Struct LwInfo &info
+	string key
+	string title2
+
+	String DataSetName = GetDataFolder(0,info.data)
+	String WindowName = DataSetName + key
+
+	String Title
+	sprintf Title, "LWA: %s, %s", DataSetName, title2
+		
+	DoWindow/F $WindowName
+	if (!V_Flag)
+		Edit/K=1 As Title
+		DoWindow/C $WindowName
+
+		String DataSet = GetDataFolder(1, info.data)
+		String PlotFolder = GetDataFolder(1, info.plot)
+		String NoteText = "LoomisWood=2.0,DataSet="+DataSet+",PlotFolder="+PlotFolder+","
+		SetWindow kwTopWin,note=NoteText
+		return 1
+	endif
+
+	DoWindow/T $WindowName, Title
+	return 0
 end
 
 //function/S LWLabelProto(name, m)
@@ -3503,13 +3365,13 @@ structure SeriesStruct
 	WAVE LegendShape
 EndStructure
 
-static function GetSeriesStruct(DataSet, s, [flag])
-	String DataSet
+static function GetSeriesStruct(dataDFR, s, [flag])
+	DFREF dataDFR
 	Struct SeriesStruct &s
 	Variable flag	// If flag is nozero, DataSet is actually the path to the Series Folder, not the DataSet folder
 
-	String saveDF = GetDataFolder(1)
-	SetDataFolder DataSet
+	DFREF saveDF = GetDataFolderDFR()
+	SetDataFolder dataDFR
 	if (!flag)
 		SetDataFolder Series
 	endif
@@ -3546,13 +3408,13 @@ structure LinesStruct
 	NVAR Count
 EndStructure
 
-static function GetLinesStruct(DataSet, s, [flag])
-	string DataSet
+static function GetLinesStruct(dataDFR, s, [flag])
+	DFREF dataDFR
 	Struct LinesStruct &s
 	Variable flag	// If flag is nozero, dataSet is actually path to the Lines Folder, not the DataSet folder
 	
-	String saveDF = GetDataFolder(1)
-	SetDataFolder DataSet
+	DFREF saveDF = GetDataFolderDFR()
+	SetDataFolder dataDFR
 	if (!flag)
 		SetDataFolder Lines
 	endif
@@ -3585,13 +3447,13 @@ structure AssignmentListStruct
 	WAVE Width
 EndStructure
 
-static function GetAssignmentListStruct(DataSet, s, [flag])
-	String DataSet
+static function GetAssignmentListStruct(dataDFR, s, [flag])
+	DFREF dataDFR
 	Struct AssignmentListStruct &s
 	Variable flag	// If flag is nozero, DataSet is actually the path to the Assignments Folder, not the DataSet folder
 
-	String saveDF = GetDataFolder(1)
-	SetDataFolder DataSet
+	DFREF saveDF = GetDataFolderDFR()
+	SetDataFolder dataDFR
 	if (!flag)
 		SetDataFolder $"Assignments"
 	endif
@@ -3629,13 +3491,13 @@ structure SeriesFitStruct
 	SVAR Name
 EndStructure
 
-static function GetSeriesFitStruct(DataSet, s, [flag])
-	String DataSet
+static function GetSeriesFitStruct(dataDFR, s, [flag])
+	DFREF dataDFR
 	Struct SeriesFitStruct &s
 	Variable flag	// If flag is nozero, DataSet is actually the path to the Series Folder, not the DataSet folder
 
-	String saveDF = GetDataFolder(1)
-	SetDataFolder DataSet
+	DFREF saveDF = GetDataFolderDFR()
+	SetDataFolder dataDFR
 	if (!flag)
 		SetDataFolder SeriesFit
 	endif
@@ -3655,18 +3517,71 @@ static function GetSeriesFitStruct(DataSet, s, [flag])
 	SetDataFolder saveDF
 end
 
+Structure LwInfo
+	Variable valid
+	Variable version
+	DFREF plot
+	DFREF data
+EndStructure
+
+static function GetLwInfo(theWinType, s)
+	variable theWinType
+	struct LwInfo &s 
+// This function tests to see if the top window is a Loomis-Wood plot.
+// If the top window is a Loomis-Wood plot, it will contain "LoomisWood=ver" in its note.
+// Use theWinType = 1 if only the top GRAPH needs to be a Loomis-Wood plot
+// Use theWinType = 3 if the top GRAPH or TABLE needs to be a Loomis-Wood plot or associated Table
+// Use theWinType = -1 if the overall top WINDOW needs to be a Loomis-Wood plot
+	s.valid = 0
+	string DataSet = ""
+	string PlotFolder = ""
+
+	string TopWinName = WinName(0, theWinType < 0 ? -1 : theWinType)
+
+	if (!cmpstr(TopWinName,""))	//This is necessary b/c this function may be called when there are no active windows.
+		Beep
+		Print LW_ERROR3
+		return 0
+	endif
+	
+	if (theWinType < 0)
+		if (cmpstr(TopWinName, WinName(0, -theWinType)))
+			// Topmost window is wrong type
+			Beep
+			Print LW_ERROR3
+			return 0
+		endif
+	endif
+
+	GetWindow $TopWinName, note
+	variable theVersion = NumberByKey("LoomisWood",S_Value,"=",",")
+
+	if (theVersion > 0)
+		s.version = theVersion
+		s.valid = 1
+		DFREF s.data = $StringByKey("DataSet",S_Value,"=",",")
+		DFREF s.plot = $StringByKey("PlotFolder",S_Value,"=",",")
+		return 1
+	else
+		Beep
+		Print LW_ERROR3
+		return 0
+	endif
+end
+
+
 /// New Stuff:
 function SynchronizeSeries2Lines()
-	String DataSet, PlotFolder
-	if (!GetFolders(1,DataSet, PlotFolder))
+	Struct LwInfo info
+	if (!GetLwInfo(1, info))
 		return 0
 	endif
 
 	Struct SeriesStruct series
-	GetSeriesStruct(DataSet, series)
+	GetSeriesStruct(info.data, series)
 
 	Struct LinesStruct lines
-	GetLinesStruct(DataSet, lines)
+	GetLinesStruct(info.data, lines)
 
 	series.Data = ""
 	Variable i, j, jmax, series_num
@@ -3691,16 +3606,16 @@ function SynchronizeSeries2Lines()
 end
 
 function SynchronizeLines2Series()
-	String DataSet, PlotFolder
-	if (!GetFolders(1,DataSet, PlotFolder))
+	Struct LwInfo info
+	if (!GetLwInfo(1, info))
 		return 0
 	endif
 
 	Struct SeriesStruct series
-	GetSeriesStruct(DataSet, series)
+	GetSeriesStruct(info.data, series)
 
 	Struct LinesStruct lines
-	GetLinesStruct(DataSet, lines)
+	GetLinesStruct(info.data, lines)
 
 	lines.assignments = ""
 	Variable i, j, jmax, point
@@ -3718,15 +3633,15 @@ end
 
 function UpdateLinesFolder(FreqTol)
 	Variable FreqTol
-	String LWDF, PlotFolder
-	//String SourceDF = GetDataFolder(1)
-	if (!GetFolders(1,LWDF, PlotFolder))
+
+	Struct LwInfo info
+	if (!GetLwInfo(1, info))
 		return 0
 	endif
 
-	String SaveDF = GetDataFolder(1)
+	DFREF SaveDF = GetDataFolderDFR()
 
-	SetDataFolder LWDF
+	SetDataFolder info.data
 	String Frequencies = StrVarOrDefault("Frequency_Source", "")
 	String Intensities = StrVarOrDefault("Intensity_Source", "")
 	String Widths = StrVarOrDefault("Width_Source", "")
@@ -3755,11 +3670,12 @@ function UpdateLinesFolder(FreqTol)
 		EndIf
 	EndIf
 	
-	SetDataFolder LWDF
+	SetDataFolder info.data
 	NewDataFolder/O LinesBak
 	KillDataFolder LinesBak
 	DuplicateDataFolder Lines, LinesBak
-
+	DFREF backupDFR = LinesBak
+	
 	If (FreqTol < 0 || numType(FreqTol) != 0)
 		FreqTol = 0.001
 		Prompt FreqTol, LW_STRING22
@@ -3767,7 +3683,7 @@ function UpdateLinesFolder(FreqTol)
 	EndIf
 	
 	Struct LinesStruct LinesBak
-	GetLinesStruct(LWDF+"LinesBak" ,LinesBak, flag=1)
+	GetLinesStruct(backupDFR, LinesBak, flag=1)
 
 	SetDataFolder Lines
 
@@ -3814,10 +3730,9 @@ function UpdateLinesFolder(FreqTol)
 			endif
 		endif
 	endfor
-
 	
 	SynchronizeSeries2Lines()
-	SetDataFolder PlotFolder
+	SetDataFolder info.plot
 	WAVE BandCoeff
 	BandCoeff *= 1
 	SetDataFolder SaveDF
@@ -3826,17 +3741,14 @@ end
 
 function AverageFits(a,b)
 	Variable a, b
-	String DataSet, PlotFolder
-	if (!GetFolders(1,DataSet, PlotFolder))
+
+	Struct LwInfo info
+	if (!GetLwInfo(1, info))
 		return 0
 	endif
 
-	string DF = GetDataFolder(1)
-	SetDataFolder PlotFolder
-	WAVE BandCoeff
-	WAVE LastCoeff
-	SetDataFolder DF
-	
+	WAVE/SDFR=info.plot BandCoeff
+	WAVE/SDFR=info.plot LastCoeff
 
 	FitSeries(a)
 	FitSeries(b)
@@ -3847,13 +3759,14 @@ end
 function AddLegend(perLine)
 	variable perLine
 	
-	String DataSet, PlotFolder
-	if (!GetFolders(1,DataSet, PlotFolder))
+	Struct LwInfo info
+	if (!GetLwInfo(1, info))
 		return 0
 	endif
+	
 	Struct SeriesStruct s
-	GetSeriesStruct(DataSet, s)
-	WAVE Colors = $(DataSet+"Colors")
+	GetSeriesStruct(info.data, s)
+	WAVE/SDFR=info.data Colors
 
 	string legendtext, marker, temp="\\JC\\[0\\y-08\\[1"
 	variable i, j
@@ -3921,4 +3834,26 @@ function/S CalcLegendStr(Text,Shape,Color,Colors,PerLine)
 	endfor
 
 	return legendtext	
+end
+
+function OrderSetVarProc(ctrlName,varNum,varStr,varName) : SetVariableControl
+	string ctrlName
+	variable varNum
+	string varStr
+	string varName
+
+	Struct LwInfo info
+	if (!GetLwInfo(1, info))
+		return 0
+	endif
+	
+	Struct SeriesStruct series
+	GetSeriesStruct(info.data, series)
+
+	NVAR/SDFR=info.plot CurrentSeries
+	variable old_value = series.Order[CurrentSeries]
+	
+	if (old_value != varnum)
+		series.Order[CurrentSeries] = varNum
+	endif
 end
