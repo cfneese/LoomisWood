@@ -5,7 +5,7 @@ The Loomis-Wood Add-In is a package for [Igor Pro](http://wavemetrics.com) that 
 
 ## Installation
 
-The Loomis-Wood Add-In is installed by copying or creating a shortcut/alias to the source folder in the User Procedures Folder, which is located in the Igor Pro User Files folder.
+The Loomis-Wood Add-In is installed by copying or creating a shortcut/alias to the source folder in the User Procedures Folder which is located in the Igor Pro User Files folder.
 
 The default location of the Igor Pro User Files folder is:
 
