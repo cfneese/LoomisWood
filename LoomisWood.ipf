@@ -8,7 +8,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-#pragma rtGlobals = 1			// Use modern global access method.
+#pragma rtGlobals = 3			// Use modern global access method.
 #pragma IgorVersion = 5.02
 #pragma Version = 2.10
 #pragma ModuleName = LWA
@@ -16,6 +16,10 @@
 // Changes 2.10:
 // AddSeries lengthens LegendName and LegendShape
 // Added EditFitFunc(), FlipConstants(), and FlipSeries()
+// Added limit checks to support latest Igor 6.3
+// Changed to #pragma rtGlobals = 3; fixed associated compiler errors
+// Changed MoveCursor() to move to beginning or end if theP is out of bounds
+// Removed bug in MoveCursor() that shifted plot by infinity. 
 
 // Changes 2.09:
 // Shifted triangles by 0.5, so that left axis ticks no longer require an offset.
@@ -518,7 +522,7 @@ static function FindPolyExtrema(coeff, order)
 	FindRoots /P=thePoly
 	WAVE/C W_polyRoots
 	Variable a, b
-	for ( order = numpnts(W_polyRoots) ; order >= 0 ; order -=1 ) 
+	for ( order = numpnts(W_polyRoots)-1 ; order >= 0 ; order -=1 ) 
 		a = real(W_polyRoots[order])
 		b = imag(W_polyRoots[order])
 		if (abs(b/a) > 1e-14)
@@ -560,7 +564,7 @@ static function inv_poly(coeff, order, theY, Xmin, Xmax)
 	FindRoots /P=thePoly
 	WAVE/C W_polyRoots
 	Variable a, b
-	for ( order = numpnts(W_polyRoots) ; order >= 0 ; order -=1 ) 
+	for ( order = numpnts(W_polyRoots)-1 ; order >= 0 ; order -=1 ) 
 		a = real(W_polyRoots[order])
 		b = imag(W_polyRoots[order])
 		if ((abs(b/a) < 1e-14) && (a > Xmin) && (a < Xmax))
@@ -1472,7 +1476,7 @@ function DoBandCoeffUpdate(BandCoeff)
 		endif
 		if (maxP == -2)
 			// The range of the polynomial ends above the frequency of the first peak.
-			maxP = NumLines
+			maxP = NumLines - 1
 		else
 			// The range of the polynomial ends below the frequency of the last peak.
 			// Set Line_LWm of those peaks below the range of the polynomial to +Inf
@@ -1539,7 +1543,7 @@ function DoTriangleUpdate(LWm, Assignments, Series_Color, Series_Shape, StartM, 
 	Wave Series_Color, Series_Shape
 	Variable startM, endM, Zoom
 
-	Variable start_time = ticks
+	Variable start_time = StopMSTimer(-2)
 
 	String SaveDF = GetDataFolder(1)
 	SetDataFolder GetWavesDataFolder(Assignments,1)
@@ -1729,7 +1733,7 @@ function DoTriangleUpdate(LWm, Assignments, Series_Color, Series_Shape, StartM, 
 
 	// This update time should be under 3 ticks (0.05 sec) for good user interaction
 	//printf "Triangle update took %d ms.\r" ticks - start_time
-	return ticks - start_time
+	return (StopMSTimer(-2) - start_time)*1e-6
 end
 
 /// Loomis-Wood plot hook functions:
@@ -2032,17 +2036,22 @@ static function NearestPeak(theX, theY)
 
 	theM = round(theY) // 1/17/07 round was ceil
 	maxP = BinarySearch(Line_LWm, theM)
+	
+	if (maxP == -2)
+		maxP = numpnts(Line_LWm)-1
+	elseif (maxP == -1)
+		Print "here!!"
+	elseif (maxP < 0)
+		Print "here"
+	endif
 	minP = maxP
 
-	minP += 1
-	do
-		minP -= 1
-	while (Line_LWm[minP-1] == theM && minP > 0)
 
-	maxP -= 1
-	do
-		maxP += 1
-	while (Line_LWm[maxP+1] == theM && maxP < numpnts(Line_LWm))
+	for(;minP > 0 && Line_LWm[minP-1] == theM ;minP -= 1)
+	endfor
+	
+	for(;maxP < numpnts(Line_LWm)-1 && Line_LWm[maxP+1] == theM ;maxP += 1)
+	endfor
 
 	if (minP == maxP)
 		return minP
@@ -2143,7 +2152,7 @@ static function UpdateCursor()
 	lwCursor_I = lines.Intensity[lwCursor_p]
 	lwCursor_W = lines.Width[lwCursor_p]
 	
- 	temp = 5*(lwCursor_p-StartP)
+ 	temp = limit(5*(lwCursor_p-StartP),0,numpnts(Triangle_X)-4)
 	LWCursorX[0] = Triangle_X[temp]
 	LWCursorX[1] = Triangle_X[temp+3]
 	LWCursorYdown = hide ? NaN : Triangle_Yup[temp]
@@ -2182,7 +2191,7 @@ end
 static function MoveCursor(theP)
 // Moves the cursor on a Loomis-Wood plot.
 	Variable theP
-	if (numtype(theP))
+	if (numtype(theP)==-2)
 		// theP is -INF, INF, or NaN, so do nothing.
 		return 0
 	endif
@@ -2197,25 +2206,29 @@ static function MoveCursor(theP)
 	NVAR maxP = $(PlotFolder+"maxP")
 	NVAR minP = $(PlotFolder+"minP")
 	NVAR lwCursor_p = $(PlotFolder+"lwCursor_p")
-
-	if ((theP > max(maxP,minP)) || (theP < min(maxP,minP)))
-		//Trying to move out of bounds
-		if (lwCursor_p > max(maxP,minP))
-			// Cursor is already out of bounds, so bring it back
-			theP = max(maxP,minP)
-		elseif (lwCursor_p < min(maxP,minP))
-			// Cursor is already out of bounds, so bring it back
-			theP = min(maxP,minP)
-		else
-			//Trying to move out of bounds, so do nothing
-			return 0
-		endif
-	endif
-
 	NVAR StartP = $(PlotFolder+"StartP")
 	NVAR EndP = $(PlotFolder+"EndP")
-	
-	NVAR lwCursor_p = $(PlotFolder+"lwCursor_p")
+
+	NVAR maxM = $(PlotFolder+"maxM")
+	NVAR minM = $(PlotFolder+"minM")
+	NVAR StartM = $(PlotFolder+"StartM")
+	NVAR EndM = $(PlotFolder+"EndM")
+
+	theP = limit(theP,min(maxP,minP),max(maxP,minP))
+//	if ((theP > max(maxP,minP)) || (theP < min(maxP,minP)))
+//		//Trying to move out of bounds
+//		if (lwCursor_p > max(maxP,minP))
+//			// Cursor is already out of bounds, so bring it back
+//			theP = max(maxP,minP)
+//		elseif (lwCursor_p < min(maxP,minP))
+//			// Cursor is already out of bounds, so bring it back
+//			theP = min(maxP,minP)
+//		else
+//			//Trying to move out of bounds, so do nothing
+//			//Printf "Trying to move cursor out of bounds.  theP=%d; maxP=%d; minP=%d\r", theP, maxP, minP
+//			return 0
+//		endif
+//	endif
 
 	Struct LinesStruct lines
 	GetLinesStruct(DataSet, lines)
@@ -2225,22 +2238,20 @@ static function MoveCursor(theP)
 
 	WAVE Line_LWm = $(PlotFolder+"Line_LWm")
 
-	theP = limit(theP, 0, lines.Count - 1)
 	variable shift = 0 
 	if (theP < StartP)
-		shift = round(Line_LWm[theP])-round(Line_LWm[StartP])
-		//VerticalScroll(shift)
-		//DoUpdate
-		//MoveCursor(theP)
-		//return 0
+		shift = round(Line_LWm[theP])-StartM//round(Line_LWm[StartP])
 	elseif (theP > EndP)
-		shift = round(Line_LWm[theP])-round(Line_LWm[EndP])
-		//VerticalScroll(shift)
-		//DoUpdate
-		//MoveCursor(theP)
-		//return 0
+		shift = round(Line_LWm[theP])-EndM//-round(Line_LWm[EndP])
 	endif
-	if (shift)
+	
+	if (numtype(shift)!=0)
+		WaveStats/Q Line_LWm
+		NVAR startM = $(PlotFolder+"startM")
+		NVAR endM = $(PlotFolder+"endM")
+
+		printf "Trying to shift plot illegally.  shift=%d\r", shift
+	elseif (shift)
 		VerticalScroll(shift)
 		DoUpdate
 	endif
@@ -2282,7 +2293,7 @@ static function VMoveCursor(Amount)
 	WAVE Triangle_X = $(PlotFolder+"Triangle_X")
 	WAVE Triangle_Yup = $(PlotFolder+"Triangle_Yup")
 	
- 	temp = 5*(lwCursor_p-StartP)
+ 	temp = limit(5*(lwCursor_p-StartP),0,numpnts(Triangle_X)-5)
 	temp = NearestPeak(Triangle_X[temp+1], lwCursor_m + Amount) // 01/17/07 lwCursor_m was Triangle_Yup[temp]
 	if (temp == CursorPosition())
 		MoveCursor(temp+Amount)
@@ -2950,13 +2961,13 @@ function ViewSeries(theSeries)	// F7
 		Edit/K=1/W=(3,0,338.25,404)  s.theM, s.Frequency, s.Residual, s.Mask, s.Intensity, s.Width As Title[0,39]
 		DoWindow/C $WindowName
 		SetWindow kwTopWin,note="LoomisWood=2.0,DataSet="+DataSet+",PlotFolder="+PlotFolder+","
-		ModifyTable width(Point)=18,width(theM)=24,title(theM)="M",format(Frequency)=3
-		ModifyTable digits(Frequency)=6,width(Frequency)=68,title(Frequency)="Frequency"
-		ModifyTable format(Residual)=3,digits(Residual)=6,width(Residual)=62
-		ModifyTable title(Residual)="Residual",width(Mask)=42,title(Mask)="Mask"
-		ModifyTable format(Intensity)=3,width(Intensity)=59,title(Intensity)="Intensity"
-		ModifyTable format(Width)=3,digits(Width)=6,width(Width)=51
-		ModifyTable title(Width)="Width"
+		ModifyTable width(Point)=18,width(s.theM)=24,title(s.theM)="M",format(s.Frequency)=3
+		ModifyTable digits(s.Frequency)=6,width(s.Frequency)=68,title(s.Frequency)="Frequency"
+		ModifyTable format(s.Residual)=3,digits(s.Residual)=6,width(s.Residual)=62
+		ModifyTable title(s.Residual)="Residual",width(s.Mask)=42,title(s.Mask)="Mask"
+		ModifyTable format(s.Intensity)=3,width(s.Intensity)=59,title(s.Intensity)="Intensity"
+		ModifyTable format(s.Width)=3,digits(s.Width)=6,width(s.Width)=51
+		ModifyTable title(s.Width)="Width" 
 	else
 		DoWindow/T $WindowName, Title
 	endif
