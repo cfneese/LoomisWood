@@ -532,8 +532,10 @@ static function FindPolyExtrema(coeff, order)
 	order = numpnts(W_polyRoots)
 	SetDataFolder SaveDF
 	Make/O/D/N=(numpnts(W_polyRoots)) W_Extrema
-	W_Extrema = real(W_polyRoots)
-	Sort W_Extrema W_Extrema
+	if (numpnts(W_polyRoots)>0)
+		W_Extrema = real(W_polyRoots)
+		Sort W_Extrema W_Extrema
+	endif
 	KillDataFolder root:Packages:bound_poly
 end
 
@@ -2588,7 +2590,10 @@ function/S FitSeries(theSeries)	// F5
 
 	order = series.Order[theSeries] + 1
 	if (order > 2)
-		CurveFit/Q/M=2/N poly order, s.Frequency /X=s.theM /M=s.Mask /R=s.Residual /A=0 
+		k0=0;k2=0;k4=0;k6=0
+		string hold_str ="0000000"
+		//string hold_str = "1010101"
+		CurveFit/Q/M=2/N/H=(hold_str) poly order, s.Frequency /X=s.theM /M=s.Mask /R=s.Residual /A=0 
 	elseif (order == 2)
 		K2 = 0
 		CurveFit/Q/M=2/N/H="001" poly 3, s.Frequency /X=s.theM /M=s.Mask /R=s.Residual /A=0 
@@ -3518,7 +3523,7 @@ function SynchronizeSeries2Lines()
 	series.Data = ""
 	Variable i, j, jmax, series_num
 	String item
-	for(i = 0 ; i <= lines.Count ; i+=1)
+	for(i = 0 ; i < lines.Count ; i+=1)
 		jmax = ItemsInList(lines.assignments[i])
 		for(j = 0 ; j < jmax ; j+=1)
 			item = StringFromList(j,lines.assignments[i])
