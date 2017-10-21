@@ -10,8 +10,12 @@
 
 #pragma rtGlobals = 1			// Use modern global access method.
 #pragma IgorVersion = 5.02
-#pragma Version = 2.09
+#pragma Version = 2.10
 #pragma ModuleName = LWA
+
+// Changes 2.10:
+// AddSeries lengthens LegendName and LegendShape
+// Added EditFitFunc(), FlipConstants(), and FlipSeries()
 
 // Changes 2.09:
 // Shifted triangles by 0.5, so that left axis ticks no longer require an offset.
@@ -49,7 +53,7 @@
 /// Global constants
 static strconstant BASE_FOLDER = "root:LW"
 
-static constant FIVEMAX_PEAKS_PER_PLOT = 400000
+static constant FIVEMAX_PEAKS_PER_PLOT = 40000
 static constant MAX_FIT_ORDER = 7
 static constant MAX_M = 10000
 
@@ -176,6 +180,10 @@ menu "&Loomis-Wood", dynamic
 
 		LWA#LWDynamicMenuItem(3)+ "Edit Colors", EditColors()
 		help = {"View/Edit the Colors used for the current Loomis-Wood folder.", "This command is only availible for Loomis-Wood plots."}
+
+		LWA#LWDynamicMenuItem(-1)+ "Edit &Fit Function...", EditFitFunc()
+		help = {"View/Edit the Fit Functions for the current Loomis-Wood folder.", "This command is only availible for Loomis-Wood plots."}
+
 	end
 	
 	submenu "&Plots"
@@ -217,6 +225,9 @@ menu "&Loomis-Wood", dynamic
 
 		LWA#LWDynamicMenuItem(-1)+ "&M-Shift Current Series.../F6", ShiftSeries(GetCurrentSeriesNumber(),0,1)
 		help = {"M-shift the current series.", "This command is only availible for Loomis-Wood plots."}
+
+		LWA#LWDynamicMenuItem(-1)+ "&M-Flip Current Series.../SF6", FlipSeries(GetCurrentSeriesNumber(),1)
+		help = {"M-flip the current series.", "This command is only availible for Loomis-Wood plots."}
 
 		LWA#LWDynamicMenuItem(-1)+ "&View Current Series/F7", ViewSeries(GetCurrentSeriesNumber())
 		help = {"View the assignment table for the current series.", "This command is only availible for Loomis-Wood plots."}
@@ -1360,7 +1371,7 @@ function DoBandCoeffUpdate(BandCoeff)
 	variable theF, theF2, theM, theP
 	variable Order, FatminM, FatmaxM, slope
 
-	if(numpnts(LW_M) != NumLines)
+	if(numpnts(Line_LWm) != NumLines)
 		Redimension/N=(NumLines) Line_LWm, Line_DF
 	endif
 
@@ -1376,7 +1387,7 @@ function DoBandCoeffUpdate(BandCoeff)
 	if (V_numINFs || V_numNaNs)
 		// If PolyCoeff contains INFs or NaNs, things will go crazy:
 		Beep
-		print LW_ERROR4
+		print "1111", LW_ERROR4
 		SetDataFolder SaveDF
 		return 0
 	endif
@@ -1387,7 +1398,7 @@ function DoBandCoeffUpdate(BandCoeff)
 	while ((PolyCoeff[Order] == 0) && (Order > 0))
 	if (Order <= 0)
 		Beep
-		print LW_ERROR4
+		print "2222", LW_ERROR4 
 		SetDataFolder SaveDF
 		return 0
 	endif
@@ -1445,9 +1456,9 @@ function DoBandCoeffUpdate(BandCoeff)
 		if ((minP == -2) || (maxP == -1))
 			// There are no peaks in the range of the polynomial
 			Beep
-			Print LW_ERROR4
-			Line_LWm  = NaN
-			break
+			Print "3333", region, region0, LW_ERROR4
+			//Line_LWm  = NaN
+			//break
 		endif
 		if (minP == -1)
 			// The range of the polynomial begins below the frequency of the first peak.
@@ -2372,7 +2383,7 @@ function AddSeries()	// F2
 
 	SeriesColor -= 1
 	series.Count += 1
-	Redimension/N=(series.Count+1) series.Name, series.Data, series.Color, series.Shape, series.Order
+	Redimension/N=(series.Count+1) series.Name, series.Data, series.Color, series.Shape, series.Order, series.LegendText, series.LegendShape
 	series.Name[series.Count] = SeriesName
 	series.LegendText[series.Count] = SeriesName
 	series.Data[series.Count] = ""
@@ -2816,6 +2827,36 @@ function ShiftSeries(theSeries, theShift, autoFixConstants)	// F6
 	endif
 end
 
+function FlipSeries(theSeries, autoFixConstants)	// Shift-F6
+	Variable theSeries, autoFixConstants
+
+	String DataSet, PlotFolder
+	if (!GetFolders(1,DataSet, PlotFolder))
+		return 0
+	endif
+
+	Struct SeriesStruct series
+	GetSeriesStruct(DataSet, series)
+	
+	Variable npnts = ItemsInList(series.Data[theSeries])
+	Struct AssignmentStruct assignment
+	
+	Variable i, pnt, m, shape
+	String data
+	for (i = 0 ; i < npnts ; i += 1)
+		data = StringFromList(i,series.Data[theSeries])
+		pnt = str2num(StringFromList(0,data,":"))
+		ReadAssignment(pnt, theSeries, assignment)
+		assignment.m *= -1
+		AssignLine2(assignment)
+	endfor
+				
+	if (autoFixConstants)
+		FlipConstants()
+	endif
+end
+
+
 static function ShiftConstants(theShift)
 // OPTIONAL DIALOG
 // This function M-Shifts BandCoeff
@@ -2855,6 +2896,29 @@ static function ShiftConstants(theShift)
 	DoUpdate
 	//MoveCursor(CursorPosition())
 end
+
+static function FlipConstants()
+	variable theShift
+
+	String DataSet, PlotFolder
+	if (!GetFolders(1,DataSet, PlotFolder))
+		return 0
+	endif
+	
+	WAVE PolyCoeff = $(PlotFolder + "PolyCoeff")
+	WAVE BandCoeff = $(PlotFolder + "BandCoeff")
+	WAVE Poly2Band = $(DataSet + "Poly2Band")
+
+	PolyCoeff[1,;2] *= -1
+
+	MatrixMultiply Poly2Band, PolyCoeff
+	WAVE M_Product
+	BandCoeff = M_Product[p][0]
+	KillWaves M_Product
+
+	DoUpdate
+end
+
 
 function ViewSeries(theSeries)	// F7
 	Variable theSeries
@@ -2929,6 +2993,23 @@ function ViewSeriesList()	// F8
 		ModifyTable width(series.Data)=200,title(series.Data)="Data"
 	endif
 end
+
+function EditFitFunc()	// F12
+// NON-OPTIONAL DIALOG
+	String DataSet, PlotFolder
+	if (!GetFolders(1,DataSet, PlotFolder))
+		return 0
+	endif
+	
+	string saveDF = GetDataFolder(1)
+	SetDataFolder DataSet
+	WAVE BandCoeff, Band2Poly, Poly2Band
+	SetDataFolder DataSet
+	WAVE/T BandCoeffLabels
+	SetDataFolder saveDF
+	
+	Edit BandCoeffLabels, Band2Poly, Poly2Band
+End
 
 function EditBandConstants()	// F12
 // NON-OPTIONAL DIALOG
