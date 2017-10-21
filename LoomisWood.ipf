@@ -10,9 +10,14 @@
 
 #pragma rtGlobals = 1			// Use modern global access method.
 #pragma IgorVersion = 5.02
-#pragma Version = 2.10
+#pragma Version = 2.11
 #pragma ModuleName = LWA
 
+// Changes 2.11:
+// Added ModifyTable showParts=254 to ViewSeries to make table read-only.
+// Replaced num2str() with num2istr to support Line Lists with more than 999999 lines
+// Removed F8 hotkey from second "View Series List..." menu to avoid "Ambiguous shortcut" on Igor 7.
+//
 // Changes 2.10:
 // AddSeries lengthens LegendName and LegendShape
 // Added EditFitFunc(), FlipConstants(), and FlipSeries()
@@ -57,7 +62,7 @@
 /// Global constants
 static strconstant BASE_FOLDER = "root:LW"
 
-static constant FIVEMAX_PEAKS_PER_PLOT = 40000
+static constant FIVEMAX_PEAKS_PER_PLOT = 500000
 static constant MAX_FIT_ORDER = 7
 static constant MAX_M = 10000
 
@@ -239,7 +244,7 @@ menu "&Loomis-Wood", dynamic
 		"-"
 		help = {"", ""}
 
-		LWA#LWDynamicMenuItem(3)+ "View Series List.../F8", ViewSeriesList()
+		LWA#LWDynamicMenuItem(3)+ "View Series List...", ViewSeriesList()
 		help = {"View/Edit the name, color, order, etc. of all assigned series.", "This command is only availible for Loomis-Wood plots."}
 	end
 	
@@ -1435,7 +1440,7 @@ function DoBandCoeffUpdate(BandCoeff)
 	String/G RegionString=""
 	Variable i
 	for (i=0 ; i < numpnts(W_Extrema)-1 ; i += 1)
-		RegionString += num2str(ceil(W_Extrema[i]))+":"+num2str(floor(W_Extrema[i+1]))+";"
+		RegionString += num2istr(ceil(W_Extrema[i]))+":"+num2istr(floor(W_Extrema[i+1]))+";"
 	endfor
 	//SetScale/P x, -region0, 1, "", RegionString 
 		
@@ -1774,13 +1779,13 @@ function LWHookFunction(s)
 				return 1
 			case VK_LEFT:
 				HMoveCursor(-1)
-				return 0 
+				return 1 
 			case VK_UP:
 				VMoveCursor(-1)
 				return 1
 			case VK_RIGHT:
 				HMoveCursor(1)
-				return 0 
+				return 1 
 			case VK_DOWN:
 				VMoveCursor(1)
 				return 1
@@ -2472,7 +2477,7 @@ function DeleteSeries()	// F4
 //	for (i=0 ; i<npnts ; i+=1)
 //		item = StringFromList(i,series.Data[theSeries],";")
 //		point = str2num(StringFromList(0,item,":"))
-//		lines.Assignments[point] = RemoveByKey(num2str(theSeries),lines.Assignments[point])
+//		lines.Assignments[point] = RemoveByKey(num2istr(theSeries),lines.Assignments[point])
 //	endfor
 //	
 //	Variable series_num
@@ -2643,7 +2648,7 @@ function/S FitSeries(theSeries)	// F5
 //		sprintf message, "\t%16s = %14.4G\r" "S. E.", sqrt(V_chisq/(V_npnts - order))
 //		total_message += message
 //		for (index = 0 ; index < order ; index += 1)
-//			strDigit = num2str(2+floor(log(abs(BandCoeff[index])))-floor(log(abs(W_sigma[index]))))
+//			strDigit = num2istr(2+floor(log(abs(BandCoeff[index])))-floor(log(abs(W_sigma[index]))))
 //			sprintf message, "\t%16s = %#14."+strDigit+"G ? %#5.2G", BandCoeffLabels[index], BandCoeff[index], W_sigma[index]
 //			total_message += message
 //			for (index2 = 0 ; index2 < index ; index2 += 1)
@@ -2677,7 +2682,7 @@ function/S GetFitRes(s)
 	sprintf message, "\t%16s = %14.4G\r" "S. E.", sqrt(s.ChiSq/(s.nPnts - s.Order - 1))
 	total_message += message
 	for (index = 0 ; index <= s.order ; index += 1)
-		strDigit = num2str(2+floor(log(abs(s.W_Coef[index])))-floor(log(abs(s.W_sigma[index]))))
+		strDigit = num2istr(2+floor(log(abs(s.W_Coef[index])))-floor(log(abs(s.W_sigma[index]))))
 		sprintf message, "\t%16s = %#14."+strDigit+"G ? %#5.2G", ""+s.Labels[index], 0+s.W_Coef[index], 0+s.W_sigma[index]
 		total_message += message
 		for (index2 = 0 ; index2 < index ; index2 += 1)
@@ -2965,6 +2970,7 @@ function ViewSeries(theSeries)	// F7
 	if (!V_flag)
 		Edit/K=1/W=(3,0,338.25,404)  s.theM, s.Frequency, s.Residual, s.Mask, s.Intensity, s.Width As Title[0,39]
 		DoWindow/C $WindowName
+		ModifyTable showParts=254
 		SetWindow kwTopWin,note="LoomisWood=2.0,DataSet="+DataSet+",PlotFolder="+PlotFolder+","
 		ModifyTable width(Point)=18,width(s.theM)=24,title(s.theM)="M",format(s.Frequency)=3
 		ModifyTable digits(s.Frequency)=6,width(s.Frequency)=68,title(s.Frequency)="Frequency"
@@ -3124,7 +3130,7 @@ static function ReadAssignment(theP, theSeries, s)
 	Struct SeriesStruct series
 	GetSeriesStruct(DataSet, series)
 	
-	string data = StringByKey( num2str(theSeries) , lines.assignments[theP] )
+	string data = StringByKey( num2istr(theSeries) , lines.assignments[theP] )
 	if (CmpStr(data,"")!=0)
 		s.Point = theP
 		s.Series = theSeries
@@ -3171,8 +3177,8 @@ static function AssignLine(theP, theSeries, theM, LWmask, USmask, LSmask, Notes)
 	string data
 	sprintf data, "%d,%d,%d,%d,%s", theM,  LWmask, USmask, LSmask, Notes
 	
-	series.Data[theSeries] = ReplaceStringByKey( num2str(theP) , series.Data[theSeries] , data )
-	lines.Assignments[theP] = ReplaceStringByKey( num2str(theSeries) , lines.Assignments[theP] , data )
+	series.Data[theSeries] = ReplaceStringByKey( num2istr(theP) , series.Data[theSeries] , data )
+	lines.Assignments[theP] = ReplaceStringByKey( num2istr(theSeries) , lines.Assignments[theP] , data )
 
 	return 1
 end
@@ -3191,8 +3197,8 @@ static function UnAssignLine(theP, theSeries)
 	Struct SeriesStruct series
 	GetSeriesStruct(DataSet, series)
 
-	series.data[theSeries] = RemoveByKey( num2str(theP) , series.data[theSeries] )
-	lines.Assignments[theP] = RemoveByKey( num2str(theSeries), lines.Assignments[theP] )
+	series.data[theSeries] = RemoveByKey( num2istr(theP) , series.data[theSeries] )
+	lines.Assignments[theP] = RemoveByKey( num2istr(theSeries), lines.Assignments[theP] )
 	lines.Assignments[theP] = RemoveByKey( "NaN", lines.Assignments[theP] )
 	
 	return 1
@@ -3258,7 +3264,7 @@ function ExtractAssignments(functionName)	// F9
 			Width[Asgn] = lines.Width[index1]
 
 			ser = str2num(StringFromList(index2, lines.Assignments[index1]))
-			data = StringByKey(num2str(index1), series.Data[ser])
+			data = StringByKey(num2istr(index1), series.Data[ser])
 			M = str2num(StringFromList(0,data,","))
 
 			LWmask[Asgn] = str2num(StringFromList(1,data,","))
@@ -3537,7 +3543,7 @@ function SynchronizeSeries2Lines()
 			endif
 			while(0)
 			item = StringFromList(1,item,":")
-			series.Data[series_num] += Num2Str(i)+":"+item+";"
+			series.Data[series_num] += num2istr(i)+":"+item+";"
 		endfor
 	endfor
 end
@@ -3563,7 +3569,7 @@ function SynchronizeLines2Series()
 			item = StringFromList(j,series.data[i])
 			point = Str2Num(StringFromList(0,item,":"))
 			item = StringFromList(1,item,":")
-			lines.assignments[point] += Num2Str(i)+":"+item+";"
+			lines.assignments[point] += num2istr(i)+":"+item+";"
 		endfor
 	endfor
 end
