@@ -8,7 +8,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-#pragma rtGlobals = 3			// Use modern global access method.
+#pragma rtGlobals = 1			// Use modern global access method.
 #pragma IgorVersion = 5.02
 #pragma Version = 2.10
 #pragma ModuleName = LWA
