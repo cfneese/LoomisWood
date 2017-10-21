@@ -201,14 +201,11 @@ menu "&Loomis-Wood", dynamic
 		//"(&Delete a Loomis-Wood Plot...", 
 		//help = {"Make a Loomis-Wood plot.  You must have already created a Loomis-Wood folder."}		
 
-		LWA#LWDynamicMenuItem(-1)+ "Change &M-axis scaling.../F11", ChangeRange(0,0)
+		LWA#LWDynamicMenuItem(-1)+ "Change &M-axis scaling.../F11", ChangeRange(0,0,0,0)
 		help = {"Change the M-axis scaling of the current Loomis-Wood plot.", "This command is only availible for Loomis-Wood plots."}
 
 		LWA#LWDynamicMenuItem(-1)+ "Edit &Band Constants.../F12", EditBandConstants()
 		help = {"View/Edit the Band Constants for the current Loomis-wood plot.", "This command is only availible for Loomis-Wood plots."}
-
-		LWA#LWDynamicMenuItem(-1)+ "Change &Regions.../SF12", ChangeRegions()
-		help = {"Select the region of monotonicity the current Loomis-wood plot.", "This command is only availible for Loomis-Wood plots."}
 
 		LWA#LWDynamicMenuItem(-1)+ "\\M0Show/Hide Cursor", ShowHideCursor()
 		help = {"Toggle visability of cursor for the current Loomis-wood plot.", "This command is only availible for Loomis-Wood plots."}
@@ -703,6 +700,16 @@ static function/S GetPlotFolderList()
 	return output
 end
 
+static function GetFoldersDFR(theWinType, DataSet, PlotFolder)
+	variable theWinType
+	DFREF &DataSet, &PlotFolder
+	
+	string DataSetName, PlotFolderName
+	GetFolders(theWinType, DataSetName, PlotFolderName)
+	DFREF DataSet = $(DataSetName)
+	DFREF PlotFolder = $(PlotFolderName)
+end
+
 static function GetFolders(theWinType, DataSet, PlotFolder)
 	variable theWinType
 	string &DataSet, &PlotFolder
@@ -742,6 +749,49 @@ static function GetFolders(theWinType, DataSet, PlotFolder)
 		Beep
 		Print LW_ERROR3
 		return 0
+	endif
+end
+
+static function/DF GetPlotDFR(theWinType)
+	variable theWinType
+
+	string DataSet, PlotFolder
+// This function tests to see if the top window is a Loomis-Wood plot.
+// If the top window is a Loomis-Wood plot, it will contain "LoomisWood=ver" in its note.
+// Use theWinType = 1 if only the top GRAPH needs to be a Loomis-Wood plot
+// Use theWinType = 3 if the top GRAPH or TABLE needs to be a Loomis-Wood plot or associated Table
+// Use theWinType = -1 if the overall top WINDOW needs to be a Loomis-Wood plot
+	DataSet = ""
+	PlotFolder = ""
+
+	string TopWinName = WinName(0, theWinType < 0 ? -1 : theWinType)
+
+	if (!cmpstr(TopWinName,""))	//This is necessary b/c this function may be called when there are no active windows.
+		Beep
+		Print LW_ERROR3
+		return $""
+	endif
+	
+	if (theWinType < 0)
+		if (cmpstr(TopWinName, WinName(0, -theWinType)))
+			// Topmost window is wrong type
+			Beep
+			Print LW_ERROR3
+			return $""
+		endif
+	endif
+
+	GetWindow $TopWinName, note
+	variable theVersion = NumberByKey("LoomisWood",S_Value,"=",",")
+
+	if (theVersion > 0)
+		DataSet = StringByKey("DataSet",S_Value,"=",",")
+		PlotFolder = StringByKey("PlotFolder",S_Value,"=",",")
+		return $(PlotFolder)
+	else
+		Beep
+		Print LW_ERROR3
+		return $""
 	endif
 end
 
@@ -831,29 +881,29 @@ end
 function FinishDataFolder(DataSet)
 	string DataSet
 
-	string SaveDF = GetDataFolder(1)
-		SetDataFolder DataSet
-		// New 2/18/05
-		Make/O/D/N=(14,3) Colors
-		Colors[0][0]= {0       , 65535, 65535, 0       , 0       , 65535, 32768, 32768, 0       , 0       , 0       , 32768, 0, 32768}
-		Colors[0][1]= {32768, 0       , 65535, 65535, 0       , 0       , 0       , 32768, 32768, 65535, 0       , 0       , 0, 32768}
-  		Colors[0][2]= {32768, 0       , 0       , 0       , 65535, 65535, 0       , 0       , 0       , 65535, 32768, 32768, 0, 32768}
-		List2DimLabels(Colors,0,"Teal;Red;Yellow;Lime;Blue;Fuchsia;Maroon;Olive;Green;Aqua;Navy;Purple;Black;Grey")
-		List2DimLabels(Colors,1,"Red;Blue;Green")
+	DFREF SaveDF = GetDataFolderDFR()
+	SetDataFolder DataSet
+	// New 2/18/05
+	Make/O/D/N=(14,3) Colors
+	Colors[0][0]= {0       , 65535, 65535, 0       , 0       , 65535, 32768, 32768, 0       , 0       , 0       , 32768, 0, 32768}
+	Colors[0][1]= {32768, 0       , 65535, 65535, 0       , 0       , 0       , 32768, 32768, 65535, 0       , 0       , 0, 32768}
+	Colors[0][2]= {32768, 0       , 0       , 0       , 65535, 65535, 0       , 0       , 0       , 65535, 32768, 32768, 0, 32768}
+	List2DimLabels(Colors,0,"Teal;Red;Yellow;Lime;Blue;Fuchsia;Maroon;Olive;Green;Aqua;Navy;Purple;Black;Grey")
+	List2DimLabels(Colors,1,"Red;Blue;Green")
 
-		Make/O/D/N=(MAX_FIT_ORDER,MAX_FIT_ORDER) Band2Poly
-		Band2Poly = StandardBand2Poly(p,q,1)
-		Make/O/T/N=(MAX_FIT_ORDER) BandCoeffLabels
-		BandCoeffLabels = StandardBandLabels(p)
-		
-		//Duplicate/O Band2Poly, Poly2Band
-		//MatrixInverse/O Poly2Band
-		MatrixOp/O Poly2Band = Inv(Band2Poly)				
-		
-		// Create an initial display
-		NewLWPlot(DataSet, "Plot0")
-		SynchronizeSeries2Lines()
-		SetDataFolder SaveDF	
+	Make/O/D/N=(MAX_FIT_ORDER,MAX_FIT_ORDER) Band2Poly
+	Band2Poly = StandardBand2Poly(p,q,1)
+	Make/O/T/N=(MAX_FIT_ORDER) BandCoeffLabels
+	BandCoeffLabels = StandardBandLabels(p)
+	
+	//Duplicate/O Band2Poly, Poly2Band
+	//MatrixInverse/O Poly2Band
+	MatrixOp/O Poly2Band = Inv(Band2Poly)				
+	
+	// Create an initial display
+	NewLWPlot(DataSet, "Plot0")
+	SynchronizeSeries2Lines()
+	SetDataFolder SaveDF	
 End
 
 static function/S GetNewLWDataFolder()
@@ -1224,15 +1274,13 @@ function NewLWPlot(DataSet, PlotFolder)
 	Make/O/D/N=2001 CombX, CombY = 1, CombM
 	SetScale/I x, -1000, 1000, "M", CombX, CombY, CombM
 	CombM = x
-	Variable/G startDeltaNu = -50, endDeltaNu = 50 // 10/14/2017 Added
+	Variable/G startDeltaNu = -50, endDeltaNu = 50
 	
 	Variable/G DataUpdate
 	temp = "DoDataUpdate(CombX, StartM, EndM, StartDeltaNu, EndDeltaNu)"
 	SetFormula DataUpdate, temp
 	
 	// Create persistant data
-	Make/O/D/N=(lines.Count) Line_LWm
-	Make/O/D/N=(lines.Count) Line_DF
 	Make/O/D/N=(FIVEMAX_PEAKS_PER_PLOT) Triangle_X, Triangle_Yup, Triangle_Ydown
 	Make/O/U/W/N=(FIVEMAX_PEAKS_PER_PLOT,3) Triangle_Color, Triangle_Color2
 	Make/O/D/N=(MAX_FIT_ORDER) BandCoeff, PolyCoeff
@@ -1247,14 +1295,12 @@ function NewLWPlot(DataSet, PlotFolder)
 	Triangle_Color2 = NaN
 	Variable/G lastTriangle
 
-	Variable/G Region=0
 	Variable/G Zoom=1
-	Variable/G StartP, EndP
 	Variable/G lwCursor_p, lwCursor_m, lwCursor_Nu, lwCursor_I, lwCursor_W, lwCursor_dM, lwCursor_dNu
+	Variable/G lwCursor_pnt
+	
 	//String/G lwCursor_assignments
 	Variable/G startM = -10, endM = 10 // 01/17/07 Changed
-	
-
 
 	Variable/G CurrentSeries = 1
 
@@ -1275,11 +1321,7 @@ function NewLWPlot(DataSet, PlotFolder)
 	SetFormula BandCoeffUpdate, temp
 
 	Variable/G TriangleUpdate
-	WAVE DataP
-	WAVE DataX=DataDeltaNu
-	WAVE DataM
-//	temp = "DoTriangleUpdate("+PlotFolder+"Line_LWm,"+DataSet+"Lines:Assignments,"+DataSet+"Series:Color,"+DataSet+"Series:Shape,"+PlotFolder+"StartM,"+PlotFolder+"EndM,"+PlotFolder+"Zoom)"
-	temp =	 "DoTriangleUpdateNew(DataP, DataX, DataM,"+DataSet+"Lines:Assignments,"+DataSet+"Series:Color,"+DataSet+"Series:Shape, Zoom)"
+	temp =	 "DoTriangleUpdate(DataP, DataDeltaNu, DataM,"+DataSet+"Lines:Assignments,"+DataSet+"Series:Color,"+DataSet+"Series:Shape, Zoom)"
 	SetFormula TriangleUpdate, temp
 
 	String Title
@@ -1367,8 +1409,8 @@ function NewLWPlot(DataSet, PlotFolder)
 	SetActiveSubwindow ##
 
 	// Move the cursor to approximately the center of the plot
-	lwCursor_p = Round(0.5*(StartP+EndP))
-	MoveCursor(lwCursor_p)	
+//	lwCursor_p = Round(0.5*(StartP+EndP))
+//	MoveCursor(lwCursor_p)	
 
 	SetDataFolder SaveDF
 end
@@ -1386,29 +1428,14 @@ function DoBandCoeffUpdate(BandCoeff)
 	string SaveDF = GetDataFolder(1)
 	SetDataFolder PlotFolder
 	WAVE PolyCoeff
-	WAVE Line_LWm
-	WAVE Line_DF
-	variable/G minM, maxM, minP, maxP, minNu, maxNu
 	SetDataFolder :::
 	WAVE Line_Frequency = :Lines:Frequency
 	WAVE Band2Poly
 	SetDataFolder PlotFolder
 
-	Variable NumLines = numpnts(Line_Frequency)
-
-	variable theF, theF2, theM, theP
-	variable Order, FatminM, FatmaxM, slope
-
-	if(numpnts(Line_LWm) != NumLines)
-		Redimension/N=(NumLines) Line_LWm, Line_DF
-	endif
-
-	// Update PolyCoeff.
+	variable order
+	
 	MatrixOp/O PolyCoeff = Band2Poly x BandCoeff
-	//MatrixMultiply Band2Poly, BandCoeff
-	//WAVE M_product = M_product
-	//PolyCoeff = M_product
-	//KillWaves/Z M_product
 
 	// Analyze PolyCoeff.
 	WaveStats/Q PolyCoeff
@@ -1420,11 +1447,11 @@ function DoBandCoeffUpdate(BandCoeff)
 		return 0
 	endif
 		
-	Order = numpnts(PolyCoeff)
+	order = numpnts(PolyCoeff)
 	do
-		Order -= 1
-	while ((PolyCoeff[Order] == 0) && (Order > 0))
-	if (Order <= 0)
+		order -= 1
+	while ((PolyCoeff[order] == 0) && (order > 0))
+	if (order <= 0)
 		Beep
 		print "2222", LW_ERROR4 
 		SetDataFolder SaveDF
@@ -1436,101 +1463,6 @@ function DoBandCoeffUpdate(BandCoeff)
 	CombM = x
 	CombX = poly2(PolyCoeff, order, x)
 
-	FindPolyExtrema(PolyCoeff, Order)
-	WAVE W_Extrema
-	InsertPoints 0,1, W_Extrema
-	W_Extrema[0] = {-INF}
-	W_Extrema[numpnts(W_Extrema)] = {INF}
-
-	NVAR region0
-	if (!NVAR_Exists(region0))
-		Variable/G region0=0
-	endif
-	region0 = -1
-	do
-		region0 += 1
-	while (W_Extrema[region0]*W_Extrema[region0+1] > 0)
-
-	if (WaveExists($"RegionString"))
-		Execute/Q/Z "KillWaves/A/Z RegionString"
-	endif
-	String/G RegionString=""
-	Variable i
-	for (i=0 ; i < numpnts(W_Extrema)-1 ; i += 1)
-		RegionString += num2istr(ceil(W_Extrema[i]))+":"+num2istr(floor(W_Extrema[i+1]))+";"
-	endfor
-	//SetScale/P x, -region0, 1, "", RegionString 
-		
-	NVAR region
-	if (!NVAR_Exists(region))
-		Variable/G region=0
-	endif
-
-	//variable/C limits = bound_poly(PolyCoeff, Order, 0.0)
-	//minM = ceil(max(-MAX_M, real(limits)))
-	//maxM = floor(min( MAX_M, imag(limits))	)
-	minM = W_Extrema[region0+region]	//real(limits)
-	maxM = W_Extrema[region0+region+1]	//imag(limits)
-
-	FatminM = poly2(PolyCoeff, Order, minM) 		
-	FatmaxM = poly2(PolyCoeff, Order, maxM)
-	minNu = min(FatminM, FatmaxM)
-	maxNu = max(FatminM, FatmaxM)
-	slope = sign(FatmaxM - FatminM)
-
-	minP = BinarySearch(Line_Frequency, minNu)
-	maxP = BinarySearch(Line_Frequency, maxNu)
-	do	// This is a do-while(0) loop, allowing the break statement to be used like a goto.
-		if ((minP == -2) || (maxP == -1))
-			// There are no peaks in the range of the polynomial
-			Beep
-			Print "3333", region, region0, LW_ERROR4
-			//Line_LWm  = NaN
-			//break
-		endif
-		if (minP == -1)
-			// The range of the polynomial begins below the frequency of the first peak.
-			minP = 0
-		else
-			// The range of the polynomial begins above the frequency of the first peak.
-			// Set Line_LWm of those peaks below the range of the polynomial to -Inf
-			Line_LWm[0, minP] = -slope*INF
-			Line_DF[0, minP] = NaN
-			minP += 1
-		endif
-		if (maxP == -2)
-			// The range of the polynomial ends above the frequency of the first peak.
-			maxP = NumLines - 1
-		else
-			// The range of the polynomial ends below the frequency of the last peak.
-			// Set Line_LWm of those peaks below the range of the polynomial to +Inf
-			Line_LWm[maxP + 1, NumLines - 1] = slope*INF
-			Line_DF[maxP + 1, NumLines - 1] = NaN
-		endif
-
-		Variable firstM = inv_poly(PolyCoeff, Order, Line_Frequency[slope > 0 ? minP : maxP], minM, maxM)
-		Variable lastM = inv_poly(PolyCoeff, Order, Line_Frequency[slope > 0 ? maxP : minP], minM, maxM)
-		
-		minM = max(round(firstM), ceil(minM))
-		maxM = min(round(lastM), floor(maxM))
-
-		theM = (slope>0) ? minM : maxM	
-		theF = poly2(PolyCoeff, order, theM)
-		theF2 = poly2(PolyCoeff, order, theM + slope*0.5)
-
-		for (theP = minP ; theP <= maxP ; theP += 1)
-			if (Line_Frequency[theP] > theF2)
-				do
-					theM += slope
-					theF2 = poly2(PolyCoeff, order, theM + slope*0.5)
-  					// BUG:  There is a bug here that causes an infinte loop
-  				while (Line_Frequency[theP]  > theF2 && (ticks-start_time < 240))
-				theF = poly2(PolyCoeff, order, theM)
-			endif
-			Line_LWm[theP] = theM
-			Line_DF[theP] = Line_Frequency[theP] - theF
-		endfor		
-	while(0)
 	SetDataFolder SaveDF
 
 	// This update time should be under 120 ticks (2 sec) for good user interaction
@@ -1581,7 +1513,7 @@ function DoDataUpdate(comb, StartM, EndM, StartDeltaNu, EndDeltaNu)
 	Make/O/D/N=(nrows) RowStart, RowStop
 	SetScale/I x, StartM, EndM, "", RowStart, RowStop  
 
-	RowStart = BinarySearch2(lines.Frequency, comb(startM+p)+StartDeltaNu )
+	RowStart = BinarySearch2(lines.Frequency, comb(startM+p)+StartDeltaNu ) + 1
 	RowStop = BinarySearch2(lines.Frequency, comb(startM+p)+EndDeltaNu )
 
 	Make/FREE/D/N=(nrows) temp = RowStop - RowStart + 1
@@ -1611,54 +1543,54 @@ function DoDataUpdate(comb, StartM, EndM, StartDeltaNu, EndDeltaNu)
 	return (StopMSTimer(-2) - start_time)*1e-6
 end
 
-Function CheckM(StartM, EndM, minM, maxM)
-	variable &startM, &EndM, minM, maxM
-	
-	// First check to make sure that StartM and EndM make sense
-	// This code will prevent scrolling beyond the first or last peak
-	if (StartM > EndM)
-		// This should only happen if the user manually edits StartM or EndM
-		// instead of using ChangeRange()
-		K0 = EndM
-		EndM = StartM
-		StartM = K0
-		ChangeRange(StartM, EndM)
-	endif
-	StartM = ceil(StartM)
-	EndM = floor(EndM)
+//Function CheckM(StartM, EndM, minM, maxM)
+//	variable &startM, &EndM, minM, maxM
+//	
+//	// First check to make sure that StartM and EndM make sense
+//	// This code will prevent scrolling beyond the first or last peak
+//	if (StartM > EndM)
+//		// This should only happen if the user manually edits StartM or EndM
+//		// instead of using ChangeRange()
+//		K0 = EndM
+//		EndM = StartM
+//		StartM = K0
+//		ChangeRange(StartM, EndM)
+//	endif
+//	StartM = ceil(StartM)
+//	EndM = floor(EndM)
+//
+//	if ( abs(endM-startM) > abs(maxM-minM) )
+//		// Region is smaller than Range"
+//		if ( ! (min(endM,startM) < maxM && maxM < max(endM,startM)) && (min(endM,startM) < minM && minM < max(endM,startM))  )
+//			//Print "Centering Range within Region"
+//			K0 = 0.5*(endM-startM)
+//			startM = round(0.5*(maxM+minM)) + K0
+//			endM = round(0.5*(maxM+minM)) - K0
+//			ChangeRange(startM,endM)
+//			//SetDataFolder SaveDF
+//			//return 0
+//		endif
+//	else
+//		K0 = abs(endM-startM)
+//		if (endM > maxM)
+//			//Print "Moving To End of Region"
+//			endM = maxM
+//			startM = maxM - K0
+//			ChangeRange(startM,endM)
+//			//SetDataFolder SaveDF
+//			//return 0
+//		elseif (startM < minM)
+//			//Print "Moving To Beginning of Region"
+//			startM = minM
+//			endM = minM + K0
+//			ChangeRange(startM,endM)
+//			//SetDataFolder SaveDF
+//			//return 0
+//		endif
+//	endif
+//End
 
-	if ( abs(endM-startM) > abs(maxM-minM) )
-		// Region is smaller than Range"
-		if ( ! (min(endM,startM) < maxM && maxM < max(endM,startM)) && (min(endM,startM) < minM && minM < max(endM,startM))  )
-			//Print "Centering Range within Region"
-			K0 = 0.5*(endM-startM)
-			startM = round(0.5*(maxM+minM)) + K0
-			endM = round(0.5*(maxM+minM)) - K0
-			ChangeRange(startM,endM)
-			//SetDataFolder SaveDF
-			//return 0
-		endif
-	else
-		K0 = abs(endM-startM)
-		if (endM > maxM)
-			//Print "Moving To End of Region"
-			endM = maxM
-			startM = maxM - K0
-			ChangeRange(startM,endM)
-			//SetDataFolder SaveDF
-			//return 0
-		elseif (startM < minM)
-			//Print "Moving To Beginning of Region"
-			startM = minM
-			endM = minM + K0
-			ChangeRange(startM,endM)
-			//SetDataFolder SaveDF
-			//return 0
-		endif
-	endif
-End
-
-function DoTriangleUpdateNew(DataP, DataX, DataM, Assignments, Series_Color, Series_Shape, Zoom)
+function DoTriangleUpdate(DataP, DataX, DataM, Assignments, Series_Color, Series_Shape, Zoom)
 // This procedure recalculates Triangle_X, Triangle_Yup, Triangle_Ydown, and Triangle_Color, StartP, EndP, StartFrequency, and EndFrequency
 // whenever LWm, Assignments, Line_Shape, Series_Color, Series_Shape, StartM, or EndM  change.
 // DO NOT DECLARE AS STATIC!
@@ -1679,6 +1611,7 @@ function DoTriangleUpdateNew(DataP, DataX, DataM, Assignments, Series_Color, Ser
 	GetLinesStruct(DataSet, lines)
 
 	DFREF PlotFolder = GetWavesDataFolderDFR(DataP)
+	cd PlotFolder
 
 	WAVE PolyCoeff
 	WAVE Line_DF
@@ -1716,7 +1649,7 @@ function DoTriangleUpdateNew(DataP, DataX, DataM, Assignments, Series_Color, Ser
 	Variable series_num
 		
 	scale_width = 2*ZoomW
- 	WidthMin = 0.1
+ 	WidthMin = 0.25
 
 	scale_height = (lines.maxIntensity-lines.minIntensity > 0) ? 0.90 / max(lines.maxIntensity, lines.minIntensity) : 1
 	scale_height *= Zoom
@@ -1801,167 +1734,167 @@ function DoTriangleUpdateNew(DataP, DataX, DataM, Assignments, Series_Color, Ser
 end
 
 
-function DoTriangleUpdate(LWm, Assignments, Series_Color, Series_Shape, StartM, EndM, Zoom)
-// This procedure recalculates Triangle_X, Triangle_Yup, Triangle_Ydown, and Triangle_Color, StartP, EndP, StartFrequency, and EndFrequency
-// whenever LWm, Assignments, Line_Shape, Series_Color, Series_Shape, StartM, or EndM  change.
-// DO NOT DECLARE AS STATIC!
-	Wave LWm
-	Wave/T Assignments
-	Wave Series_Color, Series_Shape
-	Variable startM, endM, Zoom
-
-	Variable start_time = StopMSTimer(-2)
-
-	String SaveDF = GetDataFolder(1)
-	SetDataFolder GetWavesDataFolder(Assignments,1)
-	SetDataFolder ::
-	String DataSet = GetDataFolder(1)
-	WAVE Colors
-	
-	Struct LinesStruct lines
-	GetLinesStruct(DataSet, lines)
-
-	SetDataFolder GetWavesDataFolder(LWm,1)
-	String PlotFolder = GetDataFolder(1)
-	WAVE PolyCoeff
-	WAVE Line_DF
-	WAVE Triangle_X
-	WAVE Triangle_Yup
-	WAVE Triangle_Ydown
-	WAVE Triangle_Color
-	WAVE Triangle_Color2
-	
-	If (!WaveExists(Triangle_Color2))
-		Duplicate/O Triangle_Color, Triangle_Color2
-	endif
-	If (DimSize(Colors,1)!=6)
-		Redimension/N=(-1,6) Colors
-		Colors[][3,5]=Colors[p][q-3]
-	EndIf
-
-	NVAR minM
-	NVAR maxM
-	NVAR lastTriangle
-	NVAR lwCursor_p
+//function DoTriangleUpdate(LWm, Assignments, Series_Color, Series_Shape, StartM, EndM, Zoom)
+//// This procedure recalculates Triangle_X, Triangle_Yup, Triangle_Ydown, and Triangle_Color, StartP, EndP, StartFrequency, and EndFrequency
+//// whenever LWm, Assignments, Line_Shape, Series_Color, Series_Shape, StartM, or EndM  change.
+//// DO NOT DECLARE AS STATIC!
+//	Wave LWm
+//	Wave/T Assignments
+//	Wave Series_Color, Series_Shape
+//	Variable startM, endM, Zoom
+//
+//	Variable start_time = StopMSTimer(-2)
+//
+//	String SaveDF = GetDataFolder(1)
+//	SetDataFolder GetWavesDataFolder(Assignments,1)
+//	SetDataFolder ::
+//	String DataSet = GetDataFolder(1)
+//	WAVE Colors
+//	
+//	Struct LinesStruct lines
+//	GetLinesStruct(DataSet, lines)
+//
+//	SetDataFolder GetWavesDataFolder(LWm,1)
+//	String PlotFolder = GetDataFolder(1)
+//	WAVE PolyCoeff
+//	WAVE Line_DF
+//	WAVE Triangle_X
+//	WAVE Triangle_Yup
+//	WAVE Triangle_Ydown
+//	WAVE Triangle_Color
+//	WAVE Triangle_Color2
+//	
+//	If (!WaveExists(Triangle_Color2))
+//		Duplicate/O Triangle_Color, Triangle_Color2
+//	endif
+//	If (DimSize(Colors,1)!=6)
+//		Redimension/N=(-1,6) Colors
+//		Colors[][3,5]=Colors[p][q-3]
+//	EndIf
+//
+//	NVAR minM
+//	NVAR maxM
+//	NVAR lastTriangle
+//	NVAR lwCursor_p
+////	SetDataFolder SaveDF
+//
+//	CheckM(StartM, EndM, minM, maxM)
+//
+//	
+////	SetDataFolder PlotFolder
+//	Variable/G ZoomW
+//	ZoomW = (numtype(ZoomW) || ZoomW <= 0) ? 1 : ZoomW
+//	Variable/G MinInt
+//	
+//	Variable/G startNu = poly(PolyCoeff, startM)
+//	Variable/G endNu = poly(PolyCoeff, endM)
+//
+//	// Now Find StartP and EndP
+//	Variable/G startP = BinarySearch2(LWm, startM - 0.5)
+//	Variable/G endP = BinarySearch2(LWm, endM + 0.5)
 //	SetDataFolder SaveDF
-
-	CheckM(StartM, EndM, minM, maxM)
-
-	
-//	SetDataFolder PlotFolder
-	Variable/G ZoomW
-	ZoomW = (numtype(ZoomW) || ZoomW <= 0) ? 1 : ZoomW
-	Variable/G MinInt
-	
-	Variable/G startNu = poly(PolyCoeff, startM)
-	Variable/G endNu = poly(PolyCoeff, endM)
-
-	// Now Find StartP and EndP
-	Variable/G startP = BinarySearch2(LWm, startM - 0.5)
-	Variable/G endP = BinarySearch2(LWm, endM + 0.5)
-	SetDataFolder SaveDF
-
-	if (startP > endP)
-		K0 = startP
-		startP = endP + 1
-		endP = K0
-	else
-		startP += 1
-	endif
-	endP = min(endP, StartP + 0.2*FIVEMAX_PEAKS_PER_PLOT - 1)
-	
-	// Now, calculate the Triangles
-	Variable base, center, color, height, fiveindex, shape, width, scale_width,  scale_height, WidthMin, index
-	Variable total_height, clip_width
-	Variable colorR, colorB, colorG
-	Variable colorR2, colorB2, colorG2
-	Variable series_num
-		
-	scale_width = 2*ZoomW //(lines.maxWidth-lines.minWidth > 0) ? 0.045 * PolyCoeff[1] / (lines.maxWidth - lines.minWidth) : 0
-	//WidthMin = 0.005 * PolyCoeff[1]
- 	//Variable avgM = 0.5*(startM + endM)
- 	//WidthMin = 0.005 *abs(poly(PolyCoeff,avgM)-poly(PolyCoeff,avgM+1))//PolyCoeff[1]
- 	WidthMin = 0.005 *abs(poly(PolyCoeff,startM)-poly(PolyCoeff,endM))/(abs(startM-endM))
-	//print lines.maxWidth, lines.minWidth, scale_width, WidthMin
-	
-	//scale_height = (lines.maxIntensity-lines.minIntensity > 0) ? 0.80 / (lines.maxIntensity - lines.minIntensity) : 0
-	scale_height = (lines.maxIntensity-lines.minIntensity > 0) ? 0.90 / max(lines.maxIntensity, lines.minIntensity) : 1
-	scale_height *= Zoom
-	
-	for (index = startP ; index <= endP ; index += 1)
-		fiveindex = 5*(index-startP)
-		series_num = str2num(StringFromList(0,Assignments[index],";"))
-		if (numtype(series_num))
-			series_num = 0
-		endif
-		shape = Series_Shape[series_num]
-		shape = abs(lines.Intensity [index]) > minInt ?Series_Shape[series_num] : -1
-
-		base = LWm[index] + 0.5  // 1/17/07 + 0.5 is new
-		center = Line_DF[index]
-
-		//total_height = (lines.Intensity[index] - lines.minIntensity) *scale_height + 0.1
-		total_height = lines.Intensity[index]*scale_height
-		base -= total_height < 0
-
-		height = shape<0 ? NaN : sign(total_height)*min(abs(total_height), 0.90)  // New Version 2.01
-		width =  lines.width[index]//*scale_width//(lines.width[index] -lines.minWidth)*scale_width + WidthMin
-		width = numtype(width) ? WidthMin : width
-		width *= scale_width
-		clip_width = (1-height/total_height)*width
-		
-		
-		color = Series_Color[series_num]
-		colorR = Colors[color][0]
-		colorG = Colors[color][1]
-		colorB = Colors[color][2]
-		colorR2 = Colors[color][3]
-		colorG2 = Colors[color][4]
-		colorB2 = Colors[color][5]
-		shape = shape!=0
-		
-		Triangle_X[fiveindex] = center - width
-		Triangle_Yup[fiveindex] = base
-		Triangle_Ydown[fiveindex] = base
-		Triangle_Color[fiveindex] = {{colorR},{colorG},{colorB}}
-		Triangle_Color2[fiveindex] = {{colorR2},{colorG2},{colorB2}}
-
-		fiveindex += 1
-		Triangle_X[fiveindex] = center - clip_width
-		Triangle_Yup[fiveindex] = base-height
-		Triangle_Ydown[fiveindex] = base-(1-shape)*height
-		Triangle_Color[fiveindex] = {{colorR},{colorG},{colorB}}
-		Triangle_Color2[fiveindex] = {{colorR2},{colorG2},{colorB2}}
-
-		fiveindex += 1
-		Triangle_X[fiveindex] = center + clip_width
-		Triangle_Yup[fiveindex] = base-height
-		Triangle_Ydown[fiveindex] = base-(1-shape)*height
-		Triangle_Color[fiveindex] = {{colorR},{colorG},{colorB}}
-		Triangle_Color2[fiveindex] = {{colorR2},{colorG2},{colorB2}}
-
-		fiveindex += 1
-		Triangle_X[fiveindex] = center + width
-		Triangle_Yup[fiveindex] = base
-		Triangle_Ydown[fiveindex] = base
-		Triangle_Color[fiveindex] = {{colorR},{colorG},{colorB}}
-		Triangle_Color2[fiveindex] = {{colorR2},{colorG2},{colorB2}}
-
-	endfor
-	fiveindex += 2
-	Triangle_X[fiveindex,lastTriangle] = NaN
-	//Triangle_Yup[fiveindex,lastTriangle] = NaN
-	//Triangle_Ydown[fiveindex,lastTriangle] = NaN
-	//Triangle_Color[fiveindex,lastTriangle] = NaN
-	lastTriangle = fiveindex + 2
-	if (isTopWinLWPlot(1))
-		UpdateCursor()
-	endif
-
-	// This update time should be under 3 ticks (0.05 sec) for good user interaction
-	//printf "Triangle update took %d ms.\r" ticks - start_time
-	return (StopMSTimer(-2) - start_time)*1e-6
-end
+//
+//	if (startP > endP)
+//		K0 = startP
+//		startP = endP + 1
+//		endP = K0
+//	else
+//		startP += 1
+//	endif
+//	endP = min(endP, StartP + 0.2*FIVEMAX_PEAKS_PER_PLOT - 1)
+//	
+//	// Now, calculate the Triangles
+//	Variable base, center, color, height, fiveindex, shape, width, scale_width,  scale_height, WidthMin, index
+//	Variable total_height, clip_width
+//	Variable colorR, colorB, colorG
+//	Variable colorR2, colorB2, colorG2
+//	Variable series_num
+//		
+//	scale_width = 2*ZoomW //(lines.maxWidth-lines.minWidth > 0) ? 0.045 * PolyCoeff[1] / (lines.maxWidth - lines.minWidth) : 0
+//	//WidthMin = 0.005 * PolyCoeff[1]
+// 	//Variable avgM = 0.5*(startM + endM)
+// 	//WidthMin = 0.005 *abs(poly(PolyCoeff,avgM)-poly(PolyCoeff,avgM+1))//PolyCoeff[1]
+// 	WidthMin = 0.005 *abs(poly(PolyCoeff,startM)-poly(PolyCoeff,endM))/(abs(startM-endM))
+//	//print lines.maxWidth, lines.minWidth, scale_width, WidthMin
+//	
+//	//scale_height = (lines.maxIntensity-lines.minIntensity > 0) ? 0.80 / (lines.maxIntensity - lines.minIntensity) : 0
+//	scale_height = (lines.maxIntensity-lines.minIntensity > 0) ? 0.90 / max(lines.maxIntensity, lines.minIntensity) : 1
+//	scale_height *= Zoom
+//	
+//	for (index = startP ; index <= endP ; index += 1)
+//		fiveindex = 5*(index-startP)
+//		series_num = str2num(StringFromList(0,Assignments[index],";"))
+//		if (numtype(series_num))
+//			series_num = 0
+//		endif
+//		shape = Series_Shape[series_num]
+//		shape = abs(lines.Intensity [index]) > minInt ?Series_Shape[series_num] : -1
+//
+//		base = LWm[index] + 0.5  // 1/17/07 + 0.5 is new
+//		center = Line_DF[index]
+//
+//		//total_height = (lines.Intensity[index] - lines.minIntensity) *scale_height + 0.1
+//		total_height = lines.Intensity[index]*scale_height
+//		base -= total_height < 0
+//
+//		height = shape<0 ? NaN : sign(total_height)*min(abs(total_height), 0.90)  // New Version 2.01
+//		width =  lines.width[index]//*scale_width//(lines.width[index] -lines.minWidth)*scale_width + WidthMin
+//		width = numtype(width) ? WidthMin : width
+//		width *= scale_width
+//		clip_width = (1-height/total_height)*width
+//		
+//		
+//		color = Series_Color[series_num]
+//		colorR = Colors[color][0]
+//		colorG = Colors[color][1]
+//		colorB = Colors[color][2]
+//		colorR2 = Colors[color][3]
+//		colorG2 = Colors[color][4]
+//		colorB2 = Colors[color][5]
+//		shape = shape!=0
+//		
+//		Triangle_X[fiveindex] = center - width
+//		Triangle_Yup[fiveindex] = base
+//		Triangle_Ydown[fiveindex] = base
+//		Triangle_Color[fiveindex] = {{colorR},{colorG},{colorB}}
+//		Triangle_Color2[fiveindex] = {{colorR2},{colorG2},{colorB2}}
+//
+//		fiveindex += 1
+//		Triangle_X[fiveindex] = center - clip_width
+//		Triangle_Yup[fiveindex] = base-height
+//		Triangle_Ydown[fiveindex] = base-(1-shape)*height
+//		Triangle_Color[fiveindex] = {{colorR},{colorG},{colorB}}
+//		Triangle_Color2[fiveindex] = {{colorR2},{colorG2},{colorB2}}
+//
+//		fiveindex += 1
+//		Triangle_X[fiveindex] = center + clip_width
+//		Triangle_Yup[fiveindex] = base-height
+//		Triangle_Ydown[fiveindex] = base-(1-shape)*height
+//		Triangle_Color[fiveindex] = {{colorR},{colorG},{colorB}}
+//		Triangle_Color2[fiveindex] = {{colorR2},{colorG2},{colorB2}}
+//
+//		fiveindex += 1
+//		Triangle_X[fiveindex] = center + width
+//		Triangle_Yup[fiveindex] = base
+//		Triangle_Ydown[fiveindex] = base
+//		Triangle_Color[fiveindex] = {{colorR},{colorG},{colorB}}
+//		Triangle_Color2[fiveindex] = {{colorR2},{colorG2},{colorB2}}
+//
+//	endfor
+//	fiveindex += 2
+//	Triangle_X[fiveindex,lastTriangle] = NaN
+//	//Triangle_Yup[fiveindex,lastTriangle] = NaN
+//	//Triangle_Ydown[fiveindex,lastTriangle] = NaN
+//	//Triangle_Color[fiveindex,lastTriangle] = NaN
+//	lastTriangle = fiveindex + 2
+//	if (isTopWinLWPlot(1))
+//		UpdateCursor()
+//	endif
+//
+//	// This update time should be under 3 ticks (0.05 sec) for good user interaction
+//	//printf "Triangle update took %d ms.\r" ticks - start_time
+//	return (StopMSTimer(-2) - start_time)*1e-6
+//end
 
 /// Loomis-Wood plot hook functions:
 function LWHookFunction(s)
@@ -2053,7 +1986,9 @@ function LWHookFunction(s)
 				SetActiveSubwindow $WinName(0,1)  // 01/17/07
 				theP = HitTest(s)
 				if (theP >= 0)
-					MoveCursor(theP)
+					//MoveCursor(theP)
+					
+					UpdateCursor(theP=theP)
 	 			endif
 	 		endif
  			return 1
@@ -2232,14 +2167,14 @@ static function HitTest(s)
 	EndIf
 
 	theTrace = StringByKey("TRACE",TraceFromPixel(xpixel, ypixel,"PREF:Triangle_Yup;"))
-	return NearestPeak(theX, theY - 0.2)	// New 2.01
+	return NearestPeak(theX, theY)	// New 2.01
 	
 	StrSwitch(theTrace)	// string switch
 		case "Triangle_Yup":
 		case "Triangle_Ydown":
 		case "LWCursorYup":
 		case "LWCursorYdown":
-			return NearestPeak(theX, theY - 0.2)
+			return NearestPeak(theX, theY)
 		default:
 	EndSwitch
 
@@ -2250,47 +2185,26 @@ static function NearestPeak(theX, theY)
 // Finds the peak nearest a set of cartesian coordinates in a Loomis-Wood plot.
 	variable theX, theY
 	
-	variable theM, minP, maxP
+//	variable theM, minP, maxP
 
 	String DataSet, PlotFolder
 	if (!GetFolders(1,DataSet, PlotFolder))
 		return 0
 	endif
+	DFREF dfr=$(PlotFolder)
 
-	WAVE Line_LWm = $(PlotFolder+"Line_LWm")
-	WAVE Line_DF = $(PlotFolder+"Line_DF")
+	WAVE/SDFR=dfr DataM
+	WAVE/SDFR=dfr DataDeltaNu
+	WAVE/SDFR=dfr DataP
 	GetAxis/Q bottom
 
-	theM = round(theY) // 1/17/07 round was ceil
-	maxP = BinarySearch(Line_LWm, theM)
+	Duplicate/FREE DataM, DataMfrac
+	variable range = abs(V_max - V_min)
+	DataMfrac += DataDeltaNu / range
 	
-	if (maxP == -2)
-		maxP = numpnts(Line_LWm)-1
-	elseif (maxP == -1)
-		Print "here!!"
-	elseif (maxP < 0)
-		Print "here"
-	endif
-	minP = maxP
-
-
-	for(;minP > 0 && Line_LWm[minP-1] == theM ;minP -= 1)
-	endfor
+	variable pnt = round(BinarySearchInterp(DataMfrac,round(theY)+theX/range))
 	
-	for(;maxP < numpnts(Line_LWm)-1 && Line_LWm[maxP+1] == theM ;maxP += 1)
-	endfor
-
-	if (minP == maxP)
-		return minP
-	endif
-
-	FindLevel /P/Q/R=[minP,maxP] Line_DF, theX
-	if (V_flag)
-		return (theX < 0) ? minP : maxP
-	endif
-	
-	return round(V_levelX)
-	
+	return pnt
 end
 
 static function VerticalScroll(Amount)
@@ -2339,7 +2253,9 @@ function ShowHideCursor()
 	UpdateCursor()
 end
 
-static function UpdateCursor()
+static function UpdateCursor([theP])
+	variable theP
+
 	Variable temp
 
 	String DataSet, PlotFolder
@@ -2347,15 +2263,16 @@ static function UpdateCursor()
 		return 0
 	endif
 
-	NVAR StartP = $(PlotFolder+"StartP")
-
-	NVAR lwCursor_p = $(PlotFolder+"lwCursor_p")
-	NVAR lwCursor_m = $(PlotFolder+"lwCursor_m")
-	NVAR lwCursor_Nu = $(PlotFolder+"lwCursor_Nu")
-	NVAR lwCursor_I = $(PlotFolder+"lwCursor_I")
-	NVAR lwCursor_W = $(PlotFolder+"lwCursor_W")
-	NVAR lwCursor_dM = $(PlotFolder+"lwCursor_dM")
-	NVAR lwCursor_dNu = $(PlotFolder+"lwCursor_dNu")
+	DFREF PlotDFR = $(PlotFolder)
+	
+	NVAR/SDFR=PlotDFR lwCursor_pnt
+	NVAR/SDFR=PlotDFR lwCursor_p 
+	NVAR/SDFR=PlotDFR lwCursor_m
+	NVAR/SDFR=PlotDFR lwCursor_Nu
+	NVAR/SDFR=PlotDFR lwCursor_I
+	NVAR/SDFR=PlotDFR lwCursor_W
+	NVAR/SDFR=PlotDFR lwCursor_dM
+	NVAR/SDFR=PlotDFR lwCursor_dNu
 	Variable hide=NumVarOrDefault(PlotFolder+"lwCursor_hide", 0)
 	Variable/G $(PlotFolder+"lwCursor_hide") =  hide
 	
@@ -2365,29 +2282,37 @@ static function UpdateCursor()
 	Struct SeriesStruct series
 	GetSeriesStruct(DataSet, series)
 
-	WAVE Triangle_X = $(PlotFolder+"Triangle_X")
-	WAVE Triangle_Yup = $(PlotFolder+"Triangle_Yup")
-	WAVE LWCursorYup = $(PlotFolder+"LWCursorYup")
-	WAVE LWCursorYdown = $(PlotFolder+"LWCursorYdown")
-	WAVE LWCursorX = $(PlotFolder+"LWCursorX")
-	WAVE Line_LWm = $(PlotFolder+"Line_LWm")
-	WAVE PolyCoeff = $(PlotFolder+"PolyCoeff")
-	WAVE/T AssignmentListText = $(PlotFolder+"AssignmentListText")
-	WAVE AssignmentListSel = $(PlotFolder+"AssignmentListSel")
+	WAVE/SDFR=PlotDFR Triangle_X
+	WAVE/SDFR=PlotDFR Triangle_Yup
+	WAVE/SDFR=PlotDFR LWCursorYup
+	WAVE/SDFR=PlotDFR LWCursorYdown
+	WAVE/SDFR=PlotDFR LWCursorX
+	WAVE/SDFR=PlotDFR/T AssignmentListText
+	WAVE/SDFR=PlotDFR AssignmentListSel
+	
+	WAVE/SDFR=PlotDFR DataP
+	WAVE/SDFR=PlotDFR DataM
+	WAVE/SDFR=PlotDFR DataDeltaNu
+	
+	if (!ParamIsDefault(theP))
+		lwCursor_pnt = theP
+	endif
+
+	lwCursor_p = DataP[lwCursor_pnt]
+	lwCursor_m = DataM[lwCursor_pnt]
+	lwCursor_dNu = DataDeltaNu[lwCursor_pnt]
 	
 	lwCursor_Nu = lines.Frequency[lwCursor_p]
 	lwCursor_I = lines.Intensity[lwCursor_p]
 	lwCursor_W = lines.Width[lwCursor_p]
 	
- 	temp = limit(5*(lwCursor_p-StartP),0,numpnts(Triangle_X)-4)
+ 	temp = limit(5*lwCursor_pnt,0,numpnts(Triangle_X)-4)
 	LWCursorX[0] = Triangle_X[temp]
 	LWCursorX[1] = Triangle_X[temp+3]
 	LWCursorYdown = hide ? NaN : Triangle_Yup[temp]
 	LWCursorYup = hide ? NaN : Triangle_Yup[temp]-0.8*sign(lwCursor_I)
 	
-	lwCursor_m = Triangle_Yup[temp] - 0.5*sign(lwCursor_I) // 01/17/07 added  - 0.5*sign(lwCursor_I)
 	lwCursor_dM = Triangle_X[temp+1]
-	lwCursor_dNu = lwCursor_Nu - poly(PolyCoeff, lwCursor_m)
 
 	AssignmentString2ListBoxWaves(lines.Assignments[lwCursor_p], series.Name, AssignmentListText, AssignmentListSel)
 end
@@ -2492,7 +2417,8 @@ static function CursorPosition()
 	if (!GetFolders(1,DataSet, PlotFolder))
 		return 0
 	endif
-	NVAR lwCursor_p = $(PlotFolder+"lwCursor_p")
+	DFREF PlotDFR = $(PlotFolder)
+	NVAR/SDFR=PlotDFR lwCursor_p
 	Return lwCursor_p
 end
 
@@ -2501,59 +2427,82 @@ static function CursorM()
 	if (!GetFolders(1,DataSet, PlotFolder))
 		return 0
 	endif
-	WAVE Line_LWm = $(PlotFolder+"Line_LWm")
-	return round(Line_LWm[CursorPosition()])
+	DFREF PlotDFR = $(PlotFolder)
+	NVAR/SDFR=PlotDFR lwCursor_m
+	Return lwCursor_m
 end
 
 static function VMoveCursor(Amount)
 	Variable Amount
 
-	Variable temp
-
 	String DataSet, PlotFolder
 	if (!GetFolders(1,DataSet, PlotFolder))
 		return 0
 	endif
-	NVAR lwCursor_p = $(PlotFolder+"lwCursor_p")
-	NVAR lwCursor_m = $(PlotFolder+"lwCursor_m")
-	NVAR StartP = $(PlotFolder+"StartP")
-	WAVE Triangle_X = $(PlotFolder+"Triangle_X")
-	WAVE Triangle_Yup = $(PlotFolder+"Triangle_Yup")
+	DFREF PlotDFR = $PlotFolder
 	
- 	temp = limit(5*(lwCursor_p-StartP),0,numpnts(Triangle_X)-5)
-	temp = NearestPeak(Triangle_X[temp+1], lwCursor_m + Amount) // 01/17/07 lwCursor_m was Triangle_Yup[temp]
-	if (temp == CursorPosition())
-		MoveCursor(temp+Amount)
-	else
-		MoveCursor(temp)
-	endif
+	
+	NVAR/SDFR=PlotDFR lwCursor_pnt
+	NVAR/SDFR=PlotDFR lwCursor_dNu
+	NVAR/SDFR=PlotDFR lwCursor_m
+	
+	Variable pnt = NearestPeak(lwCursor_dNu, lwCursor_m + Amount) // 01/17/07 lwCursor_m was Triangle_Yup[temp]
+	lwCursor_pnt = pnt
+	UpdateCursor()
+	
+//	if (temp == CursorPosition())
+//		MoveCursor(temp+Amount)
+//	else
+//		MoveCursor(temp)
+//	endif
 end
 
 static function HMoveCursor(Amount)
 	Variable Amount
-	MoveCursor(CursorPosition() + Amount)
-end
-
-function ChangeRange(theMin, theMax)	// F11
-// OPTIONAL DIALOG
-// Changes the left axis scaling of a Loomis-Wood plot.
-	variable theMin, theMax
-
+	
 	String DataSet, PlotFolder
 	if (!GetFolders(1,DataSet, PlotFolder))
 		return 0
 	endif
+	DFREF PlotDFR = $PlotFolder
+	
+	NVAR/SDFR=PlotDFR lwCursor_pnt
 
-	NVAR StartM = $(PlotFolder+"StartM")
-	NVAR EndM = $(PlotFolder+"EndM")
+
+	lwCursor_pnt += Amount
+	UpdateCursor()
+
+	
+//	MoveCursor(CursorPosition() + Amount)
+end
+
+function ChangeRange(theMin, theMax, left, right)	// F11
+// OPTIONAL DIALOG
+// Changes the left axis scaling of a Loomis-Wood plot.
+	variable theMin, theMax, left, right
+
+	DFREF PlotDFR = GetPlotDFR(1)
+	if (!DataFolderRefStatus(PlotDFR))
+		return 0
+	endif
+
+	NVAR/SDFR=PlotDFR StartM
+	NVAR/SDFR=PlotDFR EndM
+	NVAR/SDFR=PlotDFR StartDeltaNu
+	NVAR/SDFR=PlotDFR EndDeltaNu
 
 	if ((theMin==0) && (theMax==0))
 		do
 			theMax = ceil(StartM)
 			theMin = floor(EndM)
+			left = StartDeltaNu
+			right = EndDeltaNu
 			Prompt theMax, LW_STRING15
 			Prompt theMin, LW_STRING16
-			DoPrompt LW_TITLE, theMax, theMin
+			Prompt left, "Left Delta Nu"
+			Prompt right, "Right Delta Nu"
+
+			DoPrompt LW_TITLE, theMax, theMin, left, right
 
 			if (V_flag)
 				return 0
@@ -2561,13 +2510,12 @@ function ChangeRange(theMin, theMax)	// F11
 		while ((theMin==0) && (theMax==0))
 	endif
 
-	StartM = min(theMin,theMax)// - 1 
+	StartDeltaNu = left
+	EndDeltaNu = right
+	StartM = min(theMin,theMax) 
 	EndM = max(theMin,theMax)
 
-	//SetAxis/R left EndM , StartM - 1
-	SetAxis/R left EndM + 0.5, StartM - 0.5  // 01/17/07 Changed
-	// EndM -= 0.5
-	// StartM += 0.5
+	SetAxis/R left EndM + 0.5, StartM - 0.5	
 end
 
 function ChangeMinc(i)	// F11
@@ -2986,7 +2934,7 @@ static function FetchSeries(theSeries, s)
 	GetSeriesStruct(DataSet, series)
 
 	SetDataFolder PlotFolder
-	WAVE Line_DF
+	WAVE CombX
 
 	SetDataFolder DataSet
 	WAVE/T s.Labels =  BandCoeffLabels
@@ -3013,7 +2961,7 @@ static function FetchSeries(theSeries, s)
 		Mask[i] = str2num(StringFromList(1,data,","))
 
 		Frequency[i] = lines.Frequency[pnt]
-		Residual[i] = Line_DF[pnt]
+		Residual[i] = Frequency[i] - CombX(theM[i])
 		Intensity[i] = lines.Intensity[pnt]
 		Width[i] = lines.Width[pnt]
 	endfor
@@ -3298,32 +3246,6 @@ function EditBandConstants()	// F12
 	BandCoeff[6] = const6
 end
  
-function ChangeRegions()
-// NON-OPTIONAL DIALOG
-	String DataSet, PlotFolder
-	if (!GetFolders(1,DataSet, PlotFolder))
-		return 0
-	endif
-	
-	string saveDF = GetDataFolder(1)
-	SetDataFolder PlotFolder
-	NVAR Region
-	NVAR Region0
-	SVAR RegionString
-	WAVE BandCoeff
-	SetDataFolder saveDF
-	
-	variable reg = limit(Region0 + Region + 1, 1, ItemsInList(RegionString)+1)
-	Prompt reg, LW_STRING25, popup RegionString
-	DoPrompt LW_TITLE, reg
-	if (V_flag)
-		return 0
-	endif
-	Region = reg - Region0 - 1
-	// Force Update
-	BandCoeff *= 1
-end
-
 /// Assignment related functions:
 structure AssignmentStruct
 	Variable Point
