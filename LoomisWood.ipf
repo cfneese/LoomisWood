@@ -9,7 +9,7 @@
 // SOFTWARE.
 
 #pragma rtGlobals = 1			// Use modern global access method.
-#pragma IgorVersion = 5.02
+#pragma IgorVersion = 6.37
 #pragma Version = 3.00
 #pragma ModuleName = LWA
 
@@ -23,21 +23,28 @@
 //		The mapping of Nu to (dNu, M) is no longer bijective, so it is difficult to center the graph on a specific point.
 //		As a result the cursor can "get lost" while panning and zooming, and a lot of panning may be necessary after 
 //		updating the fit model.
-// Rewrote the code to use DFREFs instead of Strings where possible.
+// Rewrote the code to use DFREFs instead of strings where possible.
 // Added RetrieveOrCreateTable() so that tables are initialized and named in a standard way.
 // GetLwInfo() replaces GetFolders for retrieving data from the Window note.
 // Added mouse wheel support.
 // Added shift-cursor key support for panning.  PgDn and PgUp still pan vertically.
 // Added horizontal panning.
 // Removed superfluous dM display
+// Added /HELP flags to all DoPrompt Command
+// Refactored string table to use more descriptive names
 //
 // Added Rule, LineColor, and Model to Series Table
+// Added M1 and M2 to Series Table
+// Modified DoBandCoeffUpdate to calc from M1 to M2 
 //
 // ToDo List:
 //		Replace window note retrieved with GetWindow with custom user data retrieved with GetUserData()
 //		More structures for manipulating the plot folder.
 //		Modify color support to use color index wave instead of RGB color wave.  Add alpha channel to colors.
 //		Improve cursor movement on zoom/pan/jump 
+//
+//		Implement Hook function to load QM models
+
 
 // Igor 7 Bugs:
 // Bug 1: (Reported to WM)
@@ -94,8 +101,9 @@
 
 /// Global constants
 static strconstant BASE_FOLDER = "root:LW"
+static strconstant QM_FOLDER = "root:QM"
 
-static constant FIVEMAX_PEAKS_PER_PLOT = 500000
+static constant FIVEMAX_PEAKS_PER_PLOT = 10000
 static constant MAX_FIT_ORDER = 7
 static constant MAX_M = 10000
 
@@ -133,48 +141,59 @@ Static Constant VK_DELETE = 0x7F
 // NOTE: There are also strings in the Menu "Loomis-Wood" command  below
 static strconstant LW_TITLE = "Loomis-Wood"
 static strconstant LW_ABOUT = "Loomis-Wood Add-In Version 2\rMay 2005\rChristopher F. Neese\rhttp://fermi.uchicago.edu/freeware/LoomisWood.shtml"
-static strconstant LW_STRING1 = "Name of New Loomis Wood Folder:  "
-static strconstant LW_STRING2 = "Wave containing peak frequencies:"
-static strconstant LW_STRING3 = "Wave containing peak intensities:"
-static strconstant LW_STRING4 = "Wave containing peak widths:"
-//static strconstant LW_STRING5 = "Intensity for all peaks:"
-//static strconstant LW_STRING6 = "Width for all peaks:"
-static strconstant LW_STRING7 = "\" is not an availible name.  Do you wish to use \""
-static strconstant LW_STRING8 = "\" instead?"
-static strconstant LW_STRING9 = "Loomis Wood Folder to Delete:"
-static strconstant LW_STRING10 = "Series Name: (cannot contain \";\")"
-static strconstant LW_STRING11 = "Series Color:"
-static strconstant LW_STRING12 = "Select a Series:"
-static strconstant LW_STRING13 = "Series to delete:"
-static strconstant LW_STRING14="the Shift:"
-static strconstant LW_STRING15="Maximum m:"
-static strconstant LW_STRING16="Minimum m:"
-static strconstant LW_STRING17 = "Loomis-Wood Folder:"
-static strconstant LW_STRING18 = "Name of New Plot Folder:"
-static strconstant LW_STRING19 = "The waves, \""
-static strconstant LW_STRING20 = "\", have different dimensions.  If you choose to continue, Loomis-Wood will use truncated copies of all three waves.  The original waves will remain unchanged.  Do you wish to continue?"
+static strconstant LW_NEW_DATASET_NAME = "Name of New Loomis Wood Folder:  "
+static strconstant LW_LINE_FREQ_NAME = "Wave containing peak frequencies:"
+static strconstant LW_LINE_INT_NAME = "Wave containing peak intensities:"
+static strconstant LW_LINE_WIDTH_NAME = "Wave containing peak widths:"
+static strconstant LW_NAME_UNAVAILABLE = "\"%s\" is not an availible name.  Do you wish to use \"%s\" instead?"
+static strconstant LW_FOLDER_TO_DELETE = "Loomis Wood Folder to Delete:"
+static strconstant LW_NEW_SERIES_NAME = "Series Name: (cannot contain \";\")"
+static strconstant LW_SERIES_FILL_COLOR = "Series Color:"
+static strconstant LW_SELECT_SERIES = "Select a Series:"
+static strconstant LW_SERIES_TO_DELETE = "Series to delete:"
+static strconstant LW_M_SHIFT="the Shift:"
+static strconstant LW_MAX_M="Maximum m:"
+static strconstant LW_MIN_M="Minimum m:"
+static strconstant LW_LEFT_DELTA_NU="Left Delta Nu"
+static strconstant LW_RIGHT_DELTA_NU="Right Delta Nu"
+static strconstant LW_DATASET_NAME = "Loomis-Wood Folder:"
+static strconstant LW_NEW_PLOT_NAME = "Name of New Plot Folder:"
+static strconstant LW_WAVES_HAVE_DIFFERENT_DIMS = "The waves, \"%s\", have different dimensions.  If you choose to continue, Loomis-Wood will use truncated copies of all three waves.  The original waves will remain unchanged.  Do you wish to continue?"
 static strconstant LW_STRING21 = "\", and \""
-static strconstant LW_STRING22 = "Frequency Tolerence"
-static strconstant LW_STRING23 = "Assignment function"
-static strconstant LW_STRING24 = "Line # %d, %f, %f not matched.\r"
-static strconstant LW_STRING25 = "Please select a region:"
-static strconstant LW_STRING26 = "Increment for m axis:"
+static strconstant LW_FREQ_TOL = "Frequency Tolerence"
+static strconstant LW_ASSIGNMENT_FUNC = "Assignment function"
+static strconstant LW_LINE_NOT_MATCHED = "Line # %d, %f, %f not matched.\r"
+static strconstant LW_M_AXIS_INC = "Increment for m axis:"
 
-static strconstant LW_HISTORY1="\tThe Loomis-Wood folder \""
-static strconstant LW_HISTORY2="\" has been deleted."
-static strconstant LW_HISTORY3="\" has been created."
+static strconstant LW_HISTORY_LW_FOLDER_DELETED="\tThe Loomis-Wood folder \"%s\" has been deleted.\r"
+static strconstant LW_HISTORY_LW_FOLDER_CREATED="\tThe Loomis-Wood folder \"%s\" has been created.\r"
 
-static strconstant LW_ERROR1 = "\tLoomis-Wood Error: \""
-static strconstant LW_ERROR2 = "\" does not exist."
-static strconstant LW_ERROR3 = "\tLoomis-Wood Error:  The active graph is not a Loomis-Wood plot.\r"
-static strconstant LW_ERROR4 = "\tLoomis-Wood Error:  There are no peaks predicted by the current band constants.  Please edit the band constants.\r"
-static strconstant LW_ERROR5 = "\tLoomis-Wood Error:  The band constants are invalid.  Please edit the band constants.\r"
-static strconstant LW_ERROR6 = "\tLoomis-Wood Error:  The series requested does not exist.\r"
-static strconstant LW_ERROR7 = "\tLoomis-Wood Error:  The order of the series to be fit is less than 1.\r"
-static strconstant LW_ERROR8 = "\tLoomis-Wood Error:  An error occured while fitting the current series.\r"
-static strconstant LW_ERROR9 = "\tLoomis-Wood Error:  A backup coefficient wave does not exist.\r"
+static strconstant LW_ERROR_INVALID_LWDS = "\tLoomis-Wood Error: \"%s\" is not a valid LW Data Set.\r"
+static strconstant LW_ERROR_GRAPH_NOT_LW_PLOT = "\tLoomis-Wood Error:  The active graph is not a Loomis-Wood plot.\r"
+static strconstant LW_ERROR_NO_LINES_PRED = "\tLoomis-Wood Error:  There are no peaks predicted by the current band constants.  Please edit the band constants.\r"
+static strconstant LW_ERROR_INVALID_BAND_CONST = "\tLoomis-Wood Error:  The band constants are invalid.  Please edit the band constants.\r"
+static strconstant LW_ERROR_SERIES_NOT_FOUND = "\tLoomis-Wood Error:  The series requested does not exist.\r"
+static strconstant LW_ERROR_ORDER_LESS_THAN_1 = "\tLoomis-Wood Error:  The order of the series to be fit is less than 1.\r"
+static strconstant LW_ERROR_FIT_ERROR = "\tLoomis-Wood Error:  An error occured while fitting the current series.\r"
+static strconstant LW_ERROR_NO_BACKUP_COEF = "\tLoomis-Wood Error:  A backup coefficient wave does not exist.\r"
 
 static strconstant FIT_RES = "\tFit of series %s, order %d, %d lines fit, %d lines assigned.\r"
+
+static strconstant HELP_NEW_LW_DATASET_DIALOG="New LW Data Set Dialog"
+static strconstant HELP_SELECT_LINE_LIST_WAVES="Select Line List Waves Dialog"
+static strconstant HELP_SELECT_DATASET_DIALOG="Select LW Data Set Dialog"
+static strconstant HELP_NEW_LW_PLOT_DIALOG="New LW Plot Dialog"
+static strconstant HELP_SET_RANGE="Set LW Plot Range Dialog"
+static strconstant HELP_SET_M_INC="Set Tick Increment Dialog"
+static strconstant HELP_ADD_SERIES="Add New Series Dialog"
+static strconstant HELP_SELECT_SERIES="Select Series Dialog"
+static strconstant HELP_DELETE_SERIES="Delete Series Dialog"
+static strconstant HELP_UPDATE_LINE_LIST="Update Line List Dialog"
+static strconstant HELP_EXTRACT_ASSIGNMENTS_DIALOG="Extract Assignments Dialog"
+static strconstant HELP_M_SHIFT_SERIES="M-Shift Series Dialog"
+static strconstant HELP_M_SHIFT_CONST="M-Shift Constants Dialog"
+static strconstant HELP_EDIT_BAND_CONST="Edit Band Constants Dialog"
+
 
 /// Loomis-Wood menu and related functions:
 menu "&Loomis-Wood", dynamic
@@ -183,6 +202,8 @@ menu "&Loomis-Wood", dynamic
 // Thus, all of the strings for this menu are literals, not static strconstants.
 // If functions are static, they must be prefixed with LWA#
 	help = {LWA#OnLWmenuBuild()+"Welcome to Loomis-Wood!"}
+
+	LWA#GetDataSetName()
 
 	submenu "&Data Sets"
 
@@ -266,7 +287,7 @@ menu "&Loomis-Wood", dynamic
 		LWA#LWDynamicMenuItem(-1)+ "&M-Shift Current Series.../F6", ShiftSeries(GetCurrentSeriesNumber(),0,1)
 		help = {"M-shift the current series.", "This command is only availible for Loomis-Wood plots."}
 
-		LWA#LWDynamicMenuItem(-1)+ "&M-Flip Current Series.../SF6", FlipSeries(GetCurrentSeriesNumber(),1)
+		LWA#LWDynamicMenuItem(-1)+ "&M-Flip Current Series/SF6", FlipSeries(GetCurrentSeriesNumber(),1)
 		help = {"M-flip the current series.", "This command is only availible for Loomis-Wood plots."}
 
 		LWA#LWDynamicMenuItem(-1)+ "&View Current Series/F7", ViewSeries(GetCurrentSeriesNumber())
@@ -289,6 +310,7 @@ static function/S OnLWmenuBuild()
 	DFREF saveDF = GetDataFolderDFR()
 	SetDataFolder root:
 	NewDataFolder/O $BASE_FOLDER
+	OnSetupModels()
 	SetDataFolder saveDF
 	return ""
 end
@@ -748,8 +770,8 @@ static function/DF GetNewLWDataFolder()
 	DFREF SaveDF = GetDataFolderDFR()
 
 	//Ask for New DataSet.
-	Prompt DataSet, LW_STRING1
-	DoPrompt LW_TITLE, DataSet
+	Prompt DataSet, LW_NEW_DATASET_NAME
+	DoPrompt/HELP=HELP_NEW_LW_DATASET_DIALOG LW_TITLE, DataSet
 	If (V_Flag)
 		Return $""
 	EndIf
@@ -760,15 +782,18 @@ static function/DF GetNewLWDataFolder()
 	//Verify DataSet.
 	If (CheckName(DataSet,11))
 		Do
-			DoAlert 2, "\""+ DataSet + LW_STRING7+ UniqueName(CleanupName(DataSet,1),11,0) + LW_STRING8
+			string msg
+			string alt = UniqueName(CleanupName(DataSet,1),11,0)
+			sprintf msg, LW_NAME_UNAVAILABLE, DataSet, alt
+			DoAlert 2, msg
 			switch (V_Flag)
 			case 1:
 				// The user clicked "Yes", so change the name.
-				DataSet=UniqueName(CleanupName(DataSet,1),11,0)
+				DataSet=alt
 				break
 			case 2:
 				// The user clicked "No", so try again.
-				DoPrompt LW_TITLE, DataSet
+				DoPrompt/HELP=HELP_NEW_LW_DATASET_DIALOG LW_TITLE, DataSet
 				If (V_Flag)
 					Return $""
 				EndIf
@@ -780,15 +805,17 @@ static function/DF GetNewLWDataFolder()
 			endswitch
 		While(CheckName(DataSet,11))
 	EndIf
-	DataSet = BASE_FOLDER +":"+ DataSet
 	
+	NewDataFolder/S $DataSet
+	DFREF dfr = ://GetDataFolderDFR()
 	//Switch back to original folder.
-	NewDataFolder $DataSet
 	SetDataFolder SaveDF
-	Return $DataSet
+	Return dfr
 end
 
-static function isDataSetDFR(dfref dfr)
+static function isDataSetDFR(dfr)
+	DFREF dfr
+	
 	DFREF current = GetDataFolderDFR()
 	SetDataFolder dfr
 	SetDataFolder ::
@@ -845,10 +872,10 @@ static function GetPeakfinderWaves(Line_Frequency, Line_Intensity, Line_Width)
 		Line_W = NameOfWave($Line_Width)
 	endif
 
-	Prompt Line_F, LW_STRING2, popup Real1DWaveList("*", ";", "")
-	Prompt Line_I, LW_STRING3, popup "_constant_;" + Real1DWaveList("*", ";", "")
-	Prompt Line_W, LW_STRING4, popup "_constant_;" + Real1DWaveList("*", ";", "")
-	DoPrompt LW_TITLE, Line_F, Line_I, Line_W
+	Prompt Line_F, LW_LINE_FREQ_NAME, popup Real1DWaveList("*", ";", "")
+	Prompt Line_I, LW_LINE_INT_NAME, popup "_constant_;" + Real1DWaveList("*", ";", "")
+	Prompt Line_W, LW_LINE_WIDTH_NAME, popup "_constant_;" + Real1DWaveList("*", ";", "")
+	DoPrompt/HELP=HELP_SELECT_LINE_LIST_WAVES LW_TITLE, Line_F, Line_I, Line_W
 	
 	string df = GetDataFolder(1)
 	Line_Frequency = df+Line_F
@@ -916,7 +943,10 @@ static function NewLinesFolder(SourceDF, LWDF)
 	EndIf
 
 	If (VerifyInputWaveDims(Frequencies, Intensities, Widths))
-		DoAlert 1, LW_STRING19+Frequencies+"\", \""+Intensities+LW_STRING21+Widths+LW_STRING20
+		string msg
+		msg = Frequencies+"\", \""+Intensities+LW_STRING21+Widths
+		sprintf msg, LW_WAVES_HAVE_DIFFERENT_DIMS, msg
+		DoAlert 1, msg
 		If (V_Flag==2)
 			// The user clicked "No", so abort.
 			SetDataFolder SourceDF
@@ -975,7 +1005,7 @@ static function NewSeriesFolder(DataSet)
 	
 	Make/T/N=1 Name="Unassigned"
 	Make/I/N=1 Shape
-	Make/I/N=1 Model, Color, Order
+	Make/I/N=1 Color, Order
 	Make/T/N=1 Data
 	Variable/G Count = 0
 	
@@ -984,7 +1014,7 @@ static function NewSeriesFolder(DataSet)
 
 	Make/T/N=1 Rule=""
 	Make/I/N=1 Model, LineColor
-	
+	Make/I/N=1 M1=-300, M2=300
 	
 	SetDataFolder saveDF
 end
@@ -1019,17 +1049,18 @@ end
 //	endif
 //end
 	
-function/DF GetDataSetDialog(msg)
+static function/DF GetDataSetDialog(msg)
 	string msg
 	
 	//Prompt for DataSet
-	String DataSetFolders = FolderList(BASE_FOLDER)
+	String DataSetFolders = FolderList($BASE_FOLDER)
 	String DataSetName
 	if (ItemsInList(DataSetFolders)>0)
 		Prompt DataSetName, msg, popup DataSetFolders
-		DoPrompt LW_TITLE, DataSetName
+		DoPrompt/HELP=HELP_SELECT_DATASET_DIALOG LW_TITLE, DataSetName
 		if (V_flag==0)
-			DFREF dfr = $(BASE_FOLDER + ":" + DataSetName + ":")
+			DFREF base = $(BASE_FOLDER)
+			DFREF dfr = base:$DataSetName
 			return dfr
 		endif
 	endif	
@@ -1041,7 +1072,7 @@ function DeleteLWDataSet(DataSetDFR)
 
 	if (!DataFolderRefStatus(DataSetDFR))
 		//Prompt for DataSet
-		DFREF DataSetDFR = GetDataSetDialog(LW_STRING9)
+		DFREF DataSetDFR = GetDataSetDialog(LW_FOLDER_TO_DELETE)
 		if (DataFolderRefStatus(DataSetDFR)!=1)
 			return 0
 		endif	
@@ -1050,13 +1081,13 @@ function DeleteLWDataSet(DataSetDFR)
 	if (isDataSetDFR(DataSetDFR))
 		// DataSet invalid
 		Beep
-		Print LW_ERROR1 + GetDataFolder(1,DataSetDFR) + LW_ERROR2
+		printf LW_ERROR_INVALID_LWDS, GetDataFolder(1,DataSetDFR)
 		return 0
 	endif
 
 	DFREF plots = DataSetDFR:Plots
 	//First, remove all dependencies in plot folders
-	int index
+	variable index
 	for(index = 1 ; index <= CountObjectsDFR(plots,4) ; index += 1)
 		DFREF plot = plots:$GetIndexedObjNameDFR(plots,4,index-1)
 		DeleteLWPlotFolder(plot)
@@ -1068,7 +1099,7 @@ function DeleteLWDataSet(DataSetDFR)
 	KillDataFolder DataSetDFR
 	
 	Beep	
-	Print LW_HISTORY1 + name + LW_HISTORY2
+	Printf LW_HISTORY_LW_FOLDER_DELETED, name
 end
 
 function DeleteLWPlotFolder(PlotFolder)
@@ -1091,9 +1122,18 @@ function DeleteLWPlotFolder(PlotFolder)
 	Execute/P/Q/Z cmd
 end
 
+static function/S GetDataSetName()
+	Struct LwInfo info
+	if (!GetLwInfo(3, info, quiet=1))
+		return "\\M0:(:No Active Data Set"
+	endif
+
+	return "\\M0:(:Active Data Set: "+GetDataFolder(0,info.data)
+end
+
 function ViewLineList()
 	Struct LwInfo info
-	if (!GetLwInfo(1, info))
+	if (!GetLwInfo(3, info))
 		return 0
 	endif
 
@@ -1129,19 +1169,19 @@ function NewLWPlot(DataSet, PlotFolderName)
 		if (isDataSetDFR(DataSet))
 			// DataSet invalid
 			Beep
-			Print LW_ERROR1 + GetDataFolder(1, DataSet) + LW_ERROR2
+			printf LW_ERROR_INVALID_LWDS, GetDataFolder(1,DataSet)
 			return 0
 		endif
 	else
 		//Prompt for DataSet and PlotFolder
-		Prompt DataSetName, LW_STRING17, popup FolderList($BASE_FOLDER)
-		Prompt PlotFolderName, LW_STRING18
-		DoPrompt LW_TITLE, DataSetName, PlotFolderName
+		Prompt DataSetName, LW_DATASET_NAME, popup FolderList($BASE_FOLDER)
+		Prompt PlotFolderName, LW_NEW_PLOT_NAME
+		DoPrompt/HELP=HELP_NEW_LW_PLOT_DIALOG LW_TITLE, DataSetName, PlotFolderName
 		if (V_flag)
 			return 0
 		endif
 		
-		DataSetName = BASE_FOLDER + ":" + DataSetName + ":"
+		DataSetName = BASE_FOLDER + ":" + PossiblyQuoteName(DataSetName) + ":"
 		DFREF DataSet = $DataSetName
 	endif
 	
@@ -1313,15 +1353,21 @@ function DoBandCoeffUpdate(BandCoeff)
 	
 	variable start_time = ticks
 
-	string PlotFolder = GetWavesDataFolder(BandCoeff,1)
+	DFREF PlotFolder = GetWavesDataFolderDFR(BandCoeff)
 	DFREF SaveDF = GetDataFolderDFR()
 	SetDataFolder PlotFolder
+	NVAR CurrentSeries
 	WAVE PolyCoeff
 	SetDataFolder :::
-	WAVE Line_Frequency = :Lines:Frequency
 	WAVE Band2Poly
+	SetDataFolder Series
+	WAVE M1, M2	
 	SetDataFolder PlotFolder
 
+	variable m_min = m1[CurrentSeries]
+	variable m_max = m2[CurrentSeries]
+	variable nrows = abs(m_max-m_min)+1
+	
 	variable order
 	
 	MatrixOp/O PolyCoeff = Band2Poly x BandCoeff
@@ -1331,7 +1377,7 @@ function DoBandCoeffUpdate(BandCoeff)
 	if (V_numINFs || V_numNaNs)
 		// If PolyCoeff contains INFs or NaNs, things will go crazy:
 		Beep
-		print "1111", LW_ERROR4
+		print "1111", LW_ERROR_NO_LINES_PRED
 		SetDataFolder SaveDF
 		return 0
 	endif
@@ -1342,13 +1388,13 @@ function DoBandCoeffUpdate(BandCoeff)
 	while ((PolyCoeff[order] == 0) && (order > 0))
 	if (order <= 0)
 		Beep
-		print "2222", LW_ERROR4 
+		print "2222", LW_ERROR_NO_LINES_PRED 
 		SetDataFolder SaveDF
 		return 0
 	endif
 
-	Make/O/D/N=2001 CombX, CombY = 1, CombM
-	SetScale/I x, -1000, 1000, "M", CombX, CombY, CombM
+	Make/O/D/N=(nrows) CombX, CombY = 1, CombM
+	SetScale/I x, m_min, m_max, "M", CombX, CombY, CombM
 	CombM = x
 	CombX = poly2(PolyCoeff, order, x)
 
@@ -1372,7 +1418,6 @@ function DoSeriesOrderUpdate(Series_Order, CurrentSeries)
 	endif 
 	
 	variable res=Series_Order[CurrentSeries]
-	print "Here", res
 	return res
 end  
 
@@ -2244,12 +2289,12 @@ function ChangeRange(theMin, theMax, left, right)	// F11
 			theMin = floor(EndM)
 			left = StartDeltaNu
 			right = EndDeltaNu
-			Prompt theMax, LW_STRING15
-			Prompt theMin, LW_STRING16
-			Prompt left, "Left Delta Nu"
-			Prompt right, "Right Delta Nu"
+			Prompt theMax, LW_MAX_M
+			Prompt theMin, LW_MIN_M
+			Prompt left, LW_LEFT_DELTA_NU
+			Prompt right, LW_RIGHT_DELTA_NU
 
-			DoPrompt LW_TITLE, theMax, theMin, left, right
+			DoPrompt/HELP=HELP_SET_RANGE LW_TITLE, theMax, theMin, left, right
 
 			if (V_flag)
 				return 0
@@ -2274,8 +2319,8 @@ function ChangeMinc(i)	// F11
 	if (i<=0)
 		do
 			i = 1
-			Prompt i, LW_STRING26
-			DoPrompt LW_TITLE, i
+			Prompt i, LW_M_AXIS_INC
+			DoPrompt/HELP=HELP_SET_M_INC LW_TITLE, i
 			i = round(i)
 			if (V_flag)
 				return 0
@@ -2302,10 +2347,10 @@ function AddSeries()	// F2
 			
 	string SeriesName
 	variable SeriesColor = Mod(series.Count+1,DimSize(Colors,0)-1)+1
-	Prompt SeriesName, LW_STRING10
-	Prompt SeriesColor, LW_STRING11, popup, DimLabels2List(Colors,0) //COLOR_LIST
+	Prompt SeriesName, LW_NEW_SERIES_NAME
+	Prompt SeriesColor, LW_SERIES_FILL_COLOR, popup, DimLabels2List(Colors,0) //COLOR_LIST
 	do		// Dialog repeats if SeriesName contains a ";", or is of length 0
-		DoPrompt LW_TITLE, SeriesName, SeriesColor
+		DoPrompt/HELP=HELP_ADD_SERIES LW_TITLE, SeriesName, SeriesColor
 		if (V_Flag)
 			// User Canceled -- Do Nothing
 			return 1
@@ -2315,7 +2360,7 @@ function AddSeries()	// F2
 	SeriesColor -= 1
 	series.Count += 1
 	Redimension/N=(series.Count+1) series.Name, series.Data, series.Color, series.Shape, series.Order, series.LegendText, series.LegendShape
-	Redimension/N=(series.Count+1) series.Rule, series.LineColor, series.Model
+	Redimension/N=(series.Count+1) series.Rule, series.LineColor, series.Model, series.M1, series.M2
 	series.Name[series.Count] = SeriesName
 	series.LegendText[series.Count] = SeriesName
 	series.Data[series.Count] = ""
@@ -2325,6 +2370,8 @@ function AddSeries()	// F2
 	series.Order[series.Count] = 1
 
 	series.LineColor[series.Count] = SeriesColor
+	series.M1[series.Count] = series.M1[0]
+	series.M2[series.Count] = series.M2[0]
 end
 
 function SelectSeries()	// F3
@@ -2338,8 +2385,8 @@ function SelectSeries()	// F3
 	GetSeriesStruct(info.data, series)
 
 	variable theSeries
-	prompt theSeries, LW_STRING12, popup TextWave2List(Series.Name)+"_Create_New_Series_;"
-	doprompt LW_TITLE, theSeries
+	prompt theSeries, LW_SELECT_SERIES, popup TextWave2List(Series.Name)+"_Create_New_Series_;"
+	DoPrompt/HELP=HELP_SELECT_SERIES LW_TITLE, theSeries
 	if (V_Flag)
 		return 0
 	endif
@@ -2382,8 +2429,8 @@ function DeleteSeries()	// F4
 	GetSeriesStruct(info.data, series)
 	
 	variable theSeries
-	prompt theSeries, LW_STRING13, popup TextWave2List(series.Name)
-	doprompt LW_TITLE, theSeries
+	prompt theSeries, LW_SERIES_TO_DELETE, popup TextWave2List(series.Name)
+	DoPrompt/HELP=HELP_DELETE_SERIES LW_TITLE, theSeries
 	if (V_Flag)
 		return 0
 	endif
@@ -2415,7 +2462,7 @@ function DeleteSeries()	// F4
 //	endfor
 
 	DeletePoints theSeries, 1, series.Name, series.Data, series.Color, series.Shape, series.Order, series.LegendText, series.LegendShape
-	DeletePoints theSeries, 1, series.Rule, series.LineColor, series.Model
+	DeletePoints theSeries, 1, series.Rule, series.LineColor, series.Model, series.M1, series.M2
 	series.Count = numpnts(series.Name) - 1
 	SynchronizeLines2Series()
 	
@@ -2482,7 +2529,7 @@ function/S FitSeries(theSeries)	// F5
 
 	if (theSeries < 0 || numtype(theSeries))
 		Beep
-		return LW_ERROR6
+		return LW_ERROR_SERIES_NOT_FOUND
 	endif
 
 	variable order
@@ -2503,7 +2550,7 @@ function/S FitSeries(theSeries)	// F5
 	if (theSeries > series.Count)
 		Beep
 		SetDataFolder saveDF 
-		return LW_ERROR6
+		return LW_ERROR_SERIES_NOT_FOUND
 	endif
 	
 	STRUCT SeriesFitStruct s
@@ -2527,12 +2574,12 @@ function/S FitSeries(theSeries)	// F5
 	else
 		Beep
 		SetDataFolder saveDF 
-		return LW_ERROR7
+		return LW_ERROR_ORDER_LESS_THAN_1
 	endif
 
 	if (V_FitError)
 		Beep
-		total_message = LW_ERROR8
+		total_message = LW_ERROR_FIT_ERROR
 	else
 		WAVE W_coef , W_sigma, M_Covar
 	
@@ -2571,7 +2618,7 @@ function/S FitSeries(theSeries)	// F5
 //		total_message += message
 //		for (index = 0 ; index < order ; index += 1)
 //			strDigit = num2istr(2+floor(log(abs(BandCoeff[index])))-floor(log(abs(W_sigma[index]))))
-//			sprintf message, "\t%16s = %#14."+strDigit+"G ? %#5.2G", BandCoeffLabels[index], BandCoeff[index], W_sigma[index]
+//			sprintf message, "\t%16s = %#14."+strDigit+"G ± %#5.2G", BandCoeffLabels[index], BandCoeff[index], W_sigma[index]
 //			total_message += message
 //			for (index2 = 0 ; index2 < index ; index2 += 1)
 //				sprintf message, "\t\t%6.3f", M_correl[index][index2]
@@ -2605,7 +2652,7 @@ function/S GetFitRes(s)
 	total_message += message
 	for (index = 0 ; index <= s.order ; index += 1)
 		strDigit = num2istr(2+floor(log(abs(s.W_Coef[index])))-floor(log(abs(s.W_sigma[index]))))
-		sprintf message, "\t%16s = %#14."+strDigit+"G ? %#5.2G", ""+s.Labels[index], 0+s.W_Coef[index], 0+s.W_sigma[index]
+		sprintf message, "\t%16s = %#14."+strDigit+"G ± %#5.2G", ""+s.Labels[index], 0+s.W_Coef[index], 0+s.W_sigma[index]
 		total_message += message
 		for (index2 = 0 ; index2 < index ; index2 += 1)
 			sprintf message, "\t\t%6.3f", 0+s.M_correl[index][index2]
@@ -2665,7 +2712,7 @@ function/S UndoFit()	// Shift-F5
 	if (WaveExists(LastCoeff))
 		BandCoeff = LastCoeff
 	else
-		return LW_ERROR9
+		return LW_ERROR_NO_BACKUP_COEF
 	endif
 	
 	return ""
@@ -2724,7 +2771,7 @@ static function FetchSeries(theSeries, s)
 	String Title = series.Name[theSeries]
 	String DataSetName = GetDataFolder(0,info.data)
 	sprintf Title, "LWA: %s, \"%s\"", DataSetName, Title
-	String WindowName = DataSetName + "_CS"
+	String WindowName = CleanupName(DataSetName+"_CS",0)
 	DoWindow/T $WindowName, Title
 
 	Sort theM, Frequency, Residual, Mask, Intensity,Width, theM
@@ -2742,8 +2789,8 @@ function ShiftSeries(theSeries, theShift, autoFixConstants)	// F6
 
 	if (!theShift)
 		// If theShift is zero, prompt for a new value
-		Prompt theShift, LW_STRING14
-		DoPrompt LW_TITLE, theShift
+		Prompt theShift, LW_M_SHIFT
+		DoPrompt/HELP=HELP_M_SHIFT_SERIES LW_TITLE, theShift
 		if (V_flag)
 			return 0
 		endif
@@ -2812,8 +2859,8 @@ static function ShiftConstants(theShift)
 
 	if (!theShift)
 		// If theShift is zero, prompt for a new value
-		Prompt theShift, LW_STRING14
-		DoPrompt LW_TITLE, theShift
+		Prompt theShift, LW_M_SHIFT
+		DoPrompt/HELP=HELP_M_SHIFT_CONST LW_TITLE, theShift
 		if (V_flag)
 			return 0
 		endif
@@ -2862,7 +2909,6 @@ static function FlipConstants()
 	DoUpdate
 end
 
-
 function ViewSeries(theSeries)	// F7
 	Variable theSeries
 
@@ -2901,7 +2947,7 @@ end
 
 function ViewSeriesList()	// F8
 	Struct LwInfo info
-	if (!GetLwInfo(1, info))
+	if (!GetLwInfo(3, info))
 		return 0
 	endif
 
@@ -2910,12 +2956,11 @@ function ViewSeriesList()	// F8
 		GetSeriesStruct(info.data, series)
 
 		MoveWindow 5.25,42.5,1000,236
-		AppendToTable series.Name, series.Rule, series.Model, series.Color, series.LineColor, series.Shape,series.Order, series.LegendShape, series.LegendText, series.Data
-		ModifyTable showParts=254
+		AppendToTable series.Name, series.Rule, series.Model, series.M1, series.M2, series.Color, series.LineColor, series.Shape,series.Order, series.LegendShape, series.LegendText, series.Data
 
-		ModifyTable font(series.Name)="Fixedsys"
+		ModifyTable font(series.Name)="Fixedsys", width=32
 		ModifyTable width(Point)=36,width(series.Name)=210,title(series.Name)="Name"
-		ModifyTable width(series.Rule)=210,width(series.LineColor)=32,width(series.Model)=32
+		ModifyTable width(series.Rule)=210//,width(series.LineColor)=32,width(series.Model)=32
 		ModifyTable width(series.Color)=32,title(series.Color)="Color"
 		ModifyTable width(series.Shape)=32, title(series.Shape)="Shape"
 		ModifyTable width(series.Order)=32,title(series.Order)="Order"
@@ -2965,7 +3010,7 @@ function EditBandConstants()	// F12
 	Prompt const4, BandCoeffLabels[4]
 	Prompt const5, BandCoeffLabels[5]
 	Prompt const6, BandCoeffLabels[6]
-	DoPrompt LW_TITLE, const0, const4, const1, const5, const2, const6, const3
+	DoPrompt/HELP=HELP_EDIT_BAND_CONST LW_TITLE, const0, const4, const1, const5, const2, const6, const3
 	if (V_flag)
 		return 0
 	endif
@@ -3088,7 +3133,7 @@ function ExtractAssignments(functionName)	// F9
 	string functionName
 	
 	Struct LwInfo info
-	if (!GetLwInfo(1, info))
+	if (!GetLwInfo(3, info))
 		return 0
 	endif
 	
@@ -3167,8 +3212,8 @@ function ExtractAssignments(functionName)	// F9
 		if (CompareFunctions("LWLabelProto", S_AssignmentFunction))
 			functionName = S_AssignmentFunction
 		endif
-		Prompt functionName, LW_STRING23, popup "_none_;" + FunctionList2("LWLabelProto")
-		DoPrompt LW_TITLE, functionName
+		Prompt functionName, LW_ASSIGNMENT_FUNC, popup "_none_;" + FunctionList2("LWLabelProto")
+		DoPrompt/HELP=HELP_EXTRACT_ASSIGNMENTS_DIALOG LW_TITLE, functionName
 		
 		if (V_Flag)
 			// Cancel 
@@ -3209,7 +3254,7 @@ function RetrieveOrCreateTable(info, key, title2)
 	string title2
 
 	String DataSetName = GetDataFolder(0,info.data)
-	String WindowName = DataSetName + key
+	String WindowName = CleanupName(DataSetName + key,0)
 
 	String Title
 	sprintf Title, "LWA: %s, %s", DataSetName, title2
@@ -3260,6 +3305,8 @@ structure SeriesStruct
 	WAVE LegendShape
 	WAVE/T Rule
 	WAVE Model
+	WAVE M1
+	WAVE M2
 	WAVE LineColor
 EndStructure
 
@@ -3291,16 +3338,19 @@ static function GetSeriesStruct(dataDFR, s, [flag])
 	WAVE/T s.LegendText = LegendText
 	WAVE s.LegendShape = LegendShape
 
-	WAVE rule_check = Rule
+	WAVE rule_check = m1
 	if (!WaveExists(rule_check))
 		Make/N=(s.Count+1)/T Rule = ""
-		Make/N=(s.Count+1)/D Model = 0
-		Make/N=(s.Count+1)/D LineColor = s.Color
+		Make/N=(s.Count+1)/I M1 = -300
+		Make/N=(s.Count+1)/I M2 = +300
+		Make/N=(s.Count+1)/I LineColor = s.Color
 	endif
 	WAVE/T s.Rule
 	WAVE s.Model
 	WAVE s.LineColor
-
+	WAVE s.M1
+	WAVE s.M2
+	
 	SetDataFolder saveDF
 end
 
@@ -3432,9 +3482,22 @@ Structure LwInfo
 	DFREF data
 EndStructure
 
-static function GetLwInfo(theWinType, s)
+static function LwInfoWarning(quiet)
+	variable quiet
+	
+	if (!quiet)
+		Beep
+		Print LW_ERROR_GRAPH_NOT_LW_PLOT
+	endif
+	
+	return 0
+end
+
+static function GetLwInfo(theWinType, s, [quiet])
 	variable theWinType
 	struct LwInfo &s 
+	variable quiet
+
 // This function tests to see if the top window is a Loomis-Wood plot.
 // If the top window is a Loomis-Wood plot, it will contain "LoomisWood=ver" in its note.
 // Use theWinType = 1 if only the top GRAPH needs to be a Loomis-Wood plot
@@ -3447,17 +3510,13 @@ static function GetLwInfo(theWinType, s)
 	string TopWinName = WinName(0, theWinType < 0 ? -1 : theWinType)
 
 	if (!cmpstr(TopWinName,""))	//This is necessary b/c this function may be called when there are no active windows.
-		Beep
-		Print LW_ERROR3
-		return 0
+		return LwInfoWarning(quiet)
 	endif
 	
 	if (theWinType < 0)
 		if (cmpstr(TopWinName, WinName(0, -theWinType)))
 			// Topmost window is wrong type
-			Beep
-			Print LW_ERROR3
-			return 0
+			return LwInfoWarning(quiet)
 		endif
 	endif
 
@@ -3471,9 +3530,7 @@ static function GetLwInfo(theWinType, s)
 		DFREF s.plot = $StringByKey("PlotFolder",S_Value,"=",",")
 		return 1
 	else
-		Beep
-		Print LW_ERROR3
-		return 0
+		return LwInfoWarning(quiet)
 	endif
 end
 
@@ -3570,7 +3627,11 @@ function UpdateLinesFolder(FreqTol)
 	//SetDataFolder SaveDF
 
 	If (VerifyInputWaveDims(Frequencies, Intensities, Widths))
-		DoAlert 1, LW_STRING19+Frequencies+"\", \""+Intensities+LW_STRING21+Widths+LW_STRING20
+		string msg
+		msg = Frequencies+"\", \""+Intensities+LW_STRING21+Widths
+		sprintf msg, LW_WAVES_HAVE_DIFFERENT_DIMS, msg
+		DoAlert 1, msg
+
 		If (V_Flag==2)
 			// The user clicked "No", so abort.
 			SetDataFolder SourceDF
@@ -3586,8 +3647,8 @@ function UpdateLinesFolder(FreqTol)
 	
 	If (FreqTol < 0 || numType(FreqTol) != 0)
 		FreqTol = 0.001
-		Prompt FreqTol, LW_STRING22
-		DoPrompt LW_TITLE, FreqTol
+		Prompt FreqTol, LW_FREQ_TOL
+		DoPrompt/HELP=HELP_UPDATE_LINE_LIST LW_TITLE, FreqTol
 	EndIf
 	
 	Struct LinesStruct LinesBak
@@ -3634,7 +3695,7 @@ function UpdateLinesFolder(FreqTol)
 			if (j >= 0  && abs(Frequency[j] - LinesBak.Frequency[i]) < FreqTol)
 				Assignments[j] = LinesBak.Assignments[i]
 			else
-				printf LW_STRING24, i, 0+LinesBak.Frequency[i], 0+LinesBak.Intensity[i]
+				printf LW_LINE_NOT_MATCHED, i, 0+LinesBak.Frequency[i], 0+LinesBak.Intensity[i]
 			endif
 		endif
 	endfor
@@ -3764,4 +3825,70 @@ function OrderSetVarProc(ctrlName,varNum,varStr,varName) : SetVariableControl
 	if (old_value != varnum)
 		series.Order[CurrentSeries] = varNum
 	endif
+end
+
+menu "&Loomis-Wood", dynamic
+	submenu "Models"
+	end
+end
+
+static function/S OnSetupModels()
+	DFREF saveDF = GetDataFolderDFR()
+	NewDataFolder/O/S $QM_FOLDER
+	String/G ModelLoaders = ModelLoaderList()
+	SetDataFolder saveDF
+end
+
+Structure ModelLoaderStructure
+	Variable valid
+EndStructure
+
+function ModelLoaderPrototype(al)
+	STRUCT ModelLoaderStructure &al
+	
+	al.valid = 0
+end
+
+function NewLWModel(DataSet)
+// OPTIONAL DIALOG
+	DFREF DataSet
+	String DataSetName = GetDataFolder(1,DataSet)
+	
+	if (DataFolderRefStatus(DataSet)==1)
+		if (isDataSetDFR(DataSet))
+			// DataSet invalid
+			Beep
+			printf LW_ERROR_INVALID_LWDS, GetDataFolder(1,DataSet)
+			return 0
+		endif
+	else
+		//Prompt for DataSet and PlotFolder
+		Prompt DataSetName, LW_DATASET_NAME, popup FolderList($BASE_FOLDER)
+//		Prompt PlotFolderName, LW_STRING18
+		DoPrompt LW_TITLE, DataSetName//, PlotFolderName
+		if (V_flag)
+			return 0
+		endif
+		
+		DataSetName = BASE_FOLDER + ":" + DataSetName + ":"
+		DFREF DataSet = $DataSetName
+	endif
+End
+
+static function/S ModelLoaderList()
+	string List=FunctionList("*", ";", "" )
+	string FinalList=""
+	string Name
+	variable i, size = ItemsInList(List)
+	for (i = 0 ; i < size ; i += 1)
+		Name = StringFromList(i,List)
+		FUNCREF ModelLoaderPrototype f = $Name
+		STRUCT ModelLoaderStructure s
+		s.valid = 0
+		f(s)		
+		if (s.valid)
+			FinalList += Name + ";"
+		endif
+	endfor
+	return FinalList
 end
