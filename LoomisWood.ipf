@@ -1,6 +1,6 @@
 #pragma rtGlobals = 1			// Use modern global access method.
 #pragma IgorVersion = 5.02
-#pragma Version = 2.01
+#pragma Version = 2.06
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Welcome to the Loomis-Wood Igor Add-In.
@@ -37,7 +37,7 @@
 // 1.  Colors are no longer based on the Integer2Color function and the Rainbow color table, but a RGB color wave M_Colors in the Loomis-wood Folder.
 // 2.  The Control Bar in Loomis-Wood Plot is now a sub-window.
 // 3.  Added zoom
-// 4.  Assignments are now databased by two text waves:  Peak_Series and Series_Data.
+// 4.  Assignments are now databased by two text waves:  Line_Series and Series_Data.
 //      This change eliminates the need for MAX_DUP_ASSIGN and allows the same line to be assigned multiple times without wasting memory.
 //      This change also improves the performance of many operations, since assignment info is availible by peak or by series, instead of just by peak.
 // 5.  Improved Error Handling of FitSeries.  Changed output of FitSeries to string, instead of simply printing results to history.
@@ -46,25 +46,11 @@
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Global constants
-//ROOT_FOLDER and BASE_FOLDER must NOT end with a ":".
-//ROOT_FOLDER and BASE_FOLDER should be full paths.
-//ROOT_FOLDER must be a subfolder of root:
-//BASE_FOLDER must be identical to ROOT_FOLDER, or a subfolder of ROOT_FOLDER
-static strconstant ROOT_FOLDER = "root:LoomisWood"
-static strconstant BASE_FOLDER = "root:LoomisWood"
+static strconstant BASE_FOLDER = "root:LW"
 
 static constant FIVEMAX_PEAKS_PER_PLOT = 10000
-static constant MAX_QN = 8
 static constant MAX_FIT_ORDER = 7
-//static constant MAX_DUP_ASSIGN = 8
 static constant MAX_M = 10000
-//static constant MAX_IT = 100 
-//static constant M_ACC = 0.001
-
-static constant TOP_BAR_HEIGHT = 60
-//static constant LEFT_BAR_HEIGHT = 0
-//static constant BOTTOM_BAR_HEIGHT = 0
-//static constant RIGHT_BAR_HEIGHT = 0
 
 // Igor Event Codes
 static constant EC_Activate = 0
@@ -80,7 +66,7 @@ static constant EC_EnableMenu = 9
 static constant EC_Menu = 10
 static constant EC_Keyboard = 11
 
- //
+//
 // Virtual Keys, Standard Set
 // Modifed from winuser.h in the Windows API
 // Changed 07/06/2004 to reflect new Igor SetWindow hook
@@ -273,16 +259,49 @@ menu "&Loomis-Wood", dynamic
 // Thus, all of the strings for this menu  are literals, not static strconstants.
 	help = {OnLWmenuBuild()+"Welcome to Loomis-Wood!"}
 
-	"Create a &New Loomis-Wood Folder...", NewLoomisWoodFolder()
-	help = {"Create a new Loomis-Wood folder."}
+	submenu "&Data Sets"
 
-	"Create a New Loomis-Wood &Plot...", MakeLoomisWoodPlot("","")
-	help = {"Make a Loomis-Wood plot.  You must have already created a Loomis-Wood folder."}
+		"Create a &New Loomis-Wood Data Set...", NewLWDataSet()
+		help = {"Create a new Loomis-Wood folder."}
 
-	"&Delete a Loomis-Wood Folder...", DeleteLoomisWoodFolder("")
-	help = {"Delete an existing Loomis-Wood folder."}
+		"&Delete a Loomis-Wood Data Set...", DeleteLWDataSet("")
+		help = {"Delete an existing Loomis-Wood folder."}
 
-	submenu LWDynamicMenuItem()+ "Modify &Series"
+		"-"
+		help = {"", ""}
+
+		LWDynamicMenuItem()+ "(View Line List...", 
+		help = {"View the line list for the curent data set", "This command is only availible for Loomis-Wood plots."}
+
+		LWDynamicMenuItem()+ "View Series List.../F8", ViewSeriesList()
+		help = {"View/Edit the name, color, order, etc. of all assigned series.", "This command is only availible for Loomis-Wood plots."}
+
+		LWDynamicMenuItem()+ "Extract &Assignments.../F9", ExtractAssignments()
+		help = {"Create a table of assignments.", "This command is only availible for Loomis-Wood plots."}
+		
+		"-"
+		help = {"", ""}
+
+		LWDynamicMenuItem()+ "Edit Colors", EditColors()
+		help = {"View/Edit the Colors used for the current Loomis-Wood folder.", "This command is only availible for Loomis-Wood plots."}
+	end //submenu
+	
+	submenu "&Plots"
+		"&Create a New Loomis-Wood Plot...", NewLWPlot("","")
+		help = {"Make a Loomis-Wood plot.  You must have already created a Loomis-Wood folder."}
+		
+		"(&Delete a Loomis-Wood Plot...", 
+		help = {"Make a Loomis-Wood plot.  You must have already created a Loomis-Wood folder."}		
+
+		LWDynamicMenuItem()+ "Change &M-axis scaling.../F11", ChangeRange(0,0)
+		help = {"Change the M-axis scaling of the current Loomis-Wood plot.", "This command is only availible for Loomis-Wood plots."}
+
+		LWDynamicMenuItem()+ "Edit &Band Constants.../F12", EditBandConstants()
+		help = {"View/Edit the Band Constants for the current Loomis-wood plot.", "This command is only availible for Loomis-Wood plots."}
+
+	end
+
+	submenu LWDynamicMenuItem()+ "&Series"
 	help = {"These commands modify the series in the current plot.", "This command is only availible for Loomis-Wood plots."}
 		LWDynamicMenuItem()+ "Start a &New Series.../F2", AddSeries()
 		help = {"Start a new series.", "This command is only availible for Loomis-Wood plots."}
@@ -299,28 +318,18 @@ menu "&Loomis-Wood", dynamic
 		LWDynamicMenuItem()+ "&Undo Last Fit/SF5", UndoFit()
 		help = {"Revert to previous fit.", "This command is only availible for Loomis-Wood plots."}
 
-		LWDynamicMenuItem()+ "&M-Shift Current Series/F6", ShiftSeries(GetCurrentSeriesNumber(),0,1)
+		LWDynamicMenuItem()+ "&M-Shift Current Series.../F6", ShiftSeries(GetCurrentSeriesNumber(),0,1)
 		help = {"M-shift the current series.", "This command is only availible for Loomis-Wood plots."}
 
 		LWDynamicMenuItem()+ "&View Current Series/F7", ViewSeries(GetCurrentSeriesNumber())
 		help = {"View the assignment table for the current series.", "This command is only availible for Loomis-Wood plots."}
 
-		LWDynamicMenuItem()+ "Edit Series &Info.../F8", EditSeriesInfo()
-		help = {"Change the name, color, order, etc. of all assigned series.", "This command is only availible for Loomis-Wood plots."}
+		"-"
+		help = {"", ""}
 
+		LWDynamicMenuItem()+ "View Series List.../F8", ViewSeriesList()
+		help = {"View/Edit the name, color, order, etc. of all assigned series.", "This command is only availible for Loomis-Wood plots."}
 	end //submenu
-	LWDynamicMenuItem()+ "Extract &Assignments.../F9", ExtractAssignments()
-	help = {"Create a table of assignments.", "This command is only availible for Loomis-Wood plots."}
-
-	LWDynamicMenuItem()+ "Change &M-axis scaling.../F11", ChangeRange(0,0)
-	help = {"Change the M-axis scaling of the current Loomis-Wood plot.", "This command is only availible for Loomis-Wood plots."}
-
-	LWDynamicMenuItem()+ "Edit &Band Constants.../F12", EditBandConstants()
-	help = {"View/Edit the Band Constants for the current Loomis-wood plot.", "This command is only availible for Loomis-Wood plots."}
-
-	LWDynamicMenuItem()+ "Edit Colors", EditColors()
-	help = {"View/Edit the Colors used for the current Loomis-Wood folder.", "This command is only availible for Loomis-Wood plots."}
-
 end //menu "Loomis-Wood"
 
 function/S OnLWmenuBuild()
@@ -329,7 +338,6 @@ function/S OnLWmenuBuild()
 // This is a good place for global initializations.
 	string saveDF = GetDataFolder(1)
 	SetDataFolder root:
-	NewDataFolder/O $ROOT_FOLDER
 	NewDataFolder/O $BASE_FOLDER
 	SetDataFolder saveDF
 	return ""
@@ -492,29 +500,6 @@ static function StandardBand2Poly(row, column, deltaJ)
 	return theResult
 end //static function StandardBand2Poly
 
-//static function Integer2Rainbow(theInt)
-//// This function converts an integer from 0-6 to a number between 0-99 that corresponds to the Rainbow color table.
-//	variable theInt
-//	switch (theInt)
-//	case 0:
-//		return 67		//Cyan
-//	case 1:
-//		return 00		//Red
-//	case 2:
-//		return 12		//Orange
-//	case 3:
-//		return 21		//Yellow
-//	case 4:
-//		return 40		//Green
-//	case 5:
-//		return 90		//Blue
-//	case 6:
-//		return 99		//Violet
-//	default:
-//		return 67		//Cyan
-//	endswitch
-//end //function Integer2Rainbow
-
 static function poly2(coeff, order, theX)
 // Same as built-in Function poly(), except that order is given explicitly.
 // It is nice to be able to use order < (numpnts(coeff) - 1).
@@ -527,20 +512,6 @@ static function poly2(coeff, order, theX)
 	endfor	
 	return theResult
 end //static function poly2
-
-static function/C poly3(coeff, order, theX)
-// Same as poly2(), except that the derivative is also calculated, and returned as the imag part of a complex result.
-	wave coeff
-	variable order, theX
-	variable eval = coeff[order] * theX + coeff[order-1]
-	variable diff = coeff[order]
-	variable index
-	for (index = order -2 ; index >= 0 ; index -= 1)
-		diff = eval + diff * theX
-		eval = coeff[index] + eval * theX
-	endfor	
-	return cmplx(eval,diff)
-end //static function poly3
 
 static function/C bound_poly(coeff, order, theX)
 // Finds the limits of monotonicity for the polynomial contained in coeff around the value theX.
@@ -609,57 +580,70 @@ static function isTopWinLWPlot(theWinType)
 	endif
 end //static function isTopWinLWPlot
 
-static function VerifyInputWaveDims(Peak_Frequencies,Peak_Intensities,Peak_Widths)
+static function VerifyInputWaveDims(Line_Frequencies,Line_Intensities,Line_Widths)
 // Checks to make sure that all peak-listing related waves have the same length.
-	String Peak_Frequencies,Peak_Intensities,Peak_Widths
+	String Line_Frequencies,Line_Intensities,Line_Widths
 	Variable theResult = 0
 	
-	If (cmpstr(Peak_Intensities,"_constant_"))
-		theResult +=(numpnts($Peak_Frequencies)!=numpnts($Peak_Intensities))		
+	If (cmpstr(Line_Intensities,"_constant_"))
+		theResult +=(numpnts($Line_Frequencies)!=numpnts($Line_Intensities))		
 	EndIf
 
-	If (cmpstr(Peak_Widths,"_constant_"))
-		theResult += (numpnts($Peak_Frequencies)!=numpnts($Peak_Widths))		
+	If (cmpstr(Line_Widths,"_constant_"))
+		theResult += (numpnts($Line_Frequencies)!=numpnts($Line_Widths))		
 	EndIf
 
 	Return theResult
 end //static function VerifyInputWaveDims
 
-static function GetNumPeaks(Peak_Frequencies,Peak_Intensities,Peak_Widths)
-// Used to determine the number of peaks when some of the peak-listing related waves have extra points
-	String Peak_Frequencies,Peak_Intensities,Peak_Widths
-	Variable theResult = numpnts($Peak_Frequencies)
-	If (cmpstr(Peak_Intensities,"_constant_"))
-		theResult = min(theResult,numpnts($Peak_Intensities))		
+static function GetNumLines(Line_Frequencies,Line_Intensities,Line_Widths)
+// Used to determine the number of lines when some of the peak-listing related waves have extra points
+	String Line_Frequencies,Line_Intensities,Line_Widths
+	Variable theResult = numpnts($Line_Frequencies)
+	If (cmpstr(Line_Intensities,"_constant_"))
+		theResult = min(theResult,numpnts($Line_Intensities))		
 	EndIf
-	If (cmpstr(Peak_Widths,"_constant_"))
-		theResult = min(theResult,numpnts($Peak_Widths))
+	If (cmpstr(Line_Widths,"_constant_"))
+		theResult = min(theResult,numpnts($Line_Widths))
 	EndIf
 	return theResult
 end //static Function GetNumPeaks
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Main Loomis-Wood inteface functions:
-Function NewLoomisWoodFolder()
+Function NewLWDataSet()
 	// Save current folder name
 	String SaveDF = GetDataFolder(1)
 	
-	// Get name of a new SourceFolder from user
-	String SourceFolder = GetNewLWDataFolder()
-	if (cmpstr(SourceFolder,"")==0)
+	// Get name of a new Data Set Folder from user
+	String DataSet = GetNewLWDataFolder()
+	if (cmpstr(DataSet,"")==0)
 		Return 0
 	endif
 	
-	// Create SourceFolder and copy peakfinder waves to it.
-	if (CopyWavesToSourceFolder(SaveDF, SourceFolder))
-		SourceFolder += ":"
-		SetDataFolder SourceFolder
+	// Create DataSet and copy peakfinder waves to it.
+	if (CopyWavesToDataSetFolder(SaveDF, DataSet))
+		DataSet += ":"
+		SetDataFolder DataSet
 
-		// These are the persistant data created by CopyWavesToSourceFolder().
-		WAVE Peak_Frequency = Peak_Frequency
-		WAVE Peak_Intensity = Peak_Intensity
-		WAVE Peak_Width = Peak_Width
-		NVAR NumPeaks = NumPeaks
+//		// These are the persistant data created by CopyWavesToSourceFolder().
+//		SetDatafolder Lines
+//		WAVE Line_Frequency = Frequency
+//		WAVE Line_Intensity = Intensity
+//		WAVE Line_Width = Width
+//
+//		Wavestats/Q  Line_Intensity
+//		Variable/G minIntensity = V_min
+//		Variable/G maxIntensity = V_max
+//
+//		Wavestats/Q  Line_Width
+//		Variable/G minWidth = V_min
+//		Variable/G maxWidth = V_max
+//
+//		Variable NumLines = numpnts(Line_Frequency)
+//		// Create the remaining persistant data.
+//		Make/T/N=(NumLines) :Lines:Assignments
+//		SetDatafolder ::
 	
 		// New 2/18/05
 		Make/O/T/N=14 ColorNames = {"Teal","Red","Yellow","Lime","Blue","Fuchsia","Maroon","Olive","Green","Aqua","Navy","Purple","Black","Grey"}
@@ -668,11 +652,6 @@ Function NewLoomisWoodFolder()
 		M_Colors[0][1]= {32768, 0       , 65535, 65535, 0       , 0       , 0       , 32768, 32768, 65535, 0       , 0       , 0, 32768}
   		M_Colors[0][2]= {32768, 0       , 0       , 0       , 65535, 65535, 0       , 0       , 0       , 65535, 32768, 32768, 0, 32768}
 
-		// Create the remaining persistant data.
-		//Make/I/N=(NumPeaks) Peak_Shape
-		Make/T/N=(NumPeaks) Peak_Series
-		//Make/W/N=(NumPeaks,MAX_DUP_ASSIGN) Peak_Series
-		//Make/I/N=(NumPeaks,MAX_DUP_ASSIGN) Peak_Assignment
 
 		Make/D/N=(MAX_FIT_ORDER,MAX_FIT_ORDER) Band2Poly
 		Band2Poly = StandardBand2Poly(p,q,1)
@@ -681,103 +660,85 @@ Function NewLoomisWoodFolder()
 		
 		Duplicate/O Band2Poly, Poly2Band
 		MatrixInverse/O Poly2Band
+						
+		NewSeriesFolder(DataSet)
 		
-		//Make/D/N=(MAX_FIT_ORDER,1) TempB
-		//MatrixGaussJ Band2Poly, TempB
-		//Rename M_Inverse, Poly2Band
-		//KillWaves/Z TempB, M_X
-				
-		Make/T/N=1 Series_Name, Series_Data 
-		Make/T/N=(1,MAX_QN) Series_QN
-		Make/W/N=1 Series_Color, Series_Shape, Series_Order
-		Series_Name[0] = "Unassigned"
-		Variable/G NumSeries = 0
-
-		Variable/G minWidth, maxWidth, minIntensity, maxIntensity
-		WaveStats/Q Peak_Width
-		minWidth = V_min
-		maxWidth = V_max
-		WaveStats/Q Peak_intensity
-		minIntensity = V_min
-		maxIntensity = V_max
-		Variable index
-
 		// Create an initial display
-		MakeLoomisWoodPlot(SourceFolder, "Plot0")
+		NewLWPlot(DataSet, "Plot0")
 		SetDataFolder SaveDF
 		Return 1
 	else
 		Return 0
 	endif
-End //Function NewLoomisWoodFolder
+End //Function NewLWDataSet
 
-static function GetPeakfinderWaves(Peak_Frequency, Peak_Intensity, Peak_Width)
+static function GetPeakfinderWaves(Line_Frequency, Line_Intensity, Line_Width)
 // DIALOG
-	string &Peak_Frequency, &Peak_Intensity, &Peak_Width
+	string &Line_Frequency, &Line_Intensity, &Line_Width
 
-	string Peak_F = Peak_Frequency
-	string Peak_I = Peak_Intensity
-	string Peak_W = Peak_Width
+	string Line_F = Line_Frequency
+	string Line_I = Line_Intensity
+	string Line_W = Line_Width
 
-	Prompt Peak_F, LW_STRING2, popup Real1DWaveList("*", ";", "")
-	Prompt Peak_I, LW_STRING3, popup "_constant_;" + Real1DWaveList("*", ";", "")
-	Prompt Peak_W, LW_STRING4, popup "_constant_;" + Real1DWaveList("*", ";", "")
-	DoPrompt LW_TITLE, Peak_F, Peak_I, Peak_W
+	Prompt Line_F, LW_STRING2, popup Real1DWaveList("*", ";", "")
+	Prompt Line_I, LW_STRING3, popup "_constant_;" + Real1DWaveList("*", ";", "")
+	Prompt Line_W, LW_STRING4, popup "_constant_;" + Real1DWaveList("*", ";", "")
+	DoPrompt LW_TITLE, Line_F, Line_I, Line_W
 	
-	Peak_Frequency = GetDataFolder(1)+Peak_F
+	Line_Frequency = GetDataFolder(1)+Line_F
 
-	if (cmpstr(Peak_I,"_constant_"))
-		Peak_Intensity= GetDataFolder(1)+Peak_I
+	if (cmpstr(Line_I,"_constant_"))
+		Line_Intensity= GetDataFolder(1)+Line_I
 	else
-		Peak_Intensity = Peak_I
+		Line_Intensity = Line_I
 	endif
 
-	if (cmpstr(Peak_W,"_constant_"))
-		Peak_Width= GetDataFolder(1)+Peak_W		
+	if (cmpstr(Line_W,"_constant_"))
+		Line_Width= GetDataFolder(1)+Line_W		
 	else
-		Peak_Width = Peak_W
+		Line_Width = Line_W
 	endif
 
 	return V_Flag
 
 end //static function GetPeakfinderWaves
 
-static function GetConstantIntensity(Constant_Intensity)
-// DIALOG
-	variable Constant_Intensity //= 1
+//static function GetConstantIntensity(Constant_Intensity)
+//// DIALOG
+//	variable Constant_Intensity //= 1
+//
+//	Prompt Constant_Intensity, LW_STRING5
+//	DoPrompt LW_TITLE, Constant_Intensity 
+//	
+//	if (V_Flag)
+//		return 0
+//	endif
+//
+//	return Constant_Intensity
+//end //static function GetConstantIntensity
 
-	Prompt Constant_Intensity, LW_STRING5
-	DoPrompt LW_TITLE, Constant_Intensity 
-	
-	if (V_Flag)
-		return 0
-	endif
-
-	return Constant_Intensity
-end //static function GetConstantIntensity
-
-static function GetConstantWidth(Constant_Width)
-// DIALOG
-	variable Constant_Width //= 0.001
-	Prompt Constant_Width, LW_STRING6
-	DoPrompt LW_TITLE, Constant_Width 
-
-	if (V_Flag)
-		return 0
-	endif
-
-	return Constant_Width
-end //static function GetConstantWidth
+//static function GetConstantWidth(Constant_Width)
+//// DIALOG
+//	variable Constant_Width //= 0.001
+//	Prompt Constant_Width, LW_STRING6
+//	DoPrompt LW_TITLE, Constant_Width 
+//
+//	if (V_Flag)
+//		return 0
+//	endif
+//
+//	return Constant_Width
+//end //static function GetConstantWidth
 
 static function/S GetNewLWDataFolder()
 // DIALOG
-	String SourceFolder
+	String DataSet
 	//Save current folder name
 	String SaveDF = GetDataFolder(1)
 
-	//Ask for New SourceFolder.
-	Prompt SourceFolder, LW_STRING1
-	DoPrompt LW_TITLE, SourceFolder
+	//Ask for New DataSet.
+	Prompt DataSet, LW_STRING1
+	DoPrompt LW_TITLE, DataSet
 	If (V_Flag)
 		Return ""
 	EndIf
@@ -785,18 +746,18 @@ static function/S GetNewLWDataFolder()
 	//Switch to LoomisWood folder.
 	SetDataFolder $BASE_FOLDER
 
-	//Verify SourceFolder.
-	If (CheckName(SourceFolder,11))
+	//Verify DataSet.
+	If (CheckName(DataSet,11))
 		Do
-			DoAlert 2, "\""+ SourceFolder + LW_STRING7+ UniqueName(CleanupName(SourceFolder,1),11,0) + LW_STRING8
+			DoAlert 2, "\""+ DataSet + LW_STRING7+ UniqueName(CleanupName(DataSet,1),11,0) + LW_STRING8
 			switch (V_Flag)
 			case 1:
 				// The user clicked "Yes", so change the name.
-				SourceFolder=UniqueName(CleanupName(SourceFolder,1),11,0)
+				DataSet=UniqueName(CleanupName(DataSet,1),11,0)
 				break
 			case 2:
 				// The user clicked "No", so try again.
-				DoPrompt LW_TITLE, SourceFolder
+				DoPrompt LW_TITLE, DataSet
 				If (V_Flag)
 					Return ""
 				EndIf
@@ -806,34 +767,34 @@ static function/S GetNewLWDataFolder()
 				SetDataFolder SaveDF
 				Return ""
 			endswitch
-		While(CheckName(SourceFolder,11))
+		While(CheckName(DataSet,11))
 	EndIf
-	SourceFolder = BASE_FOLDER +":"+ SourceFolder
+	DataSet = BASE_FOLDER +":"+ DataSet
 	
 	//Switch back to original folder.
 	SetDataFolder SaveDF
-	Return SourceFolder
+	Return DataSet
 end //static function/S GetNewLWDataFolder
 
-static function CopyWavesToSourceFolder(SourceDF, LWDF)
+static function CopyWavesToDataSetFolder(SourceDF, LWDF)
 	String SourceDF, LWDF
 	String SaveDF = GetDataFolder(1)
 
-	String Peak_Frequencies = ""
-	String Peak_Intensities = ""
-	String Peak_Widths = ""
+	String Frequencies = ""
+	String Intensities = ""
+	String Widths = ""
 	
 	Variable Constant_Width
 	Variable Constant_Intensity
 
 	SetDataFolder SourceDF
 	//Ask for waves from peakfinder.
-	If (GetPeakfinderWaves(Peak_Frequencies,Peak_Intensities,Peak_Widths))
+	If (GetPeakfinderWaves(Frequencies, Intensities, Widths))
 		Return 0
 	EndIf
 
-	If (VerifyInputWaveDims(Peak_Frequencies,Peak_Intensities,Peak_Widths))
-		DoAlert 1, LW_STRING19+Peak_Frequencies+"\", \""+Peak_Intensities+LW_STRING21+Peak_Widths+LW_STRING20
+	If (VerifyInputWaveDims(Frequencies, Intensities, Widths))
+		DoAlert 1, LW_STRING19+Frequencies+"\", \""+Intensities+LW_STRING21+Widths+LW_STRING20
 		If (V_Flag==2)
 			// The user clicked "No", so abort.
 			SetDataFolder SourceDF
@@ -841,127 +802,138 @@ static function CopyWavesToSourceFolder(SourceDF, LWDF)
 		EndIf
 	EndIf
 
-	If (!cmpstr(Peak_Intensities,"_constant_"))
-		Constant_Intensity = GetConstantIntensity(1)
-		If (!Constant_Intensity)
-			Return 0
-		EndIf
-	EndIf
-	If (!cmpstr(Peak_Widths,"_constant_"))
-		Constant_Width = GetConstantWidth(.001)
-		If (!Constant_Width)
-			Return 0
-		EndIf
-	EndIf
+	//If (!cmpstr(Line_Intensities,"_constant_"))
+	//	Constant_Intensity = GetConstantIntensity(1)
+	//	If (!Constant_Intensity)
+	//		Return 0
+	//	EndIf
+	//EndIf
+	//If (!cmpstr(Line_Widths,"_constant_"))
+	//	Constant_Width = GetConstantWidth(.001)
+	//	If (!Constant_Width)
+	//		Return 0
+	//	EndIf
+	//EndIf
 	
-	//Create SourceFolder, if it doesn't already exist
+	//Create DataSet, if it doesn't already exist
 	NewDataFolder/O/S $LWDF
+	NewDataFolder/O/S Lines
 
-	Variable/G NumPeaks = GetNumPeaks(Peak_Frequencies,Peak_Intensities,Peak_Widths)
-	Duplicate/R=[0,NumPeaks-1] $Peak_Frequencies, Peak_Frequency
+	Variable NumLines = GetNumLines(Frequencies, Intensities, Widths)
+	Duplicate/R=[0,NumLines-1] $Frequencies, Frequency
 	
-	If (cmpstr(Peak_Intensities,"_constant_"))
-		Duplicate/R=[0,NumPeaks-1] $Peak_Intensities, Peak_Intensity
+	If (cmpstr(Intensities,"_constant_"))
+		Duplicate/R=[0,NumLines-1] $Intensities, Intensity
 	Else
-		Duplicate Peak_Frequency, Peak_Intensity
-		Peak_Intensity = Constant_Intensity
+		Make/O/N=(numpnts(Frequency)), Intensity = 1
 	EndIf
 	
-	If (cmpstr(Peak_Widths,"_constant_"))
-		Duplicate/R=[0,NumPeaks-1] $Peak_Widths,Peak_Width
+	If (cmpstr(Widths,"_constant_"))
+		Duplicate/R=[0,NumLines-1] $Widths, Width
 	Else
-		Duplicate Peak_Frequency,Peak_Width
-		Peak_Width = Constant_Width
+		Make/O/N=(numpnts(Frequency)), Width = 1
 	EndIf
 
-	Sort Peak_Frequency,Peak_Frequency,Peak_Intensity,Peak_Width
+	Sort Frequency, Frequency, Intensity, Width
+	
+	Wavestats/Q  Intensity
+	Variable/G minIntensity = V_min
+	Variable/G maxIntensity = V_max
+
+	Wavestats/Q  Width
+	Variable/G minWidth = V_min
+	Variable/G maxWidth = V_max
+
+	Variable/G Count = numpnts(Frequency)
+	Make/T/N=(Count) Assignments
+
 	SetDataFolder SaveDF
 	
 	Return 1
 end //static function CopyWavesToSourceFolder
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-function DeleteLoomisWoodFolder(SourceFolder)
+function DeleteLWDataSet(DataSet)
 // OPTIONAL DIALOG
-	string SourceFolder
+	string DataSet
 
 	string PlotFolder
 	variable index
 	
-	if (cmpstr(SourceFolder,""))
-		if (ValidateSourceFolder(SourceFolder))
-			// SourceFolder invalid
+	if (cmpstr(DataSet,""))
+		if (ValidateSourceFolder(DataSet))
+			// DataSet invalid
 			Beep
-			Print LW_ERROR1 + SourceFolder + LW_ERROR2
+			Print LW_ERROR1 + DataSet + LW_ERROR2
 			return 0
 		endif
 	else
-		//Prompt for SourceFolder
-		Prompt SourceFolder, LW_STRING9, popup FolderList(BASE_FOLDER)
-		DoPrompt LW_TITLE, SourceFolder
+		//Prompt for DataSet
+		Prompt DataSet, LW_STRING9, popup FolderList(BASE_FOLDER)
+		DoPrompt LW_TITLE, DataSet
 		if (V_flag)
 			return 0
 		endif
-		SourceFolder = BASE_FOLDER + ":" + SourceFolder + ":"
+		DataSet = BASE_FOLDER + ":" + DataSet + ":"
 	endif
 	
+	String PlotsFolder = DataSet + "Plots:"
 	//First, remove all dependencies in plot folders
-	for(index = 1 ; index <= CountObjects(SourceFolder,4) ; index += 1)
-		PlotFolder = SourceFolder+GetIndexedObjName(SourceFolder,4,index-1)+":"
+	for(index = 1 ; index <= CountObjects(PlotsFolder,4) ; index += 1)
+		PlotFolder = PlotsFolder+GetIndexedObjName(PlotsFolder,4,index-1)+":"
 		SetFormula $(PlotFolder+"BandCoeffUpdate"), ""
 		SetFormula $(PlotFolder+"TriangleUpdate"), ""
 		SetFormula $(PlotFolder+"SeriesOrder"), ""
-		//KillVariables/Z $(PlotFolder+"BandCoeffUpdate"),$(PlotFolder+"TriangleUpdate")
 	endfor
-	// Second, remove all dependencies in source folder
-	// Finally, kill the folder
-	KillDataFolder $SourceFolder
+	// Then, kill the folder
+	KillDataFolder $DataSet
 	
 	Beep	
-	Print LW_HISTORY1 + SourceFolder + LW_HISTORY2
-end //function DeleteLoomisWoodFolder
+	Print LW_HISTORY1 + DataSet + LW_HISTORY2
+end //function DeleteLWDataSet
 
-function MakeLoomisWoodPlot(SourceFolder, PlotFolder)
+function NewLWPlot(DataSet, PlotFolder)
 // OPTIONAL DIALOG
-	String SourceFolder, PlotFolder
+	String DataSet, PlotFolder
 	
-	if (cmpstr(SourceFolder,"") || cmpstr(PlotFolder,""))
-		if (ValidateSourceFolder(SourceFolder))
-			// SourceFolder invalid
+	if (cmpstr(DataSet,"") || cmpstr(PlotFolder,""))
+		if (ValidateSourceFolder(DataSet))
+			// DataSet invalid
 			Beep
-			Print LW_ERROR1 + SourceFolder + LW_ERROR2
+			Print LW_ERROR1 + DataSet + LW_ERROR2
 			return 0
 		endif
 	else
-		//Prompt for SourceFolder and PlotFolder
-		Prompt SourceFolder, LW_STRING17, popup FolderList(BASE_FOLDER)
+		//Prompt for DataSet and PlotFolder
+		Prompt DataSet, LW_STRING17, popup FolderList(BASE_FOLDER)
 		Prompt PlotFolder, LW_STRING18
-		DoPrompt LW_TITLE, SourceFolder, PlotFolder
+		DoPrompt LW_TITLE, DataSet, PlotFolder
 		if (V_flag)
 			return 0
 		endif
-		SourceFolder = BASE_FOLDER + ":" + SourceFolder + ":"
+		DataSet = BASE_FOLDER + ":" + DataSet + ":"
 	endif
 	
 	String temp
 	String SaveDF=GetDataFolder(1)
 	
-	SetDataFolder SourceFolder
-	WAVE Peak_Frequency
-	WAVE Peak_Width
-	WAVE/T Series_Name
-	NVAR NumPeaks
-		
+	SetDataFolder DataSet
+	Struct LinesStruct lines
+	GetLinesStruct(DataSet, lines)
+
+	//Struct SeriesStruct series
+	//GetSeriesStruct(DataSet, series)
+			
 	//TODO: Validate PlotFolder
+	NewDataFolder/O/S Plots
 	NewDataFolder/O/S $PlotFolder
-	PlotFolder = SourceFolder + PlotFolder + ":"
+	PlotFolder = GetDatafolder(1)
 	
 	// Create persistant data
-	Make/O/D/N=(NumPeaks) Peak_LWm
-	Make/O/D/N=(NumPeaks) Peak_delta_frequency
+	Make/O/D/N=(lines.Count) Line_LWm
+	Make/O/D/N=(lines.Count) Line_DF
 	Make/O/D/N=(FIVEMAX_PEAKS_PER_PLOT) Triangle_X, Triangle_Yup, Triangle_Ydown
 	Make/O/U/W/N=(FIVEMAX_PEAKS_PER_PLOT,3) Triangle_Color
-	//Make/O/W/N=(FIVEMAX_PEAKS_PER_PLOT) Triangle_Color
 	Make/O/D/N=(MAX_FIT_ORDER) BandCoeff, PolyCoeff
 	Make/O/D/N=(2) LWCursorX = NaN, LWCursorYup = NaN, LWCursorYdown = NaN
 
@@ -979,16 +951,15 @@ function MakeLoomisWoodPlot(SourceFolder, PlotFolder)
 	Variable/G startM = -10.5, endM = 10.5
 	Variable/G CurrentSeries = 1
 	Variable/G SeriesOrder
-	SetFormula SeriesOrder, "DoSeriesOrderUpdate("+SourceFolder+"Series_Order,"+PlotFolder+"CurrentSeries)"
+	SetFormula SeriesOrder, "DoSeriesOrderUpdate("+DataSet+"Series:Order,"+PlotFolder+"CurrentSeries)"
 
 	// Initialize persistant data.
-	BandCoeff[0] = mean(Peak_Frequency,0,NumPeaks-1)
-	BandCoeff[1] = 100*mean(Peak_Width,0,NumPeaks-1)
+	BandCoeff[0] = mean(lines.Frequency,0,lines.Count-1)
+	BandCoeff[1] = 100*mean(lines.Frequency,0,lines.Count-1)
 
 	temp = "DoBandCoeffUpdate("+PlotFolder+"BandCoeff)"
 	SetFormula BandCoeffUpdate, temp
-	//temp = "DoTriangleUpdate("+PlotFolder+"Peak_LWm,"+SourceFolder+"Peak_Series,"+SourceFolder+"Peak_Shape,"+SourceFolder+"Series_Color,"+SourceFolder+"Series_Shape,"+PlotFolder+"StartM,"+PlotFolder+"EndM,"+PlotFolder+"Zoom)"
-	temp = "DoTriangleUpdate("+PlotFolder+"Peak_LWm,"+SourceFolder+"Peak_Series,"+SourceFolder+"Series_Color,"+SourceFolder+"Series_Shape,"+PlotFolder+"StartM,"+PlotFolder+"EndM,"+PlotFolder+"Zoom)"
+	temp = "DoTriangleUpdate("+PlotFolder+"Line_LWm,"+DataSet+"Lines:Assignments,"+DataSet+"Series:Color,"+DataSet+"Series:Shape,"+PlotFolder+"StartM,"+PlotFolder+"EndM,"+PlotFolder+"Zoom)"
 	SetFormula TriangleUpdate, temp
 
 	// Draw the Graph
@@ -1016,16 +987,11 @@ function MakeLoomisWoodPlot(SourceFolder, PlotFolder)
 	ModifyGraph zColor(Triangle_Ydown)={Triangle_Color,*,*,directRGB}
 
 	// Setup the hook function
-	SetWindow kwTopWin,note="LoomisWood=1.0,SourceFolder="+SourceFolder+",PlotFolder="+PlotFolder+",",hook(LW)=LWHookFunction
-	//Execute/Z "SetWindowExt kwTopWin"
+	SetWindow kwTopWin,hook(LW)=LWHookFunction
+	SetWindow kwTopWin,note="LoomisWood=2.0,DataSet="+DataSet+",PlotFolder="+PlotFolder+","
 
-	// Move the cursor to approximately the center of the plot
-	lwCursor_p = Round(0.5*(StartP+EndP))
-	MoveCursor(lwCursor_p)	
-
-	RenameWindow #,LWbase
 	// Setup the control bar
-	ControlBar TOP_BAR_HEIGHT
+	ControlBar 60
 	NewPanel/FG=(FL,FT,GR,GT)/HOST=# 		// New
 	RenameWindow #,PTop	// New
 
@@ -1055,7 +1021,7 @@ function MakeLoomisWoodPlot(SourceFolder, PlotFolder)
 
 	Execute/Z "SetVariable zoom_setvar, value="+PlotFolder+"Zoom" 
 	Execute/Z "SetVariable order_setvar, value="+PlotFolder+"SeriesOrder" 
-	Execute/Z "PopupMenu CurrentSeriesPopup value=TextWave2List("+SourceFolder+"Series_Name)+\"_Create_New_Series_;\""
+	Execute/Z "PopupMenu CurrentSeriesPopup value=TextWave2List("+DataSet+"Series:Name)+\"_Create_New_Series_;\""
 	Execute/Z "PopupMenu popup_assignments value="+PlotFolder+"lwCursor_assignments"
 	Execute/Z "ValDisplay display_p,value="+PlotFolder+"lwCursor_p"
 	Execute/Z "ValDisplay display_m,value="+PlotFolder+"lwCursor_m"
@@ -1065,18 +1031,22 @@ function MakeLoomisWoodPlot(SourceFolder, PlotFolder)
 	Execute/Z "ValDisplay display_delta_m,value="+PlotFolder+"lwCursor_delta_m"
 	Execute/Z "ValDisplay display_delta_frequency,value="+PlotFolder+"lwCursor_delta_frequency"
 
-	SetWindow kwTopWin,note="LoomisWood=1.0,SourceFolder="+SourceFolder+",PlotFolder="+PlotFolder+","
+	SetWindow kwTopWin,note="LoomisWood=2.0,DataSet="+DataSet+",PlotFolder="+PlotFolder+","
 	SetActiveSubwindow ##	// New
 
+	// Move the cursor to approximately the center of the plot
+	lwCursor_p = Round(0.5*(StartP+EndP))
+	MoveCursor(lwCursor_p)	
+
 	SetDataFolder SaveDF
-end //function MakeLoomisWoodPlot
+end //function NewLWPlot
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Data updating functions
 function DoBandCoeffUpdate(BandCoeff)
 // DO NOT DECLARE AS STATIC!
 // This function is called via a dependancy whenever BandCoeff is changed
-// This function is responsible for calculating Peak_LWm, PolyCoeff, minM, maxM, minP, maxP
+// This function is responsible for calculating Line_LWm, PolyCoeff, minM, maxM, minP, maxP
 	wave BandCoeff
 
 	variable start_time = ticks
@@ -1085,13 +1055,13 @@ function DoBandCoeffUpdate(BandCoeff)
 	string SaveDF = GetDataFolder(1)
 	SetDataFolder PlotFolder
 	WAVE PolyCoeff
-	WAVE Peak_LWm
-	WAVE Peak_delta_frequency
+	WAVE Line_LWm
+	WAVE Line_DF
 	variable/G minM, maxM, minP, maxP
-	SetDataFolder ::
-	WAVE Peak_Frequency
+	SetDataFolder :::
+	WAVE Line_Frequency = :Lines:Frequency
 	WAVE Band2Poly
-	NVAR NumPeaks
+	Variable NumLines = numpnts(Line_Frequency)
 	SetDataFolder SaveDF
 
 	variable/C limits
@@ -1131,15 +1101,15 @@ function DoBandCoeffUpdate(BandCoeff)
 	FatmaxM = poly2(PolyCoeff, Order, maxM)
 	minF = min(FatminM, FatmaxM)
 	maxF = max(FatminM, FatmaxM)
-	minP = BinarySearch(Peak_Frequency, minF)
-	maxP = BinarySearch(Peak_Frequency, maxF)
+	minP = BinarySearch(Line_Frequency, minF)
+	maxP = BinarySearch(Line_Frequency, maxF)
 
 	do	// This is a do-while(0) loop, allowing the break statement to be used like a goto.
 		if ((minP == -2) || (maxP == -1))
 			// There are no peaks in the range of the polynomial
 			Beep
 			Print LW_ERROR4
-			Peak_LWm  = NaN
+			Line_LWm  = NaN
 			break
 		endif
 		if (minP == -1)
@@ -1147,16 +1117,16 @@ function DoBandCoeffUpdate(BandCoeff)
 			minP = 0
 		else
 			// The range of the polynomial begins above the frequency of the first peak.
-			// Set Peak_LWm of those peaks below the range of the polynomial to -Inf
-			Peak_LWm[0, minP - 1] = -Inf
+			// Set Line_LWm of those peaks below the range of the polynomial to -Inf
+			Line_LWm[0, minP - 1] = -Inf
 		endif
 		if (maxP == -2)
 			// The range of the polynomial ends above the frequency of the first peak.
-			maxP = NumPeaks
+			maxP = NumLines
 		else
 			// The range of the polynomial ends below the frequency of the last peak.
-			// Set Peak_LWm of those peaks below the range of the polynomial to +Inf
-			Peak_LWm[maxP + 1, NumPeaks - 1] = Inf
+			// Set Line_LWm of those peaks below the range of the polynomial to +Inf
+			Line_LWm[maxP + 1, NumLines - 1] = Inf
 		endif
 		
 		theM = minM	
@@ -1166,15 +1136,15 @@ function DoBandCoeffUpdate(BandCoeff)
 		// For negative slope, run theP backwards
 		slope = sign(FatmaxM - FatminM)
 		for (theP = (slope > 0 ? minP : maxP) ; ((minP <= theP) && (theP <= maxP))  ; theP += slope)
-			if (theF2 < Peak_Frequency[theP] )
+			if (theF2 < Line_Frequency[theP] )
 				do
 					theM += 1
 					theF2 = poly2(PolyCoeff, order, theM + 0.5)
-				while (theF2 < Peak_Frequency[theP] )
+				while (theF2 < Line_Frequency[theP] )
 				theF = poly2(PolyCoeff, order, theM)
 			endif
-			Peak_LWm[theP] = theM
-			Peak_delta_frequency[theP] = Peak_Frequency[theP] - theF
+			Line_LWm[theP] = theM
+			Line_DF[theP] = Line_Frequency[theP] - theF
 		endfor		
 	while(0)
 
@@ -1190,36 +1160,38 @@ function DoSeriesOrderUpdate(Series_Order, CurrentSeries)
 	return Series_Order[CurrentSeries]
 end
 
-function DoTriangleUpdate(Peak_LWm, Peak_Series, Series_Color, Series_Shape, StartM, EndM, Zoom)
+function DoTriangleUpdate(Line_LWm, Line_Series, Series_Color, Series_Shape, StartM, EndM, Zoom)
 // This procedure recalculates Triangle_X, Triangle_Yup, Triangle_Ydown, and Triangle_Color, StartP, EndP, StartFrequency, and EndFrequency
-// whenever Peak_LWm, Peak_Series, Peak_Shape, Series_Color, Series_Shape, StartM, or EndM  change.
+// whenever Line_LWm, Line_Series, Line_Shape, Series_Color, Series_Shape, StartM, or EndM  change.
 // DO NOT DECLARE AS STATIC!
-	Wave Peak_LWm
-	Wave/T Peak_Series
+	Wave Line_LWm
+	Wave/T Line_Series
 	Wave Series_Color, Series_Shape
 	Variable startM, endM, Zoom
 
 	Variable start_time = ticks
 
 	String SaveDF = GetDataFolder(1)
-	SetDataFolder GetWavesDataFolder(Peak_LWm,1)
+	SetDataFolder GetWavesDataFolder(Line_Series,1)
 	WAVE M_Colors = ::M_Colors
-	WAVE Peak_Intensity = ::Peak_Intensity
-	WAVE Peak_width = ::Peak_Width
+	WAVE Line_Intensity = Intensity
+	WAVE Line_Width = Width
+	NVAR minWidth, maxWidth, minIntensity, maxIntensity
+
+	SetDataFolder GetWavesDataFolder(Line_LWm,1)
 	WAVE PolyCoeff
-	WAVE Peak_delta_frequency
+	WAVE Line_DF
 	WAVE Triangle_X
 	WAVE Triangle_Yup
 	WAVE Triangle_Ydown
 	WAVE Triangle_Color
 
-	Variable/G startP = BinarySearch2(Peak_LWm, startM) + 1
-	Variable/G endP = min(BinarySearch2(Peak_LWm, endM), StartP + 0.2*FIVEMAX_PEAKS_PER_PLOT - 1)
+	Variable/G startP = BinarySearch2(Line_LWm, startM) + 1
+	Variable/G endP = min(BinarySearch2(Line_LWm, endM), StartP + 0.2*FIVEMAX_PEAKS_PER_PLOT - 1)
 	Variable/G startFrequency = poly(PolyCoeff,startM)
 	Variable/G endFrequency = poly(PolyCoeff,endM)
 	NVAR lastTriangle
 	SetDataFolder ::
-	NVAR minWidth, maxWidth, minIntensity, maxIntensity
 	SetDataFolder SaveDF
 	
 	Variable base, center, color, height, fiveindex, shape, width, scale_width,  scale_height, WidthMin, index
@@ -1235,14 +1207,14 @@ function DoTriangleUpdate(Peak_LWm, Peak_Series, Series_Color, Series_Shape, Sta
 	
 	for (index = startP ; index <= endP ; index += 1)
 		fiveindex = 5*(index-StartP)
-		base = Peak_LWm[index]
-		center = Peak_delta_frequency[index]
-		total_height = (Peak_Intensity[index] - minIntensity) *scale_height + 0.1
+		base = Line_LWm[index]
+		center = Line_DF[index]
+		total_height = (Line_Intensity[index] - minIntensity) *scale_height + 0.1
 		height = min(total_height, 0.90)  // New Version 2.01
-		width =  (Peak_width[index] - minWidth)*scale_width + WidthMin
+		width =  (Line_width[index] - minWidth)*scale_width + WidthMin
 		clip_width = (1-height/total_height)*width
 		
-		series = str2num(StringFromList(0,Peak_Series[index],";"))
+		series = str2num(StringFromList(0,Line_Series[index],";"))
 		if (numtype(series))
 			series = 0
 		endif
@@ -1302,9 +1274,9 @@ function LWHookFunction(s)
 	Variable theKey, theP
 
 	//do not handle Events that occur in the control bar:
-	if (s.mouseLoc.v < 0 || s.mouseLoc.h < 0) //TOP_BAR_HEIGHT
-		return 0
-	endif
+	//if (s.mouseLoc.v < 0 || s.mouseLoc.h < 0)
+	//	return 0
+	//endif
 
 	switch(s.eventcode)
 		case EC_Keyboard:
@@ -1314,14 +1286,7 @@ function LWHookFunction(s)
 				VMoveCursor(1)
 				return 1 
 			case VK_DELETE:
-				UnAssignPeak(CursorPosition(),7)
-				UnAssignPeak(CursorPosition(),6)
-				UnAssignPeak(CursorPosition(),5)
-				UnAssignPeak(CursorPosition(),4)
-				UnAssignPeak(CursorPosition(),3)
-				UnAssignPeak(CursorPosition(),2)
-				UnAssignPeak(CursorPosition(),1)
-				UnAssignPeak(CursorPosition(),0)
+				UnAssignPeak(CursorPosition(),GetCurrentSeriesNumber())
 				VMoveCursor(1)
 				return 1 
 			case VK_PRIOR:
@@ -1344,61 +1309,22 @@ function LWHookFunction(s)
 				return 1
 			case 0x41:
 			case 0x61:
-			//case VK_A:
-				//Prevent Ctrl-A
+				//Prevent Ctrl-A (Autoscale)
 				return 1			
-//			case VK_F2:
-//				AddSeries()
-//				return 1	
-//			case VK_F3:
-//				SelectSeries()
-//				return 1
-//			case VK_F4:
-//				DeleteSeries()
-//				//String PlotFolder = StringByKey("PlotFolder",S_Value,"=",",")
-//				//NVAR CurrentSeries = $(PlotFolder+"CurrentSeries")
-//				//DeleteSeries(CurrentSeries)
-//				return 1	
-//			case VK_F5:
-//				GetWindow kwTopWin, note
-//				String PlotFolder = StringByKey("PlotFolder",S_Value,"=",",")
-//				NVAR CurrentSeries = $(PlotFolder+"CurrentSeries")
-//				FitSeries(CurrentSeries)
-//				return 1
-//			case VK_F6:
-//				GetWindow kwTopWin, note
-//				PlotFolder = StringByKey("PlotFolder",S_Value,"=",",")
-//				NVAR CurrentSeries = $(PlotFolder+"CurrentSeries")
-//				ShiftSeries(CurrentSeries,0,1)
-//				return 1
-//			case VK_F7:
-//				GetWindow kwTopWin, note
-//				PlotFolder = StringByKey("PlotFolder",S_Value,"=",",")
-//				NVAR CurrentSeries = $(PlotFolder+"CurrentSeries")
-//				ViewSeries(CurrentSeries)
-//				return 1
-//			case VK_F8:
-//				EditSeriesInfo()
-//				return 1
-//			case VK_F9:
-//				ExtractAssignments()
-//				return 1
-//			case VK_F11:
-//				ChangeRange(0, 0)
-//				return 1
-//			case VK_F12:
-//				EditBandConstants()
-//				return 1	
 			default:
-				//Print theKey
 				return 0
 			endswitch
 		case EC_MouseDown:
-			SetActiveSubwindow LWbase
-			theP = HitTest(s)
-			if (theP >= 0)
-				MoveCursor(theP)
- 			endif
+			//do not handle mouse events that occur outside the graph area
+			if (s.mouseLoc.v < 0 || s.mouseLoc.h < 0) //TOP_BAR_HEIGHT
+				return 0
+			else
+				//SetActiveSubwindow LWbase
+				theP = HitTest(s)
+				if (theP >= 0)
+					MoveCursor(theP)
+	 			endif
+	 		endif
  			return 1
 		//case "mousedblclk":
 		//	theP = HitTest(InfoStr)
@@ -1407,214 +1333,24 @@ function LWHookFunction(s)
  		//	endif			
 		//	return 1
 		case EC_MouseUp:
-			theP = HitTest(s)
-			if ((theP >= 0) || (theP == -9))
-				return 1
+			//do not handle Events that occur that occur outside the graph area
+			if (s.mouseLoc.v < 0 || s.mouseLoc.h < 0) //TOP_BAR_HEIGHT
+				return 0
+			else
+				theP = HitTest(s)
+				if ((theP >= 0) || (theP == -9))
+					return 1
+ 				endif
  			endif
  			break
 		//case "mousewheel":
 		//	VerticalScroll( sign(NumberByKey("DELTA",InfoStr)) )
 		//	return 1
- 		//case EC_Kill
- 		//	return SWXKillDialog(StringByKey("WINDOW",InfoStr))			
 		default:
 			return 0
 	endswitch //(Event)
 
 End //function LWHookFunction
-
-
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-//// Loomis-Wood plot hook function:
-//function LWHookFunctionOld(InfoStr)
-//// This is the event handler for a Loomis-Wood plot window.
-//	String InfoStr
-//	if ((ticks - NumberByKey("TICKS", InfoStr)) > 2)
-//		//Ignore events that are more than 2 ticks stale. 
-//		return 1
-//	endif
-//	String Event = StringByKey("EVENT",InfoStr)
-//	
-//		//The events in IGOR 4.00 and above are: 
-//		//		activate
-//		//		deactivate
-//		//		kill
-//		//		mousedown		-> handled by SetWindowExt
-//		//		mouseup		-> handled by SetWindowExt
-//		//		mousemoved
-//		//		resize
-//		//The events provided by SetWindowExt are: 
-//		//		mousedown
-//		//		mouseup
-//		//		mousedblclk
-//		//		mmousedown
-//		//		mmouseup
-//		//		mmousedblclk
-//		//		mmousedown
-//		//		rmouseup
-//		//		rmousedblclk
-//		//		rmousemoved
-//		//		mousewheel
-//		//		keyup
-//		//		keydown
-//		//		close
-//
-//	Variable theKey, theP
-//
-//	//do not handle Events that occur in the control bar:
-//	//if (NumberByKey("MOUSEY",InfoStr) < TOP_BAR_HEIGHT)
-//	//	return 0
-//	//endif
-//
-//	strswitch(Event)
-//		case "keydown":
-//			theKey = NumberByKey("KEY",InfoStr)
-//			switch(theKey)
-//			case VK_RETURN:
-//				AssignPeak(CursorPosition(),GetCurrentSeriesNumber(),CursorM(),-1)
-//				VMoveCursor(1)
-//				return 1 
-//			case VK_DELETE:
-//				UnAssignPeak(CursorPosition(),7)
-//				UnAssignPeak(CursorPosition(),6)
-//				UnAssignPeak(CursorPosition(),5)
-//				UnAssignPeak(CursorPosition(),4)
-//				UnAssignPeak(CursorPosition(),3)
-//				UnAssignPeak(CursorPosition(),2)
-//				UnAssignPeak(CursorPosition(),1)
-//				UnAssignPeak(CursorPosition(),0)
-//				VMoveCursor(1)
-//				return 1 
-//			case VK_PRIOR:
-//				VerticalScroll(-LinesPerFrame())
-//				return 1
-//			case VK_NEXT:
-//				VerticalScroll(LinesPerFrame())
-//				return 1
-//			case VK_LEFT:
-//				HMoveCursor(-1)
-//				return 1 
-//			case VK_UP:
-//				VMoveCursor(-1)
-//				return 1
-//			case VK_RIGHT:
-//				HMoveCursor(1)
-//				return 1 
-//			case VK_DOWN:
-//				VMoveCursor(1)
-//				return 1
-//			case VK_A:
-//				//Prevent Ctrl-A
-//				return 1			
-//			case VK_F2:
-//				AddSeries()
-//				return 1	
-//			case VK_F3:
-//				SelectSeries()
-//				return 1
-//			case VK_F4:
-//				DeleteSeries()
-//				//String PlotFolder = StringByKey("PlotFolder",S_Value,"=",",")
-//				//NVAR CurrentSeries = $(PlotFolder+"CurrentSeries")
-//				//DeleteSeries(CurrentSeries)
-//				return 1	
-//			case VK_F5:
-//				GetWindow kwTopWin, note
-//				String PlotFolder = StringByKey("PlotFolder",S_Value,"=",",")
-//				NVAR CurrentSeries = $(PlotFolder+"CurrentSeries")
-//				FitSeries(CurrentSeries)
-//				return 1
-//			case VK_F6:
-//				GetWindow kwTopWin, note
-//				PlotFolder = StringByKey("PlotFolder",S_Value,"=",",")
-//				NVAR CurrentSeries = $(PlotFolder+"CurrentSeries")
-//				ShiftSeries(CurrentSeries,0,1)
-//				return 1
-//			case VK_F7:
-//				GetWindow kwTopWin, note
-//				PlotFolder = StringByKey("PlotFolder",S_Value,"=",",")
-//				NVAR CurrentSeries = $(PlotFolder+"CurrentSeries")
-//				ViewSeries(CurrentSeries)
-//				return 1
-//			case VK_F8:
-//				EditSeriesInfo()
-//				return 1
-//			case VK_F9:
-//				ExtractAssignments()
-//				return 1
-//			case VK_F11:
-//				ChangeRange(0, 0)
-//				return 1
-//			case VK_F12:
-//				EditBandConstants()
-//				return 1	
-//			default:
-//				//Print theKey
-//				return 0
-//			endswitch
-//		case "mousedown":
-//			theP = HitTestOld(InfoStr)
-//			if (theP >= 0)
-//				MoveCursor(theP)
-// 			endif
-// 			return 1
-//		case "mousedblclk":
-//			theP = HitTestOld(InfoStr)
-//			if (theP >= 0)
-//				AssignPeak(theP,GetCurrentSeriesNumber(),CursorM(), -1)
-// 			endif			
-//			return 1
-//		case "mouseup":
-//			theP = HitTestOld(InfoStr)
-//			if ((theP >= 0) || (theP == -9))
-//				return 1
-// 			endif
-// 			break
-//		case "mousewheel":
-//			VerticalScroll( sign(NumberByKey("DELTA",InfoStr)) )
-//			return 1
-// 		case "kill":
-// 			return 0 //SWXKillDialog(StringByKey("WINDOW",InfoStr))			
-//		default:
-//			return 0
-//	endswitch //(Event)
-//
-//End //function LWHookFunction
-
-//static function SWXKillDialog(WinStr)
-////This portion of the hook function will make sure that SetWindowExt kwTopWin is added to the recreation menu.
-////However, if Display, Edit, NewPanel, or NewLayout have /K=0, the result will be dual DoRecreationDialogs.
-////Because procedure windows cannot be edited while functions or macros are running, it is necessary to invoke  SetProcedureText via Execute/P.
-////There is no way to prevent the SetProcedureText command from showing in the History window.
-//	string WinStr
-//		switch (DoRecreationDialog(WinStr))
-//		case 0:	//Cancel
-//			Return 2
-//		case 1:	//Save
-//		case 2:	//Replace
-//			SVAR/Z S_FnName
-//			if (cmpstr(S_FnName,WinStr))
-//				DoWindow/F $WinStr
-//				DoWindow/C $S_FnName
-//			endif
-//			string/G S_SWX_RecreationMacroText = SWXRecreation(S_FnName)
-//			Execute/P/Z "SetProcedureText(\""+S_FnName+"\",S_SWX_RecreationMacroText,255)"
-//			return 1
-//		case 3:	//No Save
-//			return 0
-//		endswitch
-//end //static function SWXKillDialog
-//
-//static function/S SWXRecreation(WinName)
-//	string WinName
-//	string theMacro = WinRecreation(WinName,0)
-//	variable insert = StrSearch(theMacro,"\rEndMacro\r",0)
-//	if (insert < 0)
-//		Return ""
-//	else
-//		Return (theMacro[0,insert-1]+"\r\tSetWindowExt kwTopWin"+theMacro[insert,strlen(theMacro)])
-//	endif
-//end //static function/S SWXRecreation
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Loomis-Wood plot event handlers
@@ -1657,43 +1393,6 @@ static Function HitTest(s)
 	return -9
 End //Static Function HitTest
 
-//static Function HitTestOld(InfoStr)
-//// Returns -8 through -1 if user clicks outside the plot area.
-//// Returns -9 or peak number if user clicks inside the plot area.
-//	String InfoStr
-//
-//	Variable theResult = 0
-//	
-//	Variable xpixel, ypixel, theX, theY
-//
-//	String theTrace
-//
-//	xpixel = NumberByKey("MOUSEX",InfoStr)
-//	ypixel = NumberByKey("MOUSEY",InfoStr) - TOP_BAR_HEIGHT
-//	theX = AxisValfromPixel("","bottom",xpixel)
-//	theY = AxisValfromPixel("","left",ypixel)
-//	GetAxis/Q left
-//	theResult = (theY > max(V_min,V_max))+2*(theY < min(V_min,V_max))
-//	GetAxis/Q bottom
-//	theResult += 3*(theX > max(V_min,V_max))+6*(theX < min(V_min,V_max))
-//	
-//	If (theResult)
-//		return -theResult
-//	EndIf
-//
-//	theTrace = StringByKey("TRACE",TraceFromPixel(xpixel, ypixel,"PREF:Triangle_Yup;"))
-//	StrSwitch(theTrace)	// string switch
-//		case "Triangle_Yup":
-//		case "Triangle_Ydown":
-//		case "LWCursorYup":
-//		case "LWCursorYdown":
-//			return NearestPeak(theX, theY - 0.2)
-//		default:
-//	EndSwitch
-//
-//	return -9
-//End //Static Function HitTest
-
 static function NearestPeak(theX, theY)
 // Finds the peak nearest a set of cartesian coordinates in a Loomis-Wood plot.
 	variable theX, theY
@@ -1702,29 +1401,29 @@ static function NearestPeak(theX, theY)
 
 	GetWindow kwTopWin, note
 	string PlotFolder = StringByKey("PlotFolder",S_Value,"=",",")
-	WAVE Peak_LWm = $(PlotFolder+"Peak_LWm")
-	WAVE Peak_delta_frequency = $(PlotFolder+"Peak_delta_frequency")
+	WAVE Line_LWm = $(PlotFolder+"Line_LWm")
+	WAVE Line_DF = $(PlotFolder+"Line_DF")
 	GetAxis/Q bottom
 
 	theM = ceil(theY)
-	maxP = BinarySearch(Peak_LWm, theM)
+	maxP = BinarySearch(Line_LWm, theM)
 	minP = maxP
 
 	minP += 1
 	do
 		minP -= 1
-	while (Peak_LWm[minP-1] == theM && minP > 0)
+	while (Line_LWm[minP-1] == theM && minP > 0)
 
 	maxP -= 1
 	do
 		maxP += 1
-	while (Peak_LWm[maxP+1] == theM && maxP < numpnts(Peak_LWm))
+	while (Line_LWm[maxP+1] == theM && maxP < numpnts(Line_LWm))
 
 	if (minP == maxP)
 		return minP
 	endif
 
-	FindLevel /P/Q/R=[minP,maxP] Peak_delta_frequency, theX
+	FindLevel /P/Q/R=[minP,maxP] Line_DF, theX
 	if (V_flag)
 		return (theX < 0) ? minP : maxP
 	endif
@@ -1767,12 +1466,12 @@ static function MoveCursor(theP)
 		return 0
 	endif
 
-	String PlotFolder, SourceFolder
+	String PlotFolder, DataSet
 	Variable temp
 
 	GetWindow kwTopWin, note
 	PlotFolder = StringByKey("PlotFolder",S_Value,"=",",")
-	SourceFolder = StringByKey("SourceFolder",S_Value,"=",",")
+	DataSet = StringByKey("DataSet",S_Value,"=",",")
 	NVAR maxP = $(PlotFolder+"maxP")
 	NVAR minP = $(PlotFolder+"minP")
 
@@ -1781,7 +1480,6 @@ static function MoveCursor(theP)
 		return 0
 	endif
 
-	NVAR NumPeaks = $(SourceFolder+"NumPeaks")
 	NVAR StartP = $(PlotFolder+"StartP")
 	NVAR EndP = $(PlotFolder+"EndP")
 	
@@ -1794,38 +1492,38 @@ static function MoveCursor(theP)
 	NVAR lwCursor_delta_frequency = $(PlotFolder+"lwCursor_delta_frequency")
 	SVAR lwCursor_assignments= $(PlotFolder+"lwCursor_assignments")
 
-	WAVE Peak_Frequency = $(Sourcefolder+"Peak_Frequency")
-	WAVE Peak_Intensity = $(Sourcefolder+"Peak_Intensity")
-	WAVE Peak_Width = $(Sourcefolder+"Peak_Width")
-	WAVE/T Peak_Series = $(Sourcefolder+"Peak_Series")
-	WAVE/T Series_Data = $(Sourcefolder+"Series_Data")
-	WAVE/T Series_Name = $(Sourcefolder+"Series_Name")
+	SetDataFolder DataSet
+	Struct LinesStruct lines
+	GetLinesStruct(DataSet, lines)
+
+	Struct SeriesStruct series
+	GetSeriesStruct(DataSet, series)
 
 	WAVE Triangle_X = $(PlotFolder+"Triangle_X")
 	WAVE Triangle_Yup = $(PlotFolder+"Triangle_Yup")
 	WAVE LWCursorYup = $(PlotFolder+"LWCursorYup")
 	WAVE LWCursorYdown = $(PlotFolder+"LWCursorYdown")
 	WAVE LWCursorX = $(PlotFolder+"LWCursorX")
-	WAVE Peak_LWm = $(PlotFolder+"Peak_LWm")
+	WAVE Line_LWm = $(PlotFolder+"Line_LWm")
 	WAVE PolyCoeff = $(PlotFolder+"PolyCoeff")
 
-	theP = limit(theP, 0, NumPeaks - 1)
+	theP = limit(theP, 0, lines.Count - 1)
 	if (theP < StartP)
-		VerticalScroll(round(Peak_LWm[theP])-round(Peak_LWm[StartP]))
+		VerticalScroll(round(Line_LWm[theP])-round(Line_LWm[StartP]))
 		DoUpdate
 		MoveCursor(theP)
 		return 0
 	elseif (theP > EndP)
-		VerticalScroll(round(Peak_LWm[theP])-round(Peak_LWm[EndP]))
+		VerticalScroll(round(Line_LWm[theP])-round(Line_LWm[EndP]))
 		DoUpdate
 		MoveCursor(theP)
 		return 0
 	endif
 	
 	lwCursor_p = theP
-	lwCursor_frequency = Peak_Frequency[theP]
-	lwCursor_intensity = Peak_Intensity[theP]
-	lwCursor_width = Peak_Width[theP]
+	lwCursor_frequency = lines.Frequency[theP]
+	lwCursor_intensity = lines.Intensity[theP]
+	lwCursor_width = lines.Width[theP]
 	
  	temp = 5*(lwCursor_p-StartP)
 	LWCursorX[0] = Triangle_X[temp]
@@ -1837,18 +1535,18 @@ static function MoveCursor(theP)
 	lwCursor_delta_m = Triangle_X[temp+1]
 	lwCursor_delta_frequency = lwCursor_frequency - poly(PolyCoeff, lwCursor_m)
 
-	Variable i, series, nseries
+	Variable i, series_num, nassignments
 	String m
-	nseries = ItemsInList(Peak_Series[theP])
-	if (nseries <= 0)
+	nassignments = ItemsInList(lines.Assignments[theP])
+	if (nassignments <= 0)
 		lwCursor_assignments = "Unassigned"
 	else
 		lwCursor_assignments = ""
-		for (i = 0 ; i < nseries ; i += 1)
-			series = str2num(StringFromList(i,Peak_Series[theP]))
-			m = StringByKey(num2str(theP), Series_Data[series])
+		for (i = 0 ; i < nassignments ; i += 1)
+			series_num = str2num(StringFromList(i,lines.Assignments[theP]))
+			m = StringByKey(num2str(theP), series.Data[series_num])
 			m = StringFromList(0,m,",")
-			lwCursor_assignments += Series_Name[series]+" "+m+";"
+			lwCursor_assignments += series.Name[series_num]+" "+m+";"
 		endfor
 	endif
 	PopupMenu popup_assignments,mode=1
@@ -1866,8 +1564,8 @@ End //Static Function CursorPosition
 static function CursorM()
 	GetWindow kwTopWin, note
 	String PlotFolder = StringByKey("PlotFolder",S_Value,"=",",")
-	WAVE Peak_LWm = $(PlotFolder+"Peak_LWm")
-	return round(Peak_LWm[CursorPosition()])
+	WAVE Line_LWm = $(PlotFolder+"Line_LWm")
+	return round(Line_LWm[CursorPosition()])
 end
 
 static function VMoveCursor(Amount)
@@ -1890,7 +1588,6 @@ static function VMoveCursor(Amount)
 	else
 		MoveCursor(temp)
 	endif
-
 End //Static Function VMoveCursor
 
 static Function HMoveCursor(Amount)
@@ -1947,11 +1644,12 @@ function SelectSeries()
 	endif
 
 	GetWindow kwTopWin, note
-	String SourceFolder = StringByKey("SourceFolder",S_Value,"=",",")
-	WAVE/T Series_Name = $(SourceFolder+"Series_Name")
+	String DataSet = StringByKey("DataSet",S_Value,"=",",")
+	Struct SeriesStruct series
+	GetSeriesStruct(DataSet, series)
 
 	variable theSeries
-	prompt theSeries, LW_STRING12, popup TextWave2List(Series_Name)+"_Create_New_Series_;"
+	prompt theSeries, LW_STRING12, popup TextWave2List(Series.Name)+"_Create_New_Series_;"
 	doprompt LW_TITLE, theSeries
 	if (V_Flag)
 		return 0
@@ -1964,13 +1662,14 @@ static function ChangeCurrentSeries(theSeries)
 	Variable theSeries
 
 	GetWindow kwTopWin, note
-	String SourceFolder = StringByKey("SourceFolder",S_Value,"=",",")
+	String DataSet = StringByKey("DataSet",S_Value,"=",",")
 	String PlotFolder = StringByKey("PlotFolder",S_Value,"=",",")
+	Struct SeriesStruct series
+	GetSeriesStruct(DataSet, series)
 	
-	NVAR NumSeries = $(SourceFolder+"NumSeries")
 	NVAR CurrentSeries = $(PlotFolder+"CurrentSeries")
 
-	if ((theSeries > 0) && (theSeries <= NumSeries))
+	if ((theSeries > 0) && (theSeries <= series.Count))
 		CurrentSeries = theSeries
 		PopupMenu CurrentSeriesPopup, mode=theSeries
 	else
@@ -1985,50 +1684,47 @@ function DeleteSeries()
 		return 0
 	endif
 
-	string saveDF = GetDataFolder(1)
 	GetWindow kwTopWin, note
-	SetDataFolder StringByKey("SourceFolder",S_Value,"=",",")
-	
-	NVAR NumSeries
-	WAVE/T Series_Name, Series_Data, Series_QN
-	WAVE Series_Color, Series_Shape, Series_Order
-	WAVE/T Peak_Series
-	
-	SetDataFolder saveDF
+	String DataSet = StringByKey("DataSet",S_Value,"=",",")
+	//String PlotFolder = StringByKey("PlotFolder",S_Value,"=",",")
+
+	Struct LinesStruct lines
+	GetLinesStruct(DataSet, lines)
+
+	Struct SeriesStruct series
+	GetSeriesStruct(DataSet, series)
 	
 	variable theSeries
-	prompt theSeries, LW_STRING13, popup TextWave2List(Series_Name)
+	prompt theSeries, LW_STRING13, popup TextWave2List(series.Name)
 	doprompt LW_TITLE, theSeries
 	if (V_Flag)
 		return 0
 	endif
 
 	Variable i, npnts, point
-	npnts = ItemsInList(Series_Data[theSeries])
+	npnts = ItemsInList(series.Data[theSeries])
 	string item
 	for (i=0 ; i<npnts ; i+=1)
-		item = StringFromList(i,Series_Data[theSeries],";")
+		item = StringFromList(i,series.Data[theSeries],";")
 		point = str2num(StringFromList(0,item,":"))
-		Peak_Series[point] = RemoveFromList(num2str(theSeries),Peak_Series[point],";")
+		lines.Assignments[point] = RemoveFromList(num2str(theSeries),lines.Assignments[point],";")
 	endfor
 	
-	Variable series
-	npnts=numpnts(Peak_Series)
-	for (point=0 ; point<npnts; point+=1)
-		if (ItemsInList(Peak_Series[point])>0)
+	Variable series_num
+	//npnts=numpnts(Line_Series)
+	for (point=0 ; point<lines.Count; point+=1)
+		if (ItemsInList(lines.Assignments[point])>0)
 			item = ""
-			for (i=0 ; i<ItemsInList(Peak_Series[point]) ; i+=1)
-				series = str2num(StringFromList(i,Peak_Series[point],";"))
-				series -= series > theSeries ? 1 : 0
-				item += num2str(series)+";"
+			for (i=0 ; i<ItemsInList(lines.Assignments[point]) ; i+=1)
+				series_num = str2num(StringFromList(i,lines.Assignments[point],";"))
+				series_num -= series_num > theSeries ? 1 : 0
+				item += num2str(series_num)+";"
 			endfor
-			Peak_Series[point] = item
+			lines.Assignments[point] = item
 		endif
 	endfor
 
-
-	DeletePoints theSeries, 1, Series_Name, Series_Data, Series_Color, Series_Shape, Series_Order, Series_QN
-	NumSeries -= 1
+	DeletePoints theSeries, 1, series.Name, series.Data, series.Color, series.Shape, series.Order
 end
 
 function AddSeries()
@@ -2040,15 +1736,20 @@ function AddSeries()
 
 	string saveDF = GetDataFolder(1)
 	GetWindow kwTopWin, note
-	SetDataFolder StringByKey("SourceFolder",S_Value,"=",",")
-	
-	NVAR NumSeries
-	WAVE/T Series_Name, Series_Data, Series_QN 
+	SetDataFolder StringByKey("DataSet",S_Value,"=",",")
 	WAVE/T ColorNames
-	WAVE Series_Color, Series_Shape, Series_Order
+
+	SetDataFolder Series
+	WAVE/T Series_Name = Name
+	WAVE/T Series_Data = Data
+	WAVE Series_Color = Color
+	WAVE Series_Shape = shape
+	WAVE Series_Order = Order
+	Variable NumSeries = numpnts(Series_Name) - 1
 	SetDataFolder saveDF
 			
 	string SeriesName
+	// HERE HERE
 	variable SeriesColor = Mod(NumSeries,6)+1
 	Prompt SeriesName, LW_STRING10
 	Prompt SeriesColor, LW_STRING11, popup, TextWave2List(ColorNames) //COLOR_LIST
@@ -2063,7 +1764,6 @@ function AddSeries()
 
 	NumSeries += 1
 	Redimension/N=(NumSeries+1) Series_Name, Series_Data, Series_Color, Series_Shape, Series_Order
-	Redimension/N=(NumSeries+1,-1) Series_QN
 	Series_Name[NumSeries] = SeriesName
 	Series_Data[NumSeries] = ""
 	Series_Color[NumSeries] = SeriesColor
@@ -2080,10 +1780,10 @@ function GetCurrentSeriesNumber()
 	endif
 
 	GetWindow kwTopWin, note
-	String SourceFolder = StringByKey("SourceFolder",S_Value,"=",",")
+	String DataSet = StringByKey("DataSet",S_Value,"=",",")
 	String PlotFolder = StringByKey("PlotFolder",S_Value,"=",",")
 	NVAR CurrentSeries = $(PlotFolder+"CurrentSeries")
-	NVAR NumSeries = $(SourceFolder+"NumSeries")
+	Variable NumSeries = numPnts($(DataSet+"Series:Name")) -1
 	if ((CurrentSeries > NumSeries) || (CurrentSeries < 1))
 		// A valid series is not currently selected
 		if (NumSeries == 0)
@@ -2107,13 +1807,14 @@ static function AssignPeak(theP, theSeries, theM, theShape)
 	
 	string saveDF = GetDataFolder(1)
 	GetWindow kwTopWin, note
-	SetDataFolder  StringByKey("SourceFolder",S_Value,"=",",")
-	WAVE/T Peak_Series, Series_Data
+	SetDataFolder  StringByKey("DataSet",S_Value,"=",",")
+	WAVE/T Line_Series = :Lines:Assignments
+	WAVE/T Series_Data = :Series:Data
 	SetDataFolder saveDF
 	
 	Series_Data[theSeries] = ReplaceStringByKey( num2str(theP) , Series_Data[theSeries] , num2str(theM)+","+num2str(theShape) )
-	if ( !(FindListItem(num2str(theSeries) , Peak_Series[theP]) >= 0) )
-		Peak_Series[theP] += num2str(theSeries) + ";"
+	if ( !(FindListItem(num2str(theSeries) , Line_Series[theP]) >= 0) )
+		Line_Series[theP] += num2str(theSeries) + ";"
 	endif
 End //Static Function AssignPeak
 
@@ -2121,13 +1822,16 @@ static Function UnAssignPeak(theP, theSeries)
 	Variable theP, theSeries
 	
 	GetWindow kwTopWin, note
-	String SourceFolder = StringByKey("SourceFolder",S_Value,"=",",")
+	String DataSet = StringByKey("DataSet",S_Value,"=",",")
 	
-	WAVE/T Peak_Series = $(SourceFolder+"Peak_Series")
-	WAVE/T Series_Data = $(SourceFolder+"Series_Data")
+	Struct LinesStruct lines
+	GetLinesStruct(DataSet, lines)
 
-	Series_Data[theSeries] = RemoveByKey( num2str(theP) , Series_Data[theSeries] )
-	Peak_Series[theP] = RemoveFromList( num2str(theSeries), Peak_Series[theP] )
+	Struct SeriesStruct series
+	GetSeriesStruct(DataSet, series)
+
+	series.data[theSeries] = RemoveByKey( num2str(theP) , series.data[theSeries] )
+	lines.Assignments[theP] = RemoveFromList( num2str(theSeries), lines.Assignments[theP] )
 End //Static Function UnAssignPeak
 
 function/S UndoFit()
@@ -2179,10 +1883,12 @@ function/S FitSeries(theSeries)
 	WAVE BandCoeff
 	Duplicate/O BandCoeff, LastCoeff
 
-	SetDataFolder StringByKey("SourceFolder",S_Value,"=",",")
-	WAVE Series_Order, Poly2Band
-	WAVE/T BandCoeffLabels, Series_Name
-	
+	SetDataFolder StringByKey("DataSet",S_Value,"=",",")
+	WAVE Poly2Band
+	WAVE/T BandCoeffLabels
+	SetDataFolder Series
+	WAVE Series_Order = Order
+	WAVE/T Series_Name = Name
 	if (theSeries >= numpnts(Series_Order))
 		Beep
 		SetDataFolder saveDF 
@@ -2190,7 +1896,7 @@ function/S FitSeries(theSeries)
 	endif
 	
 	FetchSeries(theSeries)
-	SetDataFolder SeriesFit
+	SetDataFolder ::SeriesFit
 	WAVE Series_Frequency, Series_M, Series_Select
 	Duplicate/O Series_Frequency, Series_Residual
 	
@@ -2264,13 +1970,18 @@ static function FetchSeries(theSeries)
 	GetWindow kwTopWin, note
 
 	SetDataFolder StringByKey("PlotFolder",S_Value,"=",",")
-	WAVE Peak_delta_frequency
+	WAVE Line_DF
 
-	SetDataFolder StringByKey("SourceFolder",S_Value,"=",",")
-	WAVE Peak_Frequency, Peak_Intensity, Peak_Width
-	WAVE/T Peak_Series, Series_Data
+	SetDataFolder StringByKey("DataSet",S_Value,"=",",")
+	SetDataFolder Lines
+	WAVE Line_Frequency = Frequency
+	WAVE Line_Intensity = Intensity
+	WAVE Line_Width = Width
+	WAVE/T Line_Series = Assignments
+	SetDataFolder ::Series
+	WAVE/T Series_Data = Data
 
-	NewDataFolder/O/S SeriesFit
+	NewDataFolder/O/S ::SeriesFit
 	Variable npnts = ItemsInList(Series_Data[theSeries])
 
 	Make/D/O/N=(npnts) Series_M, Series_Frequency, Series_Residual, Series_Select, Series_Intensity, Series_Width
@@ -2286,10 +1997,10 @@ static function FetchSeries(theSeries)
 		Series_M[i] = str2num(StringFromList(0,data,","))
 		Series_Select[i] = str2num(StringFromList(1,data,","))
 
-		Series_Frequency[i] = Peak_Frequency[pnt]
-		Series_Residual[i] = Peak_delta_Frequency[pnt]
-		Series_Intensity[i] = Peak_Intensity[pnt]
-		Series_Width[i] = Peak_Width[pnt]
+		Series_Frequency[i] = Line_Frequency[pnt]
+		Series_Residual[i] = Line_DF[pnt]
+		Series_Intensity[i] = Line_Intensity[pnt]
+		Series_Width[i] = Line_Width[pnt]
 	endfor
 	
 	Sort Series_M, Series_Frequency, Series_Residual, Series_Select, Series_Intensity, Series_Width, Series_M
@@ -2307,23 +2018,23 @@ Function ViewSeries(theSeries)		//F7
 	
 	string saveDF = getDataFolder(1)
 	GetWindow kwTopWin, note
-	SetDataFolder StringByKey("SourceFolder",S_Value,"=",",")
+	SetDataFolder StringByKey("DataSet",S_Value,"=",",")
 	SetDataFolder SeriesFit
 	WAVE Series_M, Series_Frequency, Series_Residual, Series_Select, Series_Intensity, Series_Width
 
 	Edit/K=1/W=(3,0,338.25,404)  Series_M, Series_Frequency, Series_Residual, Series_Select, Series_Intensity, Series_Width
-	Execute/Z "ModifyTable width(Point)=18,width(Series_M)=24,title(Series_M)=\"M\",format(Series_Frequency)=3"
-	Execute/Z "ModifyTable digits(Series_Frequency)=6,width(Series_Frequency)=68,title(Series_Frequency)=\"Frequency\""
-	Execute/Z "ModifyTable format(Series_Residual)=3,digits(Series_Residual)=6,width(Series_Residual)=62"
-	Execute/Z "ModifyTable title(Series_Residual)=\"Residual\",width(Series_Select)=42,title(Series_Select)=\"Select\""
-	Execute/Z "ModifyTable format(Series_Intensity)=3,width(Series_Intensity)=59,title(Series_Intensity)=\"Intensity\""
-	Execute/Z "ModifyTable format(Series_Width)=3,digits(Series_Width)=6,width(Series_Width)=51"
-	Execute/Z "ModifyTable title(Series_Width)=\"Width\""
+	ModifyTable width(Point)=18,width(Series_M)=24,title(Series_M)="M",format(Series_Frequency)=3
+	ModifyTable digits(Series_Frequency)=6,width(Series_Frequency)=68,title(Series_Frequency)="Frequency"
+	ModifyTable format(Series_Residual)=3,digits(Series_Residual)=6,width(Series_Residual)=62
+	ModifyTable title(Series_Residual)="Residual",width(Series_Select)=42,title(Series_Select)="Select"
+	ModifyTable format(Series_Intensity)=3,width(Series_Intensity)=59,title(Series_Intensity)="Intensity"
+	ModifyTable format(Series_Width)=3,digits(Series_Width)=6,width(Series_Width)=51
+	ModifyTable title(Series_Width)="Width"
 
 	SetDataFolder saveDF
 End Function
 
-Function EditSeriesInfo()
+Function ViewSeriesList()
 	if (!isTopWinLWPlot(1))
 		Beep
 		Print LW_ERROR3
@@ -2332,15 +2043,19 @@ Function EditSeriesInfo()
 	
 	string saveDF = getDataFolder(1)
 	GetWindow kwTopWin, note
-	SetDataFolder StringByKey("SourceFolder",S_Value,"=",",")
-	WAVE/T Series_Name, Series_QN
-	WAVE Series_Shape, Series_Color, Series_Order
+	SetDataFolder StringByKey("DataSet",S_Value,"=",",")
 
-	Edit/W=(3,37.25,681,416)/K=1 Series_Name,Series_Color,Series_Shape,Series_Order,Series_QN
-	Execute/Z "ModifyTable width(Point)=36,width(Series_Name)=56,title(Series_Name)=\"Name\",width(Series_Color)=32"
-	Execute/Z "ModifyTable title(Series_Color)=\"Color\",width(Series_Shape)=32,title(Series_Shape)=\"Shape\""
-	Execute/Z "ModifyTable width(Series_Order)=32,title(Series_Order)=\"Order\",width(Series_QN)=54"
-	Execute/Z "ModifyTable title(Series_QN)=\"Sel. Rules\""
+	SetDataFolder Series
+	WAVE/T Series_Name = Name
+	//WAVE/T Series_Data = Data
+	WAVE Series_Color = Color
+	WAVE Series_Shape = shape
+	WAVE Series_Order = Order
+
+	Edit/W=(3,37.25,681,416)/K=1 Series_Name,Series_Color,Series_Shape,Series_Order
+	ModifyTable width(Point)=36,width(Series_Name)=56,title(Series_Name)="Name",width(Series_Color)=32
+	ModifyTable title(Series_Color)="Color", width(Series_Shape)=32, title(Series_Shape)="Shape"
+	ModifyTable width(Series_Order)=32,title(Series_Order)="Order"
 	
 	SetDataFolder saveDF
 End Function
@@ -2366,10 +2081,10 @@ function ShiftSeries(theSeries, theShift, autoFixConstants)
 	endif
 	
 	GetWindow kwTopWin, note
-	String SourceFolder = StringByKey("SourceFolder",S_Value,"=",",")
-	//String PlotFolder = StringByKey("SourceFolder",S_Value,"=",",")
+	String DataSet = StringByKey("DataSet",S_Value,"=",",")
+	//String PlotFolder = StringByKey("DataSet",S_Value,"=",",")
 	
-	WAVE/T Series_Data = $(SourceFolder + "Series_Data")
+	WAVE/T Series_Data = $(DataSet + "Series:Data")
 	Variable npnts = ItemsInList(Series_Data[theSeries])
 
 	Variable i, pnt, m, shape
@@ -2411,11 +2126,11 @@ function ShiftConstants(theShift)
 	endif
 	
 	GetWindow kwTopWin, note
-	string SourceFolder = StringByKey("SourceFolder",S_Value,"=",",")
+	string DataSet = StringByKey("DataSet",S_Value,"=",",")
 	string PlotFolder = StringByKey("PlotFolder",S_Value,"=",",")
 	WAVE PolyCoeff = $(PlotFolder + "PolyCoeff")
 	WAVE BandCoeff = $(PlotFolder + "BandCoeff")
-	WAVE Poly2Band = $(SourceFolder + "Poly2Band")
+	WAVE Poly2Band = $(DataSet + "Poly2Band")
 
 	Make/D/O/N=(MAX_FIT_ORDER,MAX_FIT_ORDER) M_Temp
 	M_Temp = ((p+q) <= 6)*binomial(p+q,p)*PolyCoeff[p+q]
@@ -2446,7 +2161,7 @@ function EditBandConstants()		//F12
 	GetWindow kwTopWin, note
 	SetDataFolder StringByKey("PlotFolder",S_Value,"=",",")
 	WAVE BandCoeff
-	SetDataFolder StringByKey("SourceFolder",S_Value,"=",",")
+	SetDataFolder StringByKey("DataSet",S_Value,"=",",")
 	WAVE/T BandCoeffLabels
 	SetDataFolder saveDF
 	
@@ -2486,45 +2201,45 @@ function EditColors()
 	
 	string saveDF = GetDataFolder(1)
 	GetWindow kwTopWin, note
-	SetDataFolder StringByKey("SourceFolder",S_Value,"=",",")
+	SetDataFolder StringByKey("DataSet",S_Value,"=",",")
 	WAVE/T ColorNames
 	WAVE M_Colors
 	SetDataFolder saveDF
 	Edit/K=1 ColorNames, M_Colors
 end
 
-static function ValidateSourceFolder (SourceFolder)
-// Makes sure that the SourceFolder string is valid.
-// Changes SourceFolder to be an absolute reference.
-// Returns 1 if SourceFolder is invalid, 0 if SorceFolder is valid.
- 	string &SourceFolder
+static function ValidateSourceFolder (DataSet)
+// Makes sure that the DataSet string is valid.
+// Changes DataSet to be an absolute reference.
+// Returns 1 if DataSet is invalid, 0 if SorceFolder is valid.
+ 	string &DataSet
 
 	variable theRes = 0
 	string saveDF = GetDataFolder(1)
 		
-	// SourceFolder may be relative to BASE_FOLDER, absolute, or invalid
-	string temp = SourceFolder + "::"
-	if (DataFolderExists(SourceFolder) && DataFolderExists(temp))
+	// DataSet may be relative to BASE_FOLDER, absolute, or invalid
+	string temp = DataSet + "::"
+	if (DataFolderExists(DataSet) && DataFolderExists(temp))
 		//If FolderA exists, the Source MAY be absolute
-		SetDataFolder SourceFolder
+		SetDataFolder DataSet
 		SetDataFolder ::
 		if (cmpstr(GetDataFolder(1),BASE_FOLDER+":"))
 			// invalid or relative
 		else 
-			// SourceFolder is absolute so make it relative
-			SetDataFolder SourceFolder
-			SourceFolder = GetDataFolder(0)
+			// DataSet is absolute so make it relative
+			SetDataFolder DataSet
+			DataSet = GetDataFolder(0)
 		endif
 	endif
 
-	// Now, SourceFolder is relative to BASE_FOLDER or invalid
-	temp = BASE_FOLDER + ":" + SourceFolder
+	// Now, DataSet is relative to BASE_FOLDER or invalid
+	temp = BASE_FOLDER + ":" + DataSet
 	if (!DataFolderExists(temp))
 		theRes = 1
 	else
 		SetDataFolder temp
-		// Now, SourceFolder is validated and absolute
-		SourceFolder=GetDataFolder(1)
+		// Now, DataSet is validated and absolute
+		DataSet=GetDataFolder(1)
 	endif
 	
 	SetDataFolder saveDF
@@ -2538,10 +2253,10 @@ static function ValidateSourceFolder (SourceFolder)
 	string varName
 
 	GetWindow kwTopWin, note
-	string SourceFolder = StringByKey("SourceFolder",S_Value,"=",",")
+	string DataSet = StringByKey("DataSet",S_Value,"=",",")
 	string PlotFolder = StringByKey("PlotFolder",S_Value,"=",",")
 	
-	WAVE Series_Order = $(SourceFolder+"Series_Order")
+	WAVE Series_Order = $(DataSet+"Series:Order")
 	NVAR CurrentSeries = $(PlotFolder+"CurrentSeries")
 	
 	Series_Order[CurrentSeries] = varNum
@@ -2552,12 +2267,12 @@ function CurrentSeriesPopupMenuControl(ctrlName,popNum,popStr) : PopupMenuContro
 	Variable popNum
 	String popStr
 	
-	String SourceFolder, PlotFolder
+	String DataSet, PlotFolder
 
 	GetWindow kwTopWin, note
-	SourceFolder = StringByKey("SourceFolder",S_Value,"=",",")
+	DataSet = StringByKey("DataSet",S_Value,"=",",")
 	
-	NVAR NumSeries = $(SourceFolder+"NumSeries")
+	Variable NumSeries = numPnts($(DataSet+"Series:Name")) - 1
 	
 	if (popNum > NumSeries)
 		if(AddSeries())
@@ -2581,46 +2296,43 @@ function ExtractAssignments()
 	
 	string saveDF = GetDataFolder(1)
 	GetWindow kwTopWin, note
-	SetDataFolder StringByKey("SourceFolder",S_Value,"=",",")
+	SetDataFolder StringByKey("DataSet",S_Value,"=",",")
 
-	WAVE Peak_Frequency, Peak_Intensity, Peak_Width
-	WAVE/T Peak_Series
-	WAVE Series_Shape, Series_Color, Series_Order
-	WAVE/T Series_Data, Series_QN
-	NVAR NumPeaks, NumSeries
+	SetDataFolder Lines
+	WAVE Line_Frequency = Frequency
+	WAVE Line_Intensity = Intensity
+	WAVE Line_Width = Width
+	WAVE/T Line_Series = Series
+
+	SetDataFolder ::Series	
+	WAVE Series_Shape = Shape
+	WAVE Series_Color = Color
+	WAVE Series_Order = Order
+	WAVE/T Series_Data = Data
+	Variable NumPeaks=numPnts(Line_Frequency)
+	Variable NumSeries=numPnts(Series_Shape) - 1
 	
 	NewDataFolder/O/S Assignments
 	variable NumAssignments = 0
 	variable index1
 	for (index1 = 0 ; index1 < NumPeaks ; index1 += 1)
-		NumAssignments += ItemsInList(Peak_Series[index1])
+		NumAssignments += ItemsInList(Line_Series[index1])
 	endfor
 	
 	Make/O/D/N=(NumAssignments) Frequency, Intensity, Width
 	Make/O/W/N=(NumAssignments) Series, theM, Select
 	Make/O/I/N=(NumAssignments) theP
 
-	//variable MaxQN
-	//for (index1 = 0 ; index1 < MAX_QN ; index1 += 1)
-	//	if (!cmpstr(Series_QN[0][index1],""))
-	//		break
-	//	endif
-	//	Series_QN[0][index1] = CleanupName(Series_QN[0][index1], 0)
-	//	Make/O/W/N=(NumAssignments) $(Series_QN[0][index1])
-	//endfor
-	//MaxQN = index1
-	//string theString = ""
-
 	variable m, nseries, index2, ser, assignment=0
 	string data
 	for (index1 = 0 ; index1 < NumPeaks ; index1 += 1)
-		nseries = ItemsInList(Peak_Series[index1])
+		nseries = ItemsInList(Line_Series[index1])
 		for (index2 = 0 ; index2 < nseries ; index2 += 1)
-			Frequency[assignment] = Peak_Frequency[index1]
-			Intensity[assignment] = Peak_Intensity[index1]
-			Width[assignment] = Peak_Width[index1]
+			Frequency[assignment] = Line_Frequency[index1]
+			Intensity[assignment] = Line_Intensity[index1]
+			Width[assignment] = Line_Width[index1]
 
-			ser = str2num(StringFromList(index2,Peak_Series[index1]))
+			ser = str2num(StringFromList(index2,Line_Series[index1]))
 			data = StringByKey(num2str(index1),Series_Data[ser])
 			M = str2num(StringFromList(0,data,","))
 
@@ -2629,57 +2341,85 @@ function ExtractAssignments()
 			Series[assignment] = ser
 
 			theP[assignment] = index1
-				
-
-
-//			theString = "["+num2str(A)+"] = "
-//			for (index3 = 0 ; index3 < MaxQN ; index3 += 1)
-//				Execute/Z Series_QN[0][index3] + theString + Series_QN[S][index3]
-//			endfor
-//
 			assignment += 1
 		endfor
 	endfor
 	
 	Edit/K=1/W=(5,5,700,400) Frequency, Intensity, Width,Series, theM, theP, Select
-	// for (index3 = 0 ; index3 < MaxQN ; index3 += 1)
-	// 	AppendToTable $Series_QN[0][index3]
-	// endfor
-	Execute/Z "ModifyTable width = 35"
-	Execute/Z "ModifyTable width(Frequency)=80,format(Frequency)=3,digits(Frequency)=6"
-	Execute/Z "ModifyTable width(Point)=30,width(Intensity)=60,format(Intensity)=3"
-	Execute/Z "ModifyTable width(Width)=60,format(Width)=3,digits(Width)=6,width(Series)=50"
+	ModifyTable width = 35
+	ModifyTable width(Frequency)=80,format(Frequency)=3,digits(Frequency)=6
+	ModifyTable width(Point)=30,width(Intensity)=60,format(Intensity)=3
+	ModifyTable width(Width)=60,format(Width)=3,digits(Width)=6,width(Series)=50
 
 	SetDataFolder saveDF
 end function
 
-function Assign_Peaklist(Replace)
-	Variable Replace
-	if (!isTopWinLWPlot(1))
-		Beep
-		Print LW_ERROR3
-		return 0
-	endif
+Structure SeriesStruct
+	WAVE/T Name
+	WAVE Color
+	WAVE Shape
+	WAVE Order
+	WAVE/T Data
+	NVAR Count
+EndStructure
+
+Function GetSeriesStruct(DataSet, s)
+	String DataSet
+	Struct SeriesStruct &s
+
+	String saveDF = GetDataFolder(1)
+	SetDataFolder DataSet
+	SetDataFolder Series
+
+	WAVE/T s.Name = Name
+	WAVE s.Color = Color
+	WAVE s.Shape = Shape
+	WAVE s.Order = Order
+	WAVE/T s.Data = Data
+	NVAR s.Count = Count
+	s.Count = numPnts(s.Name)-1
+	SetDataFolder saveDF
+End
+
+static function NewSeriesFolder(DataSet)
+	String DataSet
 	
-	string saveDF = GetDataFolder(1)
-	GetWindow kwTopWin, note
-	SetDataFolder StringByKey("SourceFolder",S_Value,"=",",")
-
-	WAVE Peak_Shape, Peak_Series, Peak_Assignment
-		
-	SetDataFolder Assignments
-	NVAR NumAssignments
-	WAVE Series, theM, Select, theP
-	if (Replace)
-		Peak_Series = 0
-		Peak_Assignment = 0
-		Peak_Shape = 0
-	endif
-
-	Select += 2*(Select<0)
-	variable index
-	for( index = 0 ; index < NumAssignments ; index += 1)
-		AssignPeak(theP[index], Series[index], theM[index], Select[index])
-	endfor
+	String saveDF = GetDataFolder(1)
+	SetDataFolder DataSet
+	NewDataFolder/O/S Series
+	
+	Make/T/N=1 Name="Unassigned"
+	Make/W/N=1 Shape, Color, Order=1
+	Make/T/N=1 Data
+	Variable/G Count = 0
+	
 	SetDataFolder saveDF
-end function
+end
+
+Structure LinesStruct
+	WAVE Frequency
+	WAVE Intensity
+	WAVE Width
+	WAVE/T Assignments
+	NVAR maxIntensity
+	NVAR minIntensity
+	NVAR maxWidth
+	NVAR minWidth
+	NVAR Count
+EndStructure
+
+Function GetLinesStruct(DataSet, s)
+	String DataSet
+	Struct LinesStruct &s
+
+	String saveDF = GetDataFolder(1)
+	SetDataFolder DataSet
+	SetDataFolder Lines
+
+	WAVE s.Frequency = Frequency
+	WAVE s.Intensity = Intensity
+	WAVE s.Width = Width
+	WAVE/T s.Assignments = Assignments
+	NVAR s.Count = Count
+	SetDataFolder saveDF
+End
