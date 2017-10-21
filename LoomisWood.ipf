@@ -1,4 +1,4 @@
-// Copyright (c) 2005 Christopher F. Neese
+// Copyright (c) 2017 Christopher F. Neese
 //
 // THIS SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 // IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
@@ -30,7 +30,9 @@
 // Added shift-cursor key support for panning.  PgDn and PgUp still pan vertically.
 // Added horizontal panning.
 // Removed superfluous dM display
-
+//
+// Added Rule, LineColor, and Model to Series Table
+//
 // ToDo List:
 //		Replace window note retrieved with GetWindow with custom user data retrieved with GetUserData()
 //		More structures for manipulating the plot folder.
@@ -187,7 +189,7 @@ menu "&Loomis-Wood", dynamic
 		"Create a &New Loomis-Wood Data Set...", NewLWDataSet()
 		help = {"Create a new Loomis-Wood folder."}
 
-		"&Delete a Loomis-Wood Data Set...", DeleteLWDataSet("")
+		"&Delete a Loomis-Wood Data Set...", DeleteLWDataSet($"")
 		help = {"Delete an existing Loomis-Wood folder."}
 
 		"-"
@@ -228,7 +230,7 @@ menu "&Loomis-Wood", dynamic
 	end
 	
 	submenu "&Plots"
-		"&Create a New Loomis-Wood Plot...", NewLWPlot("","")
+		"&Create a New Loomis-Wood Plot...", NewLWPlot($"","")
 		help = {"Make a Loomis-Wood plot.  You must have already created a Loomis-Wood folder."}
 		
 		//"(&Delete a Loomis-Wood Plot...", 
@@ -351,16 +353,16 @@ end
 
 static function/S FolderList(sourceFolderStr)
 // Returns a list of all folders in sourceFolderStr.
-	string sourceFolderStr
+	DFREF sourceFolderStr
 	string theResult = ""
 	string objName
 	variable index
-	index = CountObjects(sourceFolderStr,4)-1
+	index = CountObjectsDFR(sourceFolderStr,4)-1
 	if (index == -1)
 		return ""
 	endif
 	do
-		objName = GetIndexedObjName(sourceFolderstr, 4, index)
+		objName = GetIndexedObjNameDFR(sourceFolderstr, 4, index)
 		if (strlen(objName) > 0)
 			theResult+=objName+";"
 		endif
@@ -697,212 +699,107 @@ end
 
 static function/S GetPlotList()
 	string output = ""
-	string DataSetFolders = FolderList(BASE_FOLDER)
+	
+	DFREF base = $BASE_FOLDER
+	string DataSetFolders = FolderList(base)
 	variable i
 	for (i = 0 ; i < ItemsInList(DataSetFolders) ; i+= 1)
 		string DataSetName =  StringFromList(i,DataSetFolders)
-		string DataSet = BASE_FOLDER+":"+DataSetName+":"
-		string PlotFolders = FolderList(DataSet+"Plots")
+		DFREF dataset = base:$DataSetName
+		DFREF plots = dataset:plots
+		string PlotFolders = FolderList(plots)
+
 		variable j
-			for (j = 0 ; j < ItemsInList(PlotFolders) ; j+= 1)
-				string PlotName = StringFromList(j,PlotFolders)
-				string PlotFolder = DataSet+"Plots:"+PlotName+":"
-				output += DataSetName +":"+PlotName+";"
-			endfor
+		for (j = 0 ; j < ItemsInList(PlotFolders) ; j+= 1)
+			DFREF plot = plots:$StringFromList(j,PlotFolders)
+			output += GetDataFolder(1,plot)
+		endfor
 	endfor
 	
 	return output
-end
-
-static function/S GetPlotFolderList()
-	string output = ""
-	string DataSetFolders = FolderList(BASE_FOLDER)
-	variable i
-	for (i = 0 ; i < ItemsInList(DataSetFolders) ; i+= 1)
-		string DataSetName =  StringFromList(i,DataSetFolders)
-		string DataSet = BASE_FOLDER+":"+DataSetName+":"
-		string PlotFolders = FolderList(DataSet+"Plots")
-		variable j
-			for (j = 0 ; j < ItemsInList(PlotFolders) ; j+= 1)
-				string PlotName = StringFromList(j,PlotFolders)
-				string PlotFolder = DataSet+"Plots:"+PlotName+":"
-				output += PlotFolder+";"
-			endfor
-	endfor
-	
-	return output
-end
-
-//static function GetFolders(theWinType, DataSet, PlotFolder)
-//	variable theWinType
-//	string &DataSet, &PlotFolder
-//// This function tests to see if the top window is a Loomis-Wood plot.
-//// If the top window is a Loomis-Wood plot, it will contain "LoomisWood=ver" in its note.
-//// Use theWinType = 1 if only the top GRAPH needs to be a Loomis-Wood plot
-//// Use theWinType = 3 if the top GRAPH or TABLE needs to be a Loomis-Wood plot or associated Table
-//// Use theWinType = -1 if the overall top WINDOW needs to be a Loomis-Wood plot
-//	DataSet = ""
-//	PlotFolder = ""
-//
-//	string TopWinName = WinName(0, theWinType < 0 ? -1 : theWinType)
-//
-//	if (!cmpstr(TopWinName,""))	//This is necessary b/c this function may be called when there are no active windows.
-//		Beep
-//		Print LW_ERROR3
-//		return 0
-//	endif
-//	
-//	if (theWinType < 0)
-//		if (cmpstr(TopWinName, WinName(0, -theWinType)))
-//			// Topmost window is wrong type
-//			Beep
-//			Print LW_ERROR3
-//			return 0
-//		endif
-//	endif
-//
-//	GetWindow $TopWinName, note
-//	variable theVersion = NumberByKey("LoomisWood",S_Value,"=",",")
-//
-//	if (theVersion > 0)
-//		DataSet = StringByKey("DataSet",S_Value,"=",",")
-//		PlotFolder = StringByKey("PlotFolder",S_Value,"=",",")
-//		return 1
-//	else
-//		Beep
-//		Print LW_ERROR3
-//		return 0
-//	endif
-//end
-//
-//static function/DF GetPlotDFR(theWinType)
-//	variable theWinType
-//
-//	string DataSet, PlotFolder
-//// This function tests to see if the top window is a Loomis-Wood plot.
-//// If the top window is a Loomis-Wood plot, it will contain "LoomisWood=ver" in its note.
-//// Use theWinType = 1 if only the top GRAPH needs to be a Loomis-Wood plot
-//// Use theWinType = 3 if the top GRAPH or TABLE needs to be a Loomis-Wood plot or associated Table
-//// Use theWinType = -1 if the overall top WINDOW needs to be a Loomis-Wood plot
-//	DataSet = ""
-//	PlotFolder = ""
-//
-//	string TopWinName = WinName(0, theWinType < 0 ? -1 : theWinType)
-//
-//	if (!cmpstr(TopWinName,""))	//This is necessary b/c this function may be called when there are no active windows.
-//		Beep
-//		Print LW_ERROR3
-//		return $""
-//	endif
-//	
-//	if (theWinType < 0)
-//		if (cmpstr(TopWinName, WinName(0, -theWinType)))
-//			// Topmost window is wrong type
-//			Beep
-//			Print LW_ERROR3
-//			return $""
-//		endif
-//	endif
-//
-//	GetWindow $TopWinName, note
-//	variable theVersion = NumberByKey("LoomisWood",S_Value,"=",",")
-//
-//	if (theVersion > 0)
-//		DataSet = StringByKey("DataSet",S_Value,"=",",")
-//		PlotFolder = StringByKey("PlotFolder",S_Value,"=",",")
-//		return $(PlotFolder)
-//	else
-//		Beep
-//		Print LW_ERROR3
-//		return $""
-//	endif
-//end
-
-static function ValidateSourceFolder (DataSet)
-// Makes sure that the DataSet string is valid.
-// Changes DataSet to be an absolute reference.
-// Returns 1 if DataSet is invalid, 0 if DataSet is valid.
- 	string &DataSet
-
-	variable theRes = 0
-	DFREF SaveDF = GetDataFolderDFR()
-		
-	// DataSet may be relative to BASE_FOLDER, absolute, or invalid
-	string temp = DataSet + "::"
-	if (DataFolderExists(DataSet) && DataFolderExists(temp))
-		//If FolderA exists, the Source MAY be absolute
-		SetDataFolder DataSet
-		SetDataFolder ::
-		if (cmpstr(GetDataFolder(1),BASE_FOLDER+":"))
-			// invalid or relative
-		else 
-			// DataSet is absolute so make it relative
-			SetDataFolder DataSet
-			DataSet = GetDataFolder(0)
-		endif
-	endif
-
-	// Now, DataSet is relative to BASE_FOLDER or invalid
-	temp = BASE_FOLDER + ":" + DataSet
-	if (!DataFolderExists(temp))
-		theRes = 1
-	else
-		SetDataFolder temp
-		// Now, DataSet is validated and absolute
-		DataSet=GetDataFolder(1)
-	endif
-	
-	SetDataFolder saveDF
-	return theRes
 end
 
 /// Main Loomis-Wood inteface functions:
 function NewLWDataSet()
 	// Save current folder name
-	String SaveDF = GetDataFolder(1)
+	DFREF SaveDF = GetDataFolderDFR()
 	
 	// Get name of a new Data Set Folder from user
-	String DataSet = GetNewLWDataFolder()
-	if (cmpstr(DataSet,"")==0)
+	DFREF DataSet = GetNewLWDataFolder()
+	if (DataFolderRefStatus(DataSet)!=1)
 		Return 0
 	endif
 	
 	// Create DataSet and copy peakfinder waves to it.
 	if (NewLinesFolder(saveDF, DataSet))
-		DataSet += ":"
 	
 		NewSeriesFolder(DataSet)
 		FinishDataFolder(DataSet)
-//		
-//		SetDataFolder DataSet
-//		// New 2/18/05
-//		Make/O/D/N=(14,3) Colors
-//		Colors[0][0]= {0       , 65535, 65535, 0       , 0       , 65535, 32768, 32768, 0       , 0       , 0       , 32768, 0, 32768}
-//		Colors[0][1]= {32768, 0       , 65535, 65535, 0       , 0       , 0       , 32768, 32768, 65535, 0       , 0       , 0, 32768}
-//  		Colors[0][2]= {32768, 0       , 0       , 0       , 65535, 65535, 0       , 0       , 0       , 65535, 32768, 32768, 0, 32768}
-//		List2DimLabels(Colors,0,"Teal;Red;Yellow;Lime;Blue;Fuchsia;Maroon;Olive;Green;Aqua;Navy;Purple;Black;Grey")
-//		List2DimLabels(Colors,1,"Red;Blue;Green")
-//
-//		Make/D/N=(MAX_FIT_ORDER,MAX_FIT_ORDER) Band2Poly
-//		Band2Poly = StandardBand2Poly(p,q,1)
-//		Make/T/N=(MAX_FIT_ORDER) BandCoeffLabels
-//		BandCoeffLabels = StandardBandLabels(p)
-//		
-//		//Duplicate/O Band2Poly, Poly2Band
-//		//MatrixInverse/O Poly2Band
-//		MatrixOp/O Poly2Band = Inv(Band2Poly)				
-//		
-//		// Create an initial display
-//		NewLWPlot(DataSet, "Plot0")
-//		SetDataFolder SaveDF
 		Return 1
 	else
 		Return 0
 	endif
 end
 
+static function/DF GetNewLWDataFolder()
+// DIALOG
+	String DataSet
+	//Save current folder name
+	DFREF SaveDF = GetDataFolderDFR()
+
+	//Ask for New DataSet.
+	Prompt DataSet, LW_STRING1
+	DoPrompt LW_TITLE, DataSet
+	If (V_Flag)
+		Return $""
+	EndIf
+
+	//Switch to LoomisWood folder.
+	SetDataFolder $BASE_FOLDER
+
+	//Verify DataSet.
+	If (CheckName(DataSet,11))
+		Do
+			DoAlert 2, "\""+ DataSet + LW_STRING7+ UniqueName(CleanupName(DataSet,1),11,0) + LW_STRING8
+			switch (V_Flag)
+			case 1:
+				// The user clicked "Yes", so change the name.
+				DataSet=UniqueName(CleanupName(DataSet,1),11,0)
+				break
+			case 2:
+				// The user clicked "No", so try again.
+				DoPrompt LW_TITLE, DataSet
+				If (V_Flag)
+					Return $""
+				EndIf
+				break
+			default:
+				// The user clicked "Cancel" so abort.
+				SetDataFolder SaveDF
+				Return $""
+			endswitch
+		While(CheckName(DataSet,11))
+	EndIf
+	DataSet = BASE_FOLDER +":"+ DataSet
+	
+	//Switch back to original folder.
+	NewDataFolder $DataSet
+	SetDataFolder SaveDF
+	Return $DataSet
+end
+
+static function isDataSetDFR(dfref dfr)
+	DFREF current = GetDataFolderDFR()
+	SetDataFolder dfr
+	SetDataFolder ::
+	DFREF parent = GetDataFolderDFR()
+	SetDataFolder current
+
+	return !DataFolderRefsEqual(parent, $(BASE_FOLDER))	
+end
+
 function FinishDataFolder(DataSet)
-	string DataSet
+	DFREF DataSet
 
 	DFREF SaveDF = GetDataFolderDFR()
 	SetDataFolder DataSet
@@ -928,52 +825,6 @@ function FinishDataFolder(DataSet)
 	SynchronizeSeries2Lines()
 	SetDataFolder SaveDF	
 End
-
-static function/S GetNewLWDataFolder()
-// DIALOG
-	String DataSet
-	//Save current folder name
-	DFREF SaveDF = GetDataFolderDFR()
-
-	//Ask for New DataSet.
-	Prompt DataSet, LW_STRING1
-	DoPrompt LW_TITLE, DataSet
-	If (V_Flag)
-		Return ""
-	EndIf
-
-	//Switch to LoomisWood folder.
-	SetDataFolder $BASE_FOLDER
-
-	//Verify DataSet.
-	If (CheckName(DataSet,11))
-		Do
-			DoAlert 2, "\""+ DataSet + LW_STRING7+ UniqueName(CleanupName(DataSet,1),11,0) + LW_STRING8
-			switch (V_Flag)
-			case 1:
-				// The user clicked "Yes", so change the name.
-				DataSet=UniqueName(CleanupName(DataSet,1),11,0)
-				break
-			case 2:
-				// The user clicked "No", so try again.
-				DoPrompt LW_TITLE, DataSet
-				If (V_Flag)
-					Return ""
-				EndIf
-				break
-			default:
-				// The user clicked "Cancel" so abort.
-				SetDataFolder SaveDF
-				Return ""
-			endswitch
-		While(CheckName(DataSet,11))
-	EndIf
-	DataSet = BASE_FOLDER +":"+ DataSet
-	
-	//Switch back to original folder.
-	SetDataFolder SaveDF
-	Return DataSet
-end
 
 static function GetPeakfinderWaves(Line_Frequency, Line_Intensity, Line_Width)
 // DIALOG
@@ -1047,7 +898,8 @@ static function GetNumLines(Line_Frequencies,Line_Intensities,Line_Widths)
 end
 
 static function NewLinesFolder(SourceDF, LWDF)
-	String SourceDF, LWDF
+	DFREF SourceDF
+	DFREF LWDF
 	DFREF SaveDF = GetDataFolderDFR()
 
 	String Frequencies = ""
@@ -1072,8 +924,9 @@ static function NewLinesFolder(SourceDF, LWDF)
 		EndIf
 	EndIf
 	
+	SetDataFolder LWDF
+
 	//Create DataSet, if it doesn't already exist
-	NewDataFolder/O/S $LWDF
 	NewDataFolder/O/S Lines
 
 	Variable NumLines = GetNumLines(Frequencies, Intensities, Widths)
@@ -1095,21 +948,7 @@ static function NewLinesFolder(SourceDF, LWDF)
 		Make/O/N=(numpnts(Frequency)), Width = NaN
 	EndIf
 
-//	Duplicate/R=[0,NumLines-1] $Frequencies, Frequency
-//	
-//	If (cmpstr(Intensities,"_constant_"))
-//		Duplicate/R=[0,NumLines-1] $Intensities, Intensity
-//	Else
-//		Make/O/N=(numpnts(Frequency)), Intensity = 1
-//	EndIf
-//	
-//	If (cmpstr(Widths,"_constant_"))
-//		Duplicate/R=[0,NumLines-1] $Widths, Width
-//	Else
-//		Make/O/N=(numpnts(Frequency)), Width = NaN
-//	EndIf
-
-	Sort Frequency, Frequency, Intensity, Width
+	Sort {Frequency}, Frequency, Intensity, Width
 	
 	Wavestats/Q  Intensity
 	Variable/G minIntensity = V_min
@@ -1128,60 +967,108 @@ static function NewLinesFolder(SourceDF, LWDF)
 end
 
 static function NewSeriesFolder(DataSet)
-	String DataSet
+	DFREF DataSet
 	
 	DFREF SaveDF = GetDataFolderDFR()
 	SetDataFolder DataSet
 	NewDataFolder/O/S Series
 	
 	Make/T/N=1 Name="Unassigned"
-	Make/W/N=1 Shape, Color, Order=1
+	Make/I/N=1 Shape
+	Make/I/N=1 Model, Color, Order
 	Make/T/N=1 Data
 	Variable/G Count = 0
+	
+	Make/T/N=1 LegendText=""
+	Make/I/N=1 LegendShape
+
+	Make/T/N=1 Rule=""
+	Make/I/N=1 Model, LineColor
+	
 	
 	SetDataFolder saveDF
 end
 
-function DeleteLWDataSet(DataSet)
+//function DeleteLWDataSet_Old(DataSet)
+//// OPTIONAL DIALOG
+//	string DataSet
+//
+//	string PlotFolder
+//	variable index
+//	
+//	if (cmpstr(DataSet,""))
+//		if (ValidateSourceFolder(DataSet))
+//			// DataSet invalid
+//			Beep
+//			Print LW_ERROR1 + DataSet + LW_ERROR2
+//			return 0
+//		endif
+//	else
+//		//Prompt for DataSet
+//		String DataSetFolders = FolderList(BASE_FOLDER)
+//		if (ItemsInList(DataSetFolders)>0)
+//			Prompt DataSet, LW_STRING9, popup DataSetFolders
+//			DoPrompt LW_TITLE, DataSet
+//			if (V_flag)
+//				return 0
+//			endif
+//			DataSet = BASE_FOLDER + ":" + DataSet + ":"
+//		else
+//			return 0
+//		endif
+//	endif
+//end
+	
+function/DF GetDataSetDialog(msg)
+	string msg
+	
+	//Prompt for DataSet
+	String DataSetFolders = FolderList(BASE_FOLDER)
+	String DataSetName
+	if (ItemsInList(DataSetFolders)>0)
+		Prompt DataSetName, msg, popup DataSetFolders
+		DoPrompt LW_TITLE, DataSetName
+		if (V_flag==0)
+			DFREF dfr = $(BASE_FOLDER + ":" + DataSetName + ":")
+			return dfr
+		endif
+	endif	
+end	
+	
+function DeleteLWDataSet(DataSetDFR)
 // OPTIONAL DIALOG
-	string DataSet
+	DFREF DataSetDFR
 
-	string PlotFolder
-	variable index
-	
-	if (cmpstr(DataSet,""))
-		if (ValidateSourceFolder(DataSet))
-			// DataSet invalid
-			Beep
-			Print LW_ERROR1 + DataSet + LW_ERROR2
-			return 0
-		endif
-	else
+	if (!DataFolderRefStatus(DataSetDFR))
 		//Prompt for DataSet
-		String DataSetFolders = FolderList(BASE_FOLDER)
-		if (ItemsInList(DataSetFolders)>0)
-			Prompt DataSet, LW_STRING9, popup DataSetFolders
-			DoPrompt LW_TITLE, DataSet
-			if (V_flag)
-				return 0
-			endif
-			DataSet = BASE_FOLDER + ":" + DataSet + ":"
-		else
+		DFREF DataSetDFR = GetDataSetDialog(LW_STRING9)
+		if (DataFolderRefStatus(DataSetDFR)!=1)
 			return 0
-		endif
+		endif	
 	endif
-	
-	String PlotsFolder = DataSet + "Plots:"
+
+	if (isDataSetDFR(DataSetDFR))
+		// DataSet invalid
+		Beep
+		Print LW_ERROR1 + GetDataFolder(1,DataSetDFR) + LW_ERROR2
+		return 0
+	endif
+
+	DFREF plots = DataSetDFR:Plots
 	//First, remove all dependencies in plot folders
-	for(index = 1 ; index <= CountObjects(PlotsFolder,4) ; index += 1)
-		PlotFolder = PlotsFolder+GetIndexedObjName(PlotsFolder,4,index-1)+":"
-		DeleteLWPlotFolder(PlotFolder)
+	int index
+	for(index = 1 ; index <= CountObjectsDFR(plots,4) ; index += 1)
+		DFREF plot = plots:$GetIndexedObjNameDFR(plots,4,index-1)
+		DeleteLWPlotFolder(plot)
 	endfor
+
+	string name = GetDataFolder(1,DataSetDFR)
+
 	// Then, kill the folder
-	KillDataFolder $DataSet
+	KillDataFolder DataSetDFR
 	
 	Beep	
-	Print LW_HISTORY1 + DataSet + LW_HISTORY2
+	Print LW_HISTORY1 + name + LW_HISTORY2
 end
 
 function DeleteLWPlotFolder(PlotFolder)
@@ -1232,29 +1119,30 @@ function EditColors()
 	endif	
 end
  
-function NewLWPlot(DataSet, PlotFolder)
+function NewLWPlot(DataSet, PlotFolderName)
 // OPTIONAL DIALOG
-	String DataSet, PlotFolder
-
-	DFREF dataDFR =$DataSet
-
+	DFREF DataSet
+	String PlotFolderName
+	String DataSetName = GetDataFolder(1,DataSet)
 	
-	if (cmpstr(DataSet,"") || cmpstr(PlotFolder,""))
-		if (ValidateSourceFolder(DataSet))
+	if (DataFolderRefStatus(DataSet)==1)
+		if (isDataSetDFR(DataSet))
 			// DataSet invalid
 			Beep
-			Print LW_ERROR1 + DataSet + LW_ERROR2
+			Print LW_ERROR1 + GetDataFolder(1, DataSet) + LW_ERROR2
 			return 0
 		endif
 	else
 		//Prompt for DataSet and PlotFolder
-		Prompt DataSet, LW_STRING17, popup FolderList(BASE_FOLDER)
-		Prompt PlotFolder, LW_STRING18
-		DoPrompt LW_TITLE, DataSet, PlotFolder
+		Prompt DataSetName, LW_STRING17, popup FolderList($BASE_FOLDER)
+		Prompt PlotFolderName, LW_STRING18
+		DoPrompt LW_TITLE, DataSetName, PlotFolderName
 		if (V_flag)
 			return 0
 		endif
-		DataSet = BASE_FOLDER + ":" + DataSet + ":"
+		
+		DataSetName = BASE_FOLDER + ":" + DataSetName + ":"
+		DFREF DataSet = $DataSetName
 	endif
 	
 	DFREF SaveDF = GetDataFolderDFR()
@@ -1269,9 +1157,9 @@ function NewLWPlot(DataSet, PlotFolder)
 
 //	//TODO: Validate PlotFolder
 	NewDataFolder/O/S Plots
-	NewDataFolder/O/S $PlotFolder
-	PlotFolder = GetDatafolder(1)
-	
+	NewDataFolder/O/S $PlotFolderName
+	DFREF PlotFolder = GetDatafolderDFR()
+	PlotFolderName = GetDataFolder(1,PlotFolder)
 	
 	Make/O/D/N=2001 CombX, CombY = 1, CombM
 	SetScale/I x, -1000, 1000, "M", CombX, CombY, CombM
@@ -1311,24 +1199,24 @@ function NewLWPlot(DataSet, PlotFolder)
 	BandCoeff[1] = abs(10*(lines.Frequency[0]-lines.Frequency[inf])/lines.Count)
 
 	Variable/G SeriesOrder
-	temp = "DoSeriesOrderUpdate("+DataSet+"Series:Order,"+PlotFolder+"CurrentSeries)"
-	temp = DataSet+"Series:Order["+PlotFolder+"CurrentSeries]"
+	temp = "DoSeriesOrderUpdate("+DataSetName+"Series:Order,"+PlotFolderName+"CurrentSeries)"
+	temp = DataSetName+"Series:Order["+PlotFolderName+"CurrentSeries]"
 	SetFormula SeriesOrder, temp
 
 	Variable/G SeriesNameUpdate
-	temp = "DoSeriesNameUpdate("+DataSet+"Series:Name,"+PlotFolder+"CurrentSeries)"
+	temp = "DoSeriesNameUpdate("+DataSetName+"Series:Name,"+PlotFolderName+"CurrentSeries)"
 	SetFormula SeriesNameUpdate, temp
 
 	Variable/G BandCoeffUpdate
-	temp = "DoBandCoeffUpdate("+PlotFolder+"BandCoeff)"
+	temp = "DoBandCoeffUpdate("+PlotFolderName+"BandCoeff)"
 	SetFormula BandCoeffUpdate, temp
 
 	Variable/G TriangleUpdate
-	temp =	 "DoTriangleUpdate(DataP, DataDeltaNu, DataM,"+DataSet+"Lines:Assignments,"+DataSet+"Series:Color,"+DataSet+"Series:Shape, Zoom)"
+	temp =	 "DoTriangleUpdate(DataP, DataDeltaNu, DataM,"+DataSetName+"Lines:Assignments,"+DataSetName+"Series:Color,"+DataSetName+"Series:Shape, Zoom)"
 	SetFormula TriangleUpdate, temp
 
 	String Title
-	sprintf Title, "LWA: %s, %s", StringFromList(ItemsInList(DataSet,":")-1,DataSet,":"), StringFromList(ItemsInList(PlotFolder,":")-1,PlotFolder,":")
+	sprintf Title, "LWA: %s, %s", GetDataFolder(1,DataSet), GetDataFolder(1,PlotFolder)
 	// Draw the Graph
 	Display/K=1/W=(3,0,762,400) LWCursorYup, LWCursorYdown vs LWCursorX As Title
 	AppendToGraph Triangle_Yup, Triangle_Ydown, Triangle_Yup vs Triangle_X
@@ -1358,7 +1246,7 @@ function NewLWPlot(DataSet, PlotFolder)
 
 	// Setup the hook function
 	SetWindow kwTopWin,hook(LW)=LWHookFunction
-	SetWindow kwTopWin,note="LoomisWood=2.0,DataSet="+DataSet+",PlotFolder="+PlotFolder+","
+	SetWindow kwTopWin,note="LoomisWood=2.0,DataSet="+DataSetName+",PlotFolder="+PlotFolderName+","
 
 	// Setup the control bar
 	ControlBar/T 60
@@ -1372,7 +1260,7 @@ function NewLWPlot(DataSet, PlotFolder)
 
 	PopupMenu CurrentSeriesPopup, pos={2,38}, size={280,22}, proc=CurrentSeriesPopupMenuControl,title="Current Series"
 	PopupMenu CurrentSeriesPopup, mode=1, bodyWidth= 200
-	Execute/Z "PopupMenu CurrentSeriesPopup value=LWA#TextWave2List("+DataSet+"Series:Name)+\"_Create_New_Series_;\""
+	Execute/Z "PopupMenu CurrentSeriesPopup value=LWA#TextWave2List("+DataSetName+"Series:Name)+\"_Create_New_Series_;\""
 
 	SetVariable order_setvar, pos={292,41}, size={80,16},title="Order", format="%d"
 	SetVariable order_setvar, limits={1,6,1}, proc=OrderSetVarProc
@@ -1406,7 +1294,7 @@ function NewLWPlot(DataSet, PlotFolder)
 	ListBox list0, selWave=AssignmentListSel,mode= 5
 	ListBox list0, widths={name_size,25,25,25,25,name_size}, userColumnResize= 1
 
-	SetWindow #,note="LoomisWood=2.0,DataSet="+DataSet+",PlotFolder="+PlotFolder+","
+	SetWindow #,note="LoomisWood=2.0,DataSet="+DataSetName+",PlotFolder="+PlotFolderName+","
 	SetActiveSubwindow ##
 
 	// Move the cursor to approximately the center of the plot
@@ -2427,6 +2315,7 @@ function AddSeries()	// F2
 	SeriesColor -= 1
 	series.Count += 1
 	Redimension/N=(series.Count+1) series.Name, series.Data, series.Color, series.Shape, series.Order, series.LegendText, series.LegendShape
+	Redimension/N=(series.Count+1) series.Rule, series.LineColor, series.Model
 	series.Name[series.Count] = SeriesName
 	series.LegendText[series.Count] = SeriesName
 	series.Data[series.Count] = ""
@@ -2434,6 +2323,8 @@ function AddSeries()	// F2
 	series.Shape[series.Count] = 1
 	series.LegendShape[series.Count] = 1
 	series.Order[series.Count] = 1
+
+	series.LineColor[series.Count] = SeriesColor
 end
 
 function SelectSeries()	// F3
@@ -2524,18 +2415,21 @@ function DeleteSeries()	// F4
 //	endfor
 
 	DeletePoints theSeries, 1, series.Name, series.Data, series.Color, series.Shape, series.Order, series.LegendText, series.LegendShape
+	DeletePoints theSeries, 1, series.Rule, series.LineColor, series.Model
 	series.Count = numpnts(series.Name) - 1
 	SynchronizeLines2Series()
 	
 	// Now cycle through all plots and adjust CurrentSeries as needed
-	string DataSet = GetDataFolder(1,info.data)
-	string plots = FolderList(DataSet+"Plots")
-	variable numPlots = ItemsInList(plots)
-	string thePlot
+	DFREF dataset = info.data
+	DFREF plots = dataset:plots
+	
+	string plotsList = FolderList(plots)
+	variable numPlots = ItemsInList(plotsList)
+	DFREF thePlot
 	variable i
 	for (i=0 ; i<numPlots ; i+= 1)
-		thePlot = StringFromList(i, plots)
-		NVAR CurrentSeries = $(DataSet+"Plots:"+thePlot+":CurrentSeries")
+		thePlot = plots:$StringFromList(i, plotsList)
+		NVAR/SDFR=thePlot CurrentSeries
 		if (theSeries == CurrentSeries)
 			CurrentSeries = series.Count + 1
 		elseif (CurrentSeries > theSeries)
@@ -3015,16 +2909,17 @@ function ViewSeriesList()	// F8
 		Struct SeriesStruct series
 		GetSeriesStruct(info.data, series)
 
-		MoveWindow 5.25,42.5,802.5,236
-		AppendToTable series.Name,series.Color,series.Shape,series.Order, series.LegendShape, series.LegendText, series.Data
+		MoveWindow 5.25,42.5,1000,236
+		AppendToTable series.Name, series.Rule, series.Model, series.Color, series.LineColor, series.Shape,series.Order, series.LegendShape, series.LegendText, series.Data
 		ModifyTable showParts=254
 
 		ModifyTable font(series.Name)="Fixedsys"
 		ModifyTable width(Point)=36,width(series.Name)=210,title(series.Name)="Name"
+		ModifyTable width(series.Rule)=210,width(series.LineColor)=32,width(series.Model)=32
 		ModifyTable width(series.Color)=32,title(series.Color)="Color"
 		ModifyTable width(series.Shape)=32, title(series.Shape)="Shape"
 		ModifyTable width(series.Order)=32,title(series.Order)="Order"
-		ModifyTable width(series.LegendText)=210,title(series.LegendText)="Legend Text"
+		ModifyTable width(series.LegendText)=210,title(series.LegendText)="Legend Text",title(series.LineColor)="Line Color"
 		ModifyTable width(series.LegendShape)=31,title(series.LegendShape)="Legend Shape"
 		ModifyTable width(series.Data)=200,title(series.Data)="Data"
 	endif	
@@ -3363,6 +3258,9 @@ structure SeriesStruct
 	NVAR Count
 	WAVE/T LegendText
 	WAVE LegendShape
+	WAVE/T Rule
+	WAVE Model
+	WAVE LineColor
 EndStructure
 
 static function GetSeriesStruct(dataDFR, s, [flag])
@@ -3376,12 +3274,12 @@ static function GetSeriesStruct(dataDFR, s, [flag])
 		SetDataFolder Series
 	endif
 			
-	WAVE/T s.Name = Name
-	WAVE s.Color = Color
-	WAVE s.Shape = Shape
-	WAVE s.Order = Order
-	WAVE/T s.Data = Data
-	NVAR s.Count = Count
+	WAVE/T s.Name
+	WAVE s.Color
+	WAVE s.Shape
+	WAVE s.Order
+	WAVE/T s.Data
+	NVAR s.Count
 	s.Count = numPnts(s.Name)-1
 
 	// Added 01/17/07
@@ -3392,6 +3290,16 @@ static function GetSeriesStruct(dataDFR, s, [flag])
 	endif
 	WAVE/T s.LegendText = LegendText
 	WAVE s.LegendShape = LegendShape
+
+	WAVE rule_check = Rule
+	if (!WaveExists(rule_check))
+		Make/N=(s.Count+1)/T Rule = ""
+		Make/N=(s.Count+1)/D Model = 0
+		Make/N=(s.Count+1)/D LineColor = s.Color
+	endif
+	WAVE/T s.Rule
+	WAVE s.Model
+	WAVE s.LineColor
 
 	SetDataFolder saveDF
 end
