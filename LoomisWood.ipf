@@ -1,4 +1,4 @@
-// Copyright (c) 2017 Christopher F. Neese
+// Copyright (c) 2005 Christopher F. Neese
 //
 // THIS SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 // IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
@@ -10,14 +10,13 @@
 
 #pragma rtGlobals = 1			// Use modern global access method.
 #pragma IgorVersion = 5.02
-#pragma Version = 2.11
+#pragma Version = 3.00
 #pragma ModuleName = LWA
 
-// Changes 2.11:
-// Added ModifyTable showParts=254 to ViewSeries to make table read-only.
-// Replaced num2str() with num2istr to support Line Lists with more than 999999 lines
-// Removed F8 hotkey from second "View Series List..." menu to avoid "Ambiguous shortcut" on Igor 7.
-//
+// Changes 3.00:
+// Rewrote Calculation of triangles to eliminate the need for regions 
+
+
 // Changes 2.10:
 // AddSeries lengthens LegendName and LegendShape
 // Added EditFitFunc(), FlipConstants(), and FlipSeries()
@@ -1121,6 +1120,7 @@ function DeleteLWPlotFolder(PlotFolder)
 	//First, remove all dependencies in plot folders
 	SetFormula $("BandCoeffUpdate"), ""
 	SetFormula $("TriangleUpdate"), ""
+	SetFormula $("DataUpdate"), ""
 	SetFormula $("SeriesNameUpdate"), ""
 	SetFormula $("SeriesOrder"), ""
 	SetDataFolder saveDF
@@ -1220,6 +1220,16 @@ function NewLWPlot(DataSet, PlotFolder)
 	NewDataFolder/O/S $PlotFolder
 	PlotFolder = GetDatafolder(1)
 	
+	
+	Make/O/D/N=2001 CombX, CombY = 1, CombM
+	SetScale/I x, -1000, 1000, "M", CombX, CombY, CombM
+	CombM = x
+	Variable/G startDeltaNu = -50, endDeltaNu = 50 // 10/14/2017 Added
+	
+	Variable/G DataUpdate
+	temp = "DoDataUpdate(CombX, StartM, EndM, StartDeltaNu, EndDeltaNu)"
+	SetFormula DataUpdate, temp
+	
 	// Create persistant data
 	Make/O/D/N=(lines.Count) Line_LWm
 	Make/O/D/N=(lines.Count) Line_DF
@@ -1243,6 +1253,9 @@ function NewLWPlot(DataSet, PlotFolder)
 	Variable/G lwCursor_p, lwCursor_m, lwCursor_Nu, lwCursor_I, lwCursor_W, lwCursor_dM, lwCursor_dNu
 	//String/G lwCursor_assignments
 	Variable/G startM = -10, endM = 10 // 01/17/07 Changed
+	
+
+
 	Variable/G CurrentSeries = 1
 
 	// Initialize persistant data.
@@ -1262,7 +1275,11 @@ function NewLWPlot(DataSet, PlotFolder)
 	SetFormula BandCoeffUpdate, temp
 
 	Variable/G TriangleUpdate
-	temp = "DoTriangleUpdate("+PlotFolder+"Line_LWm,"+DataSet+"Lines:Assignments,"+DataSet+"Series:Color,"+DataSet+"Series:Shape,"+PlotFolder+"StartM,"+PlotFolder+"EndM,"+PlotFolder+"Zoom)"
+	WAVE DataP
+	WAVE DataX=DataDeltaNu
+	WAVE DataM
+//	temp = "DoTriangleUpdate("+PlotFolder+"Line_LWm,"+DataSet+"Lines:Assignments,"+DataSet+"Series:Color,"+DataSet+"Series:Shape,"+PlotFolder+"StartM,"+PlotFolder+"EndM,"+PlotFolder+"Zoom)"
+	temp =	 "DoTriangleUpdateNew(DataP, DataX, DataM,"+DataSet+"Lines:Assignments,"+DataSet+"Series:Color,"+DataSet+"Series:Shape, Zoom)"
 	SetFormula TriangleUpdate, temp
 
 	String Title
@@ -1414,8 +1431,8 @@ function DoBandCoeffUpdate(BandCoeff)
 		return 0
 	endif
 
-	Make/O/D/N=201 CombX, CombY = 1, CombM
-	SetScale/I x, -100, 100, "M", CombX, CombY, CombM
+	Make/O/D/N=2001 CombX, CombY = 1, CombM
+	SetScale/I x, -1000, 1000, "M", CombX, CombY, CombM
 	CombM = x
 	CombX = poly2(PolyCoeff, order, x)
 
@@ -1541,50 +1558,62 @@ function DoSeriesNameUpdate(Series_Name, CurrentSeries)
 	endif
 end
 
-function DoTriangleUpdate(LWm, Assignments, Series_Color, Series_Shape, StartM, EndM, Zoom)
-// This procedure recalculates Triangle_X, Triangle_Yup, Triangle_Ydown, and Triangle_Color, StartP, EndP, StartFrequency, and EndFrequency
-// whenever LWm, Assignments, Line_Shape, Series_Color, Series_Shape, StartM, or EndM  change.
+function DoDataUpdate(comb, StartM, EndM, StartDeltaNu, EndDeltaNu)
+// This procedure recalculates 
 // DO NOT DECLARE AS STATIC!
-	Wave LWm
-	Wave/T Assignments
-	Wave Series_Color, Series_Shape
-	Variable startM, endM, Zoom
+	Wave comb
+	Variable startM, EndM, StartDeltaNu, EndDeltaNu
 
 	Variable start_time = StopMSTimer(-2)
 
-	String SaveDF = GetDataFolder(1)
-	SetDataFolder GetWavesDataFolder(Assignments,1)
-	SetDataFolder ::
-	String DataSet = GetDataFolder(1)
-	WAVE Colors
+	DFREF SaveDF = GetDataFolderDFR()
+	DFREF PlotFolder = GetWavesDataFolderDFR(comb)
+	SetDataFolder PlotFolder
+	SetDataFolder :::
+	DFREF DataSet = GetDataFolderDFR()
 	
 	Struct LinesStruct lines
-	GetLinesStruct(DataSet, lines)
+	GetLinesStruct(GetDataFolder(1,DataSet), lines)
 
-	SetDataFolder GetWavesDataFolder(LWm,1)
-	String PlotFolder = GetDataFolder(1)
-	WAVE PolyCoeff
-	WAVE Line_DF
-	WAVE Triangle_X
-	WAVE Triangle_Yup
-	WAVE Triangle_Ydown
-	WAVE Triangle_Color
-	WAVE Triangle_Color2
+	variable nrows = abs(endM - startM + 1)
+
+	SetDataFolder PlotFolder
+	Make/O/D/N=(nrows) RowStart, RowStop
+	SetScale/I x, StartM, EndM, "", RowStart, RowStop  
+
+	RowStart = BinarySearch2(lines.Frequency, comb(startM+p)+StartDeltaNu )
+	RowStop = BinarySearch2(lines.Frequency, comb(startM+p)+EndDeltaNu )
+
+	Make/FREE/D/N=(nrows) temp = RowStop - RowStart + 1
 	
-	If (!WaveExists(Triangle_Color2))
-		Duplicate/O Triangle_Color, Triangle_Color2
-	endif
-	If (DimSize(Colors,1)!=6)
-		Redimension/N=(-1,6) Colors
-		Colors[][3,5]=Colors[p][q-3]
-	EndIf
 
-	NVAR minM
-	NVAR maxM
-	NVAR lastTriangle
-	NVAR lwCursor_p
+	variable theM, row, p1, p2, n2, rowNu
+	variable nlines = sum(temp)
+	Make/O/D/N=(nlines) DataP, DataM, DataDeltaNu
+	
+	for(row=0 ; row < nrows ; row += 1)
+		theM = StartM + row
+		n2 = temp[row]
+		p2 = p1 + n2 - 1
+		rowNu = comb(startM+row)
+		
+		DataP[p1, p2] = RowStart[row] + p - p1	
+		DataM[p1, p2] = theM
+		DataDeltaNu[p1, p2] = lines.Frequency[DataP[p]] - rowNu
+		
+		p1 += n2
+	endfor
+
 	SetDataFolder SaveDF
 
+	// This update time should be under 3 ticks (0.05 sec) for good user interaction
+	//printf "Data update took %d ms.\r" ticks - start_time
+	return (StopMSTimer(-2) - start_time)*1e-6
+end
+
+Function CheckM(StartM, EndM, minM, maxM)
+	variable &startM, &EndM, minM, maxM
+	
 	// First check to make sure that StartM and EndM make sense
 	// This code will prevent scrolling beyond the first or last peak
 	if (StartM > EndM)
@@ -1627,8 +1656,199 @@ function DoTriangleUpdate(LWm, Assignments, Series_Color, Series_Shape, StartM, 
 			//return 0
 		endif
 	endif
+End
+
+function DoTriangleUpdateNew(DataP, DataX, DataM, Assignments, Series_Color, Series_Shape, Zoom)
+// This procedure recalculates Triangle_X, Triangle_Yup, Triangle_Ydown, and Triangle_Color, StartP, EndP, StartFrequency, and EndFrequency
+// whenever LWm, Assignments, Line_Shape, Series_Color, Series_Shape, StartM, or EndM  change.
+// DO NOT DECLARE AS STATIC!
+	WAVE DataP, DataX, DataM
+	Wave/T Assignments
+	Wave Series_Color, Series_Shape
+	Variable Zoom
+
+	Variable start_time = StopMSTimer(-2)
+
+	DFREF SaveDF = GetDataFolderDFR()
+	SetDataFolder GetWavesDataFolderDFR(Assignments)
+	SetDataFolder ::
+	String DataSet = GetDataFolder(1)
+	WAVE Colors
 	
-	SetDataFolder PlotFolder
+	Struct LinesStruct lines
+	GetLinesStruct(DataSet, lines)
+
+	DFREF PlotFolder = GetWavesDataFolderDFR(DataP)
+
+	WAVE PolyCoeff
+	WAVE Line_DF
+	WAVE Triangle_X
+	WAVE Triangle_Yup
+	WAVE Triangle_Ydown
+	WAVE Triangle_Color
+	WAVE Triangle_Color2
+	
+	If (!WaveExists(Triangle_Color2))
+		Duplicate/O Triangle_Color, Triangle_Color2
+	endif
+	If (DimSize(Colors,1)!=6)
+		Redimension/N=(-1,6) Colors
+		Colors[][3,5]=Colors[p][q-3]
+	EndIf
+
+	NVAR lastTriangle
+
+//	NVAR minM
+//	NVAR maxM
+//	CheckM(StartM, EndM, minM, maxM)
+
+	Variable/G ZoomW
+	ZoomW = (numtype(ZoomW) || ZoomW <= 0) ? 1 : ZoomW
+	Variable/G MinInt
+	
+	SetDataFolder SaveDF
+	
+	// Now, calculate the Triangles
+	Variable base, center, color, height, fiveindex, shape, width, scale_width,  scale_height, WidthMin, index
+	Variable total_height, clip_width
+	Variable colorR, colorB, colorG
+	Variable colorR2, colorB2, colorG2
+	Variable series_num
+		
+	scale_width = 2*ZoomW
+ 	WidthMin = 0.1
+
+	scale_height = (lines.maxIntensity-lines.minIntensity > 0) ? 0.90 / max(lines.maxIntensity, lines.minIntensity) : 1
+	scale_height *= Zoom
+	
+	variable nlines = numpnts(DataP) 
+	variable line
+	
+	for (line = 0 ; line <= nlines ; line += 1)
+		fiveindex = 5*line
+		index = DataP[line]
+		
+		series_num = str2num(StringFromList(0,Assignments[index],";"))
+		if (numtype(series_num))
+			series_num = 0
+		endif
+		shape = Series_Shape[series_num]
+		shape = abs(lines.Intensity [index]) > minInt ?Series_Shape[series_num] : -1
+
+		base = DataM[line] + 0.5  // 1/17/07 + 0.5 is new
+		center = DataX[line]
+
+		//total_height = (lines.Intensity[index] - lines.minIntensity) *scale_height + 0.1
+		total_height = lines.Intensity[index]*scale_height
+		base -= total_height < 0
+
+		height = shape<0 ? NaN : sign(total_height)*min(abs(total_height), 0.90)  // New Version 2.01
+		width =  lines.width[index]//*scale_width//(lines.width[index] -lines.minWidth)*scale_width + WidthMin
+		width = numtype(width) ? WidthMin : width
+		width *= scale_width
+		clip_width = (1-height/total_height)*width	
+		
+		color = Series_Color[series_num]
+		colorR = Colors[color][0]
+		colorG = Colors[color][1]
+		colorB = Colors[color][2]
+		colorR2 = Colors[color][3]
+		colorG2 = Colors[color][4]
+		colorB2 = Colors[color][5]
+		shape = shape!=0
+		
+		Triangle_X[fiveindex] = center - width
+		Triangle_Yup[fiveindex] = base
+		Triangle_Ydown[fiveindex] = base
+		Triangle_Color[fiveindex] = {{colorR},{colorG},{colorB}}
+		Triangle_Color2[fiveindex] = {{colorR2},{colorG2},{colorB2}}
+
+		fiveindex += 1
+		Triangle_X[fiveindex] = center - clip_width
+		Triangle_Yup[fiveindex] = base-height
+		Triangle_Ydown[fiveindex] = base-(1-shape)*height
+		Triangle_Color[fiveindex] = {{colorR},{colorG},{colorB}}
+		Triangle_Color2[fiveindex] = {{colorR2},{colorG2},{colorB2}}
+
+		fiveindex += 1
+		Triangle_X[fiveindex] = center + clip_width
+		Triangle_Yup[fiveindex] = base-height
+		Triangle_Ydown[fiveindex] = base-(1-shape)*height
+		Triangle_Color[fiveindex] = {{colorR},{colorG},{colorB}}
+		Triangle_Color2[fiveindex] = {{colorR2},{colorG2},{colorB2}}
+
+		fiveindex += 1
+		Triangle_X[fiveindex] = center + width
+		Triangle_Yup[fiveindex] = base
+		Triangle_Ydown[fiveindex] = base
+		Triangle_Color[fiveindex] = {{colorR},{colorG},{colorB}}
+		Triangle_Color2[fiveindex] = {{colorR2},{colorG2},{colorB2}}
+
+	endfor
+	fiveindex += 2
+	Triangle_X[fiveindex,lastTriangle] = NaN
+	//Triangle_Yup[fiveindex,lastTriangle] = NaN
+	//Triangle_Ydown[fiveindex,lastTriangle] = NaN
+	//Triangle_Color[fiveindex,lastTriangle] = NaN
+	lastTriangle = fiveindex + 2
+	if (isTopWinLWPlot(1))
+		UpdateCursor()
+	endif
+
+	// This update time should be under 3 ticks (0.05 sec) for good user interaction
+	//printf "Triangle update took %d ms.\r" ticks - start_time
+	return (StopMSTimer(-2) - start_time)*1e-6
+end
+
+
+function DoTriangleUpdate(LWm, Assignments, Series_Color, Series_Shape, StartM, EndM, Zoom)
+// This procedure recalculates Triangle_X, Triangle_Yup, Triangle_Ydown, and Triangle_Color, StartP, EndP, StartFrequency, and EndFrequency
+// whenever LWm, Assignments, Line_Shape, Series_Color, Series_Shape, StartM, or EndM  change.
+// DO NOT DECLARE AS STATIC!
+	Wave LWm
+	Wave/T Assignments
+	Wave Series_Color, Series_Shape
+	Variable startM, endM, Zoom
+
+	Variable start_time = StopMSTimer(-2)
+
+	String SaveDF = GetDataFolder(1)
+	SetDataFolder GetWavesDataFolder(Assignments,1)
+	SetDataFolder ::
+	String DataSet = GetDataFolder(1)
+	WAVE Colors
+	
+	Struct LinesStruct lines
+	GetLinesStruct(DataSet, lines)
+
+	SetDataFolder GetWavesDataFolder(LWm,1)
+	String PlotFolder = GetDataFolder(1)
+	WAVE PolyCoeff
+	WAVE Line_DF
+	WAVE Triangle_X
+	WAVE Triangle_Yup
+	WAVE Triangle_Ydown
+	WAVE Triangle_Color
+	WAVE Triangle_Color2
+	
+	If (!WaveExists(Triangle_Color2))
+		Duplicate/O Triangle_Color, Triangle_Color2
+	endif
+	If (DimSize(Colors,1)!=6)
+		Redimension/N=(-1,6) Colors
+		Colors[][3,5]=Colors[p][q-3]
+	EndIf
+
+	NVAR minM
+	NVAR maxM
+	NVAR lastTriangle
+	NVAR lwCursor_p
+//	SetDataFolder SaveDF
+
+	CheckM(StartM, EndM, minM, maxM)
+
+	
+//	SetDataFolder PlotFolder
 	Variable/G ZoomW
 	ZoomW = (numtype(ZoomW) || ZoomW <= 0) ? 1 : ZoomW
 	Variable/G MinInt
@@ -3405,7 +3625,7 @@ structure LinesStruct
 EndStructure
 
 static function GetLinesStruct(DataSet, s, [flag])
-	String DataSet
+	string DataSet
 	Struct LinesStruct &s
 	Variable flag	// If flag is nozero, dataSet is actually path to the Lines Folder, not the DataSet folder
 	
