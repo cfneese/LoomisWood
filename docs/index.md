@@ -438,117 +438,119 @@ By implementing this function, the Extract Assignments command can generate a
 complete set of quantum numbers compatible with other fitting programs such as
 CALFIT.   Some example code is: 
 
-	function ProlateAsym(a, s)
-	    STRUCT AssignmentListStruct &a
-	    STRUCT SeriesStruct &s
-	
-	    variable i, imax, freq, weight
-	    imax = numpnts(a.Frequency)
-	
-	    string DF = GetDataFolder(1)
-	
-	    SetDataFolder GetWavesDataFolder(a.Frequency, 1)
-	    Make/T/O/N=(imax) QN_US, QN_LS
-	    SetDataFolder DF
-	
-	    string QN
-	
-	    for (i=0 ; i < imax ; i += 1)
-	       freq = a.Frequency[i]
-	        weight = a.LSmask[i] && a.USmask[i]
-	        QN = ProlateAsymQN(s.Name[a.SeriesIndex[i]], a.theM[i])
-	
-	        QN_US[i] = QN[0,11]
-	        QN_LS[i] = QN[12,23]
-	        sprintf QN, "%s %14.6f %14.6f %15.6f", QN, freq, -0.001, weight
-	
-	        a.Assignment[i] = QN
-	    endfor
-	end
+```
+function ProlateAsym(a, s)
+    STRUCT AssignmentListStruct &a
+    STRUCT SeriesStruct &s
 
-	Function/S ProlateAsymQN(name, m)
-	    string name
-	    variable m  
-	
-	    if (ItemsInList(name,",") != 6 )
-	        return ""
-	    endif
-	
-	    string dKa = UpperStr(StringFromList(1,name,","))
-	    string dJ = UpperStr(StringFromList(2,name,","))
-	    variable Ka = round(str2Num(StringFromList(3,name,",")))
-	    string SR = UpperStr(StringFromList(4,name,","))
-	    variable S = round(str2num (StringFromList(5,name,",")))!=0 
-	
-	    if (Ka < 0)
-	        return ""
-	    elseif (Ka==0 && S != 0)
-	        return ""
-	    endif
-	    
-	    variable Ka2 = Ka har2num(dKa) - char2num("Q")
-	    variable J, J2
-	
-	    strswitch (dJ)
-	        // Treat P and R the same so that P and R lines can be fit to same polynomial 
-	        case "P":
-	        case "R":
-	            if (M < 0)
-	                J = -M
-	                J2 = J-1
-	            else
-	                J = M-1
-	                J2 = J+1
-	            endif
-	            break
-	        case "Q":
-	            J = abs(M)
-	            J2 = J
-	            break
-	        default:
-	            return ""
-	            break
-	      endswitch
-	    
-	    if (Ka > J || Ka2 > J2)
-	        return ""
-	    endif
-	    
-	    Variable S2 = abs(S+J2-J)
-	    
-	    strswitch (SR)
-	        case "A":
-	            if (mod(abs(Ka2 - Ka), 2) != 0)
-	                return ""
-	            endif
-	            S2=mod(S2+1,2)
-	            break
-	        case "B":
-	            if (mod(abs(Ka2 - Ka), 2) != 1)
-	                return ""
-	            endif
-	            S2=mod(S2,2)
-	            break
-	        case "C":
-	            if (mod(abs(Ka2 - Ka), 2) != 1)
-	                return ""
-	            endif
-	            S2=mod(S2+1,2)
-	            break
-	        default:
-	            S2 = NaN
-	            break
-	    endswitch
-	
-	    if (Ka2==0 && S2 != 0)
-	        return ""
-	    endif
-	    Variable Kc = J - Ka + S
-	    Variable Kc2 = J2 - Ka2 + S2
-	    String res
-	    sprintf res, "%3d%3d%3d  1      %3d%3d%3d  0      ", J2, Ka2, Kc2, J, Ka, Kc
-	    return res
-	End
+    variable i, imax, freq, weight
+    imax = numpnts(a.Frequency)
+
+    string DF = GetDataFolder(1)
+
+    SetDataFolder GetWavesDataFolder(a.Frequency, 1)
+    Make/T/O/N=(imax) QN_US, QN_LS
+    SetDataFolder DF
+
+    string QN
+
+    for (i=0 ; i < imax ; i += 1)
+       freq = a.Frequency[i]
+        weight = a.LSmask[i] && a.USmask[i]
+        QN = ProlateAsymQN(s.Name[a.SeriesIndex[i]], a.theM[i])
+
+        QN_US[i] = QN[0,11]
+        QN_LS[i] = QN[12,23]
+        sprintf QN, "%s %14.6f %14.6f %15.6f", QN, freq, -0.001, weight
+
+        a.Assignment[i] = QN
+    endfor
+end
+
+Function/S ProlateAsymQN(name, m)
+    string name
+    variable m  
+
+    if (ItemsInList(name,",") != 6 )
+        return ""
+    endif
+
+    string dKa = UpperStr(StringFromList(1,name,","))
+    string dJ = UpperStr(StringFromList(2,name,","))
+    variable Ka = round(str2Num(StringFromList(3,name,",")))
+    string SR = UpperStr(StringFromList(4,name,","))
+    variable S = round(str2num (StringFromList(5,name,",")))!=0 
+
+    if (Ka < 0)
+        return ""
+    elseif (Ka==0 && S != 0)
+        return ""
+    endif
+    
+    variable Ka2 = Ka + char2num(dKa) - char2num("Q")
+    variable J, J2
+
+    strswitch (dJ)
+        // Treat P and R the same so that P and R lines can be fit to same polynomial 
+        case "P":
+        case "R":
+            if (M < 0)
+                J = -M
+                J2 = J-1
+            else
+                J = M-1
+                J2 = J+1
+            endif
+            break
+        case "Q":
+            J = abs(M)
+            J2 = J
+            break
+        default:
+            return ""
+            break
+      endswitch
+    
+    if (Ka > J || Ka2 > J2)
+        return ""
+    endif
+    
+    Variable S2 = abs(S+J2-J)
+    
+    strswitch (SR)
+        case "A":
+            if (mod(abs(Ka2 - Ka), 2) != 0)
+                return ""
+            endif
+            S2=mod(S2+1,2)
+            break
+        case "B":
+            if (mod(abs(Ka2 - Ka), 2) != 1)
+                return ""
+            endif
+            S2=mod(S2,2)
+            break
+        case "C":
+            if (mod(abs(Ka2 - Ka), 2) != 1)
+                return ""
+            endif
+            S2=mod(S2+1,2)
+            break
+        default:
+            S2 = NaN
+            break
+    endswitch
+
+    if (Ka2==0 && S2 != 0)
+        return ""
+    endif
+    Variable Kc = J - Ka + S
+    Variable Kc2 = J2 - Ka2 + S2
+    String res
+    sprintf res, "%3d%3d%3d  1      %3d%3d%3d  0      ", J2, Ka2, Kc2, J, Ka, Kc
+    return res
+End
+```
 
 This above code uses the Series Name wave to assign prolate asymmetric top quantum
 numbers.   The series name should be a list of the form _name, DJ, DK, Ka, SR, s_ where _DJ_ is "P",
