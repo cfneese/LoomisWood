@@ -1,193 +1,114 @@
-<html xmlns:v="urn:schemas-microsoft-com:vml"
-xmlns:o="urn:schemas-microsoft-com:office:office"
-xmlns:w="urn:schemas-microsoft-com:office:word"
-xmlns="http://www.w3.org/TR/REC-html40">
+#Loomis-Wood Manual
 
-<head>
-<title>Loomis-Wood Manual</title>
-</head>
+Loomis-Wood Add-In
 
-<body lang=EN-US>
+Version 2.08
 
-<div class=Section1>
+June 3, 2005
 
-<p class=Topic><span style='mso-bidi-font-family:"Times New Roman";font-weight:
-normal'>•<span style='mso-tab-count:1'>   </span></span><span style='mso-bidi-font-family:
-"Times New Roman"'>Loomis-Wood Add-In<o:p></o:p></span></p>
+Christopher F. Neese
 
-<p class=TopicBody><span style='mso-bidi-font-family:"Times New Roman"'>Version
-2.08<o:p></o:p></span></p>
+cfneese@uchicago.edu
 
-<p class=TopicBody><span style='mso-bidi-font-family:"Times New Roman"'>June 3,
-2005<o:p></o:p></span></p>
+http://fermi.uchicago.edu/freeware/LoomisWood.shtml
 
-<p class=TopicBody><span style='mso-bidi-font-family:"Times New Roman"'>Christopher
-F. Neese<o:p></o:p></span></p>
+##Contents
 
-<p class=TopicBody><span style='mso-bidi-font-family:"Times New Roman"'>cfneese@uchicago.edu<o:p></o:p></span></p>
+var toc = require('markdown-toc');
+toc('# One\n\n# Two').content;
 
-<p class=TopicBody><u><span style='mso-bidi-font-family:"Times New Roman";
-color:blue'>&lt;http://fermi.uchicago.edu/freeware/LoomisWood.shtml&gt;<o:p></o:p></span></u></p>
+// Theory
+// License
+// Features
+// System Requirements
+// Upgrading
+// Getting Started with the Add-In
+// Working with Band Heads
+// How It Works
+// Troubleshooting
+// Menu/Command Reference
+// Keyboard Reference
+// Function Reference
+// Structures
+// Customization
+// Revision List
+// To Do List
+// References
 
-<p class=Subtopic><span style='mso-bidi-font-family:"Times New Roman"'>Contents<o:p></o:p></span></p>
+##Theory
 
-<p class=TopicBody><u><span style='mso-bidi-font-family:"Times New Roman";
-color:blue'>Theory<o:p></o:p></span></u></p>
+Most molecular spectra contain series of lines that are readily fitted to
+polynomials of the quantum number _J_, or some index directly related to _J_.
+For example, for a linear molecule, the _P_ and _R_ branches can be to fit to the same polynomial
+if we use _m_ instead of _J_, where _m_= -_J_ for a _P_-branch line and _m_ = _J_ - 1 for an _R_-branch line.
+ 
+If we plot _m_ verses the residual of such a fit, we have a basic Loomis-Wood plot.
+In this plot a well-fit rotational series will appear as a vertical line of points.
+If the fit is not optimal but close, a series will appear as a line of points with a small slope
+and/or a small curvature from the error of the fit.
+It is relatively easy to follow such a series in a Loomis-Wood plot even when the
+series is not-so-obvious in the actual spectrum.
+The extra dimension of the Loomis-Wood plot creates a higher information-density than in the raw spectrum.
+By plotting the Loomis-Wood plot using triangles of height and width proportional to line intensity and line width,
+this information density can be increased further.
 
-<p class=TopicBody><u><span style='mso-bidi-font-family:"Times New Roman";
-color:blue'>License<o:p></o:p></span></u></p>
 
-<p class=TopicBody><u><span style='mso-bidi-font-family:"Times New Roman";
-color:blue'>Features<o:p></o:p></span></u></p>
-
-<p class=TopicBody><u><span style='mso-bidi-font-family:"Times New Roman";
-color:blue'>System Requirements<o:p></o:p></span></u></p>
-
-<p class=TopicBody><u><span style='mso-bidi-font-family:"Times New Roman";
-color:blue'>Upgrading<o:p></o:p></span></u></p>
-
-<p class=TopicBody><u><span style='mso-bidi-font-family:"Times New Roman";
-color:blue'>Getting Started with the Add-In<o:p></o:p></span></u></p>
-
-<p class=TopicBody><u><span style='mso-bidi-font-family:"Times New Roman";
-color:blue'>Working with Band Heads<o:p></o:p></span></u></p>
-
-<p class=TopicBody><u><span style='mso-bidi-font-family:"Times New Roman";
-color:blue'>How It Works<o:p></o:p></span></u></p>
-
-<p class=TopicBody><u><span style='mso-bidi-font-family:"Times New Roman";
-color:blue'>Troubleshooting<o:p></o:p></span></u></p>
-
-<p class=TopicBody><u><span style='mso-bidi-font-family:"Times New Roman";
-color:blue'>Menu/Command Reference<o:p></o:p></span></u></p>
-
-<p class=TopicBody><u><span style='mso-bidi-font-family:"Times New Roman";
-color:blue'>Keyboard Reference<o:p></o:p></span></u></p>
-
-<p class=TopicBody><u><span style='mso-bidi-font-family:"Times New Roman";
-color:blue'>Function Reference<o:p></o:p></span></u></p>
-
-<p class=TopicBody><u><span style='mso-bidi-font-family:"Times New Roman";
-color:blue'>Structures<o:p></o:p></span></u></p>
-
-<p class=TopicBody><u><span style='mso-bidi-font-family:"Times New Roman";
-color:blue'>Customization<o:p></o:p></span></u></p>
-
-<p class=TopicBody><u><span style='mso-bidi-font-family:"Times New Roman";
-color:blue'>Revision List<o:p></o:p></span></u></p>
-
-<p class=TopicBody><u><span style='mso-bidi-font-family:"Times New Roman";
-color:blue'>To Do List<o:p></o:p></span></u></p>
-
-<p class=TopicBody><u><span style='mso-bidi-font-family:"Times New Roman";
-color:blue'>References<o:p></o:p></span></u></p>
-
-<p class=Subtopic><span style='mso-bidi-font-family:"Times New Roman"'>Theory<o:p></o:p></span></p>
-
-<p class=TopicBody><span style='mso-bidi-font-family:"Times New Roman"'>Most
-molecular spectra contain series of lines that are readily fitted to
-polynomials of the quantum number <i>J</i>, or some index directly related to <i>J</i>.<span
-style='mso-spacerun:yes'>  </span>For example, for a linear molecule, the <i>P</i>
-and <i>R</i> branches can be to fit to the same polynomial if we use <i>m</i>
-instead of <i>J</i>, where <i>m </i>= -<i>J</i> for a <i>P</i>-branch line and <i>m</i>
-= <i>J</i> - 1 for an <i>R</i>-branch line.<span style='mso-spacerun:yes'> 
-</span>If we plot <i>m</i> verses the residual of such a fit, we have a basic
-Loomis-Wood plot.<span style='mso-spacerun:yes'>  </span>In this plot a
-well-fit rotational series will appear as a vertical line of points.<span
-style='mso-spacerun:yes'>   </span>If the fit is not optimal but close, a
-series will appear as a line of points with a small slope and/or a small
-curvature from the error of the fit.<span style='mso-spacerun:yes'>  </span>It
-is relatively easy to follow such a series in a Loomis-Wood plot even when the
-series is not-so-obvious in the actual spectrum.<span
-style='mso-spacerun:yes'>  </span>The extra dimension of the Loomis-Wood plot
-creates a higher information-density than in the raw spectrum.<span
-style='mso-spacerun:yes'>  </span>By plotting the Loomis-Wood plot using
-triangles of height and width proportional to line intensity and line width,
-this information density can be increased further.<o:p></o:p></span></p>
-
-<p class=TopicBody><span style='mso-bidi-font-family:"Times New Roman"'>Loomis
-and Wood were the first to use this two-dimensional representation of a
-spectrum in 1928.<span style='mso-spacerun:yes'>  </span>While simply drawing
-Loomis-Wood plots is relatively straightforward, the time required to manually
+Loomis and Wood were the first to use this two-dimensional representation of a spectrum in 1928.
+While simply drawing Loomis-Wood plots is relatively straightforward, the time required to manually
 create a Loomis-Wood diagram limited the usefulness of these plots in the
-initial assignment of spectra before the advent of microcomputers.<span
-style='mso-spacerun:yes'>  </span>The first computer program to generate a
-Loomis-Wood plot was written at the Ohio State University in the 1960s.<span
-style='mso-spacerun:yes'>  </span>When a Loomis-Wood plot is made interactive
-so that assignments can be made in the plot and linked to an assignment database
-a powerful tool is created.<span style='mso-spacerun:yes'>  </span>The first
-interactive Loomis-Wood applications by Winnewisser <i>et al</i>. appeared in
-the 1980s.<span style='mso-spacerun:yes'>  </span>The Loomis-Wood add-in
-follows in the tradition of these interactive programs.<o:p></o:p></span></p>
+initial assignment of spectra before the advent of microcomputers.
+The first computer program to generate a Loomis-Wood plot was written at the Ohio State University in the 1960s.
+When a Loomis-Wood plot is made interactive so that assignments can be made in the plot and linked to an assignment database a powerful tool is created.
+The first interactive Loomis-Wood applications by Winnewisser _et al._ appeared in
+the 1980s.
+The Loomis-Wood add-in follows in the tradition of these interactive programs.
 
-<p class=Subtopic><span style='mso-bidi-font-family:"Times New Roman"'>License<o:p></o:p></span></p>
+#License
 
-<p class=TopicBody><span style='font-family:"Courier New"'>Copyright (c) 2005
-Christopher F. Neese<o:p></o:p></span></p>
+Copyright (c) 2005
+Christopher F. Neese
 
-<p class=TopicBody><span style='font-family:"Courier New"'>THIS SOFTWARE IS
-PROVIDED &quot;AS IS&quot;, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
+THIS SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
 INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A
 PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR
 COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER
 IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
-CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.<o:p></o:p></span></p>
+CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-<p class=TopicBody>For the time being, users should cite this work as:</p>
+For the time being, users should cite this work as:
 
-<p class=TopicBody>An Interactive Loomis-wood Package for Spectral Assignment
-in Igor Pro, Version 2.0., Neese, C. F.<i> Fifty-sixth Ohio State University
-International Symposium on Molecular Spectroscopy</i>, Columbus, Ohio, June
-20-24, 2005</p>
+An Interactive Loomis-wood Package for Spectral Assignment in Igor Pro, Version 2.0.,
+Neese, C. F.
+_Fifty-sixth Ohio State University International Symposium on Molecular Spectroscopy_,
+Columbus, Ohio, June 20-24, 2005.
 
-<p class=TopicBody>(Please check the website <u><span style='color:blue'>&lt;&gt;</span></u><span
-style='color:black'> for latest information on citing this work.)<o:p></o:p></span></p>
+(Please check the website for latest information on citing this work.)
 
-<p class=Subtopic><span style='mso-bidi-font-family:"Times New Roman"'>Features<o:p></o:p></span></p>
+#Features
 
-<p class=TopicBody><span style='mso-bidi-font-family:"Times New Roman"'>The
-add-in is Macintosh and Windows compatible.<span style='mso-spacerun:yes'> 
-</span>(Version 1.0 was not Macintosh compatible.)<o:p></o:p></span></p>
+* The add-in is Macintosh and Windows compatible. (Version 1.0 was not Macintosh compatible.)
+* The add-in provides an organized line/assignment database.
+* Lines can be assigned to multiple series.
+* Multiple Loomis-Wood data sets can be created within a single Igor experiment.
+* Multiple plots of a single Loomis-Wood data set can be created within a single Igor experiment.
+* There is a user-extensible extract assignments feature. This feature allows the add-in to be used
+easily with external fitting programs.
 
-<p class=TopicBody><span style='mso-bidi-font-family:"Times New Roman"'>The
-add-in provides an organized line/assignment database.<o:p></o:p></span></p>
+Since the add-in is written for Igor (instead of as a stand-alone program) all of
+Igor’s features are available to the add-in.
+For example, printing and graphics export are provided by Igor, not the
+add-in.
 
-<p class=TopicBody><span style='mso-bidi-font-family:"Times New Roman"'>Lines
-can be assigned to multiple series.<o:p></o:p></span></p>
+##System Requirements
 
-<p class=TopicBody><span style='mso-bidi-font-family:"Times New Roman"'>Multiple
-Loomis-Wood data sets can be created within a single Igor experiment.<o:p></o:p></span></p>
+The add-in requires Igor 5.02 or later. Performance should be acceptable on any Pentium-4 based computer.
 
-<p class=TopicBody><span style='mso-bidi-font-family:"Times New Roman"'>Multiple
-plots of a single Loomis-Wood data set can be created within a single Igor
-experiment.<o:p></o:p></span></p>
+# Upgrading
 
-<p class=TopicBody><span style='mso-bidi-font-family:"Times New Roman"'>There
-is a user-extensible extract assignments feature.<span
-style='mso-spacerun:yes'>  </span>This feature allows the add-in to be used
-easily with external fitting programs.<o:p></o:p></span></p>
-
-<p class=TopicBody><span style='mso-bidi-font-family:"Times New Roman"'>Since
-the add-in is written for Igor (instead of as a stand-alone program) all of
-Igor’s features are available to the add-in.<span style='mso-spacerun:yes'> 
-</span>For example, printing and graphics export are provided by Igor, not the
-add-in.<o:p></o:p></span></p>
-
-<p class=Subtopic><span style='mso-bidi-font-family:"Times New Roman"'>System
-Requirements<o:p></o:p></span></p>
-
-<p class=TopicBody><span style='mso-bidi-font-family:"Times New Roman"'>The
-add-in requires Igor 5.02 or later.<span style='mso-spacerun:yes'> 
-</span>Performance should be acceptable on any Pentium-4 based computer.<o:p></o:p></span></p>
-
-<p class=Subtopic><span style='mso-bidi-font-family:"Times New Roman"'>Upgrading<o:p></o:p></span></p>
-
-<p class=TopicBody><span style='mso-bidi-font-family:"Times New Roman"'>The
-data format for version 2.x of the Loomis-Wood add-in is substantially
-different from version 1.0.<span style='mso-spacerun:yes'>  </span>Therefore no
-direct upgrade route has been provided.<span style='mso-spacerun:yes'> 
-</span>If you need a method to upgrade an experiment using Loomis-Wood 1.0 to
-2.x please contact the author.<o:p></o:p></span></p>
+The data format for version 2.x of the Loomis-Wood add-in is substantially
+different from version 1.0.  Therefore no direct upgrade route has been provided.
+If you need a method to upgrade an experiment using Loomis-Wood 1.0 to
+2.x please contact the author.
 
 <p class=TopicBody><span style='mso-bidi-font-family:"Times New Roman"'>If the
 user needs to update from version 2.x to a newer version of the Add-In, it may
