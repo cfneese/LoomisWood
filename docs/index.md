@@ -166,9 +166,13 @@ You will be asked to name the series and choose a color for the series.  You can
 10. Once you have a series assigned or partially assigned, you can refine the rotational constants by performing a fit.
 Do this by selecting **Loomis-Wood | Series | Fit Current Series**.
 
-11. If the value of _m_ is off (corresponding to misassignment of _J_), then the constants produced by the fit will be meaningless.  To correct this, choose **Loomis-Wood | Series | M-Shift Current Series…**.  You will be asked for a correction which will be added to the current _m_ values of the current series.
+11. If the value of _m_ is off (corresponding to misassignment of _J_),
+then the constants produced by the fit will be meaningless.
+To correct this, choose **Loomis-Wood | Series | M-Shift Current Series...**.
+You will be asked for a correction which will be added to the current _m_ values of the current series.
 
-12. Repeat steps 7-11 to assign additional series.  A complete list of assignments can be created by selecting **Loomis-Wood | Data Sets | Extract Assignments...**.
+12. Repeat steps 7-11 to assign additional series.
+A complete list of assignments can be created by selecting **Loomis-Wood | Data Sets | Extract Assignments...**.
 
 ## Working with Band Heads
 
@@ -271,7 +275,9 @@ measured new lines.
 **The waves in the Series subfolder may be edited but should not be sorted or redimensioned.
 The Data wave in the Series subfolder should not be manually edited.**
 
-If one does need to sort the waves in his folder, run the **Loomis-wood | Data Sets | Synchronize Lines to Series** when finished.  Again make sure your experiment is saved before trying this!!!
+If one does need to sort the waves in his folder, run the
+**Loomis-Wood | Data Sets | Synchronize Lines to Series** when finished.
+Again make sure your experiment is saved before trying this!!!
 
 Band2Poly and Poly2Band may be edited, but they must be matrix inverses of each other.
 
