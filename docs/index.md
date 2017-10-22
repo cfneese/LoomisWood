@@ -435,266 +435,126 @@ selects Extract Assignments, a dialog will ask for an Assignment Function.<span
 style='mso-spacerun:yes'>  This function is user supplied and must use
 the following prototype:
 
-<p class=CodeIndented>function LWLabelProto(a, s)
+    function LWLabelProto(a, s)
+        STRUCT AssignmentListStruct &a
+        STRUCT SeriesStruct &s
+    end
 
-<p class=CodeIndented>   STRUCT
-AssignmentListStruct &amp;a
-
-<p class=CodeIndented>   STRUCT
-SeriesStruct &amp;s
-
-<p class=CodeIndented>end
-
-By
-implementing this function, the Extract Assignments command can generate a
+By implementing this function, the Extract Assignments command can generate a
 complete set of quantum numbers compatible with other fitting programs such as
 CALFIT.   Some example code is: 
 
-<p class=CodeIndented>function ProlateAsym(a, s)
-
-<p class=CodeIndented>   STRUCT
-AssignmentListStruct &amp;a
-
-<p class=CodeIndented>   STRUCT SeriesStruct
-&amp;s
-
-<p class=CodeIndented><span style='mso-tab-count:2'>       
-
-<p class=CodeIndented>   variable i, imax,
-freq, weight
-
-<p class=CodeIndented>   imax =
-numpnts(a.Frequency)
-
-<p class=CodeIndented>   
-
-<p class=CodeIndented>   string DF =
-GetDataFolder(1)
-
-<p class=CodeIndented>   SetDataFolder
-GetWavesDataFolder(a.Frequency, 1)
-
-<p class=CodeIndented>   Make/T/O/N=(imax)
-QN_US, QN_LS
-
-<p class=CodeIndented>   SetDataFolder DF
-
-<p class=CodeIndented><o:p>&nbsp;</o:p>
-
-<p class=CodeIndented>   string QN
-
-<p class=CodeIndented>   for (i=0 ; i &lt;
-imax ; i += 1)
-
-<p class=CodeIndented>      freq = a.Frequency[i]
-
-<p class=CodeIndented><span style='mso-tab-count:2'>       weight =
-a.LSmask[i] &amp;&amp; a.USmask[i]
-
-<p class=CodeIndented><span style='mso-tab-count:2'>       QN =
-ProlateAsymQN(s.Name[a.SeriesIndex[i]], a.theM[i])
-
-<p class=CodeIndented><span style='mso-tab-count:2'>       QN_US[i] =
-QN[0,11]
-
-<p class=CodeIndented><span style='mso-tab-count:2'>       QN_LS[i] =
-QN[12,23]
-
-<p class=CodeIndented><span style='mso-tab-count:2'>       sprintf QN,
-"%s %14.6f %14.6f %15.6f", QN, freq, -0.001, weight
-
-<p class=CodeIndented><span style='mso-tab-count:2'>       a.Assignment[i]
-= QN
-
-<p class=CodeIndented>   endfor
-
-<p class=CodeIndented>end
-
-<p class=CodeIndented><o:p>&nbsp;</o:p>
-
-<p class=CodeIndented>Function/S ProlateAsymQN(name, m)
-
-<p class=CodeIndented>   string name
-
-<p class=CodeIndented>   variable m
-
-<p class=CodeIndented>   
-
-<p class=CodeIndented>   if (
-ItemsInList(name,",") != 6 )
-
-<p class=CodeIndented><span style='mso-tab-count:2'>       return
-""
-
-<p class=CodeIndented>   endif
-
-<p class=CodeIndented>   
-
-<p class=CodeIndented>   string dKa =
-UpperStr(StringFromList(1,name,","))
-
-<p class=CodeIndented>   string dJ =
-UpperStr(StringFromList(2,name,","))
-
-<p class=CodeIndented>   variable Ka =
-round(str2Num(StringFromList(3,name,",")))
-
-<p class=CodeIndented>   string SR =
-UpperStr(StringFromList(4,name,","))
-
-<p class=CodeIndented>   variable S =
-round(str2num (StringFromList(5,name,",")))!=0
-
-<p class=CodeIndented>   
-
-<p class=CodeIndented>   if (Ka &lt; 0)
-
-<p class=CodeIndented><span style='mso-tab-count:2'>       return
-""
-
-<p class=CodeIndented>   elseif (Ka==0
-&amp;&amp; S != 0)
-
-<p class=CodeIndented><span style='mso-tab-count:2'>       return
-""
-
-<p class=CodeIndented>   endif
-
-<p class=CodeIndented>   
-
-<p class=CodeIndented>   variable Ka2 = Ka
-+ char2num(dKa) - char2num("Q")
-
-<p class=CodeIndented>   variable J, J2
-
-<p class=CodeIndented><o:p>&nbsp;</o:p>
-
-<p class=CodeIndented>   strswitch (dJ)
-
-<p class=CodeIndented><span style='mso-tab-count:2'>       // Treat P
-and R the same so that P and R lines can be fir to same polynomial 
-
-<p class=CodeIndented><span style='mso-tab-count:2'>       case
-"P":
-
-<p class=CodeIndented><span style='mso-tab-count:2'>       case
-"R":
-
-<p class=CodeIndented><span style='mso-tab-count:3'>          if (M &lt;
-0)
-
-<p class=CodeIndented><span style='mso-tab-count:4'>              J = -M
-
-<p class=CodeIndented><span style='mso-tab-count:4'>              J2 =
-J-1
-
-<p class=CodeIndented><span style='mso-tab-count:3'>          else
-
-<p class=CodeIndented><span style='mso-tab-count:4'>              J =
-M-1
-
-<p class=CodeIndented><span style='mso-tab-count:4'>              J2 =
-J+1
-
-<p class=CodeIndented><span style='mso-tab-count:3'>          endif
-
-<p class=CodeIndented>   <span
-style='mso-tab-count:2'>       break
-
-<p class=CodeIndented><span style='mso-tab-count:2'>       case
-"Q":
-
-<p class=CodeIndented><span style='mso-tab-count:3'>          J = abs(M)
-
-<p class=CodeIndented><span style='mso-tab-count:3'>          J2 = J
-
-<p class=CodeIndented><span style='mso-tab-count:3'>          break
-
-<p class=CodeIndented><span style='mso-tab-count:2'>       default:
-
-<p class=CodeIndented><span style='mso-tab-count:3'>          return
-""
-
-<p class=CodeIndented><span style='mso-tab-count:3'>          break
-
-<p class=CodeIndented>   endswitch
-
-<p class=CodeIndented>   
-
-<p class=CodeIndented>   if (Ka &gt; J ||
-Ka2 &gt; J2)
-
-<p class=CodeIndented><span style='mso-tab-count:2'>       return
-""
-
-<p class=CodeIndented>   endif
-
-<p class=CodeIndented>   
-
-<p class=CodeIndented>   Variable S2 =
-abs(S+J2-J)
-
-<p class=CodeIndented>   strswitch (SR)
-
-<p class=CodeIndented><span style='mso-tab-count:2'>       case
-"A":
-
-<p class=CodeIndented><span style='mso-tab-count:3'>          if (
-mod(abs(Ka2 - Ka), 2) != 0)
-
-<p class=CodeIndented><span style='mso-tab-count:4'>              return
-""
-
-<p class=CodeIndented><span style='mso-tab-count:3'>          endif
-
-<p class=CodeIndented><span style='mso-tab-count:3'>          S2=mod(S2+1,2)
-
-<p class=CodeIndented><span style='mso-tab-count:3'>          break
-
-<p class=CodeIndented><span style='mso-tab-count:2'>       case
-"B":
-
-<p class=CodeIndented><span style='mso-tab-count:3'>          if (
-mod(abs(Ka2 - Ka), 2) != 1)
-
-<p class=CodeIndented><span style='mso-tab-count:4'>              return
-""
-
-<p class=CodeIndented><span style='mso-tab-count:3'>          endif
-
-<p class=CodeIndented><span style='mso-tab-count:3'>          S2=mod(S2,2)
-
-<p class=CodeIndented><span style='mso-tab-count:3'>          break
-
-<p class=CodeIndented><span style='mso-tab-count:2'>       case
-"C":
-
-<p class=CodeIndented><span style='mso-tab-count:3'>          if (
-mod(abs(Ka2 - Ka), 2) != 1)
-
-<p class=CodeIndented><span style='mso-tab-count:4'>              return
-""
-
-<p class=CodeIndented><span style='mso-tab-count:3'>          endif
-
-<p class=CodeIndented><span style='mso-tab-count:3'>          S2=mod(S2+1,2)
-
-            break
-        default:
-            S2 = NaN
-            break
-    endswitch
-
-    if (Ka2==0 && S2 != 0)
-        return ""
-    endif
-    Variable Kc = J - Ka + S
-    Variable Kc2 = J2 - Ka2 + S2
-    String res
-    sprintf res, "%3d%3d%3d  1      %3d%3d%3d  0      ", J2, Ka2, Kc2, J, Ka, Kc
-    return res
-End
-`
+	function ProlateAsym(a, s)
+	    STRUCT AssignmentListStruct &a
+	    STRUCT SeriesStruct &s
+	
+	    variable i, imax, freq, weight
+	    imax = numpnts(a.Frequency)
+	
+	    string DF = GetDataFolder(1)
+	
+	    SetDataFolder GetWavesDataFolder(a.Frequency, 1)
+	    Make/T/O/N=(imax) QN_US, QN_LS
+	    SetDataFolder DF
+	
+	    string QN
+	
+	    for (i=0 ; i < imax ; i += 1)
+	       freq = a.Frequency[i]
+	        weight = a.LSmask[i] && a.USmask[i]
+	        QN = ProlateAsymQN(s.Name[a.SeriesIndex[i]], a.theM[i])
+	
+	        QN_US[i] = QN[0,11]
+	        QN_LS[i] = QN[12,23]
+	        sprintf QN, "%s %14.6f %14.6f %15.6f", QN, freq, -0.001, weight
+	
+	        a.Assignment[i] = QN
+	    endfor
+	end
+
+	Function/S ProlateAsymQN(name, m)
+	    string name
+	    variable m  
+	
+	    if (ItemsInList(name,",") != 6 )
+	        return ""
+	    endif
+	
+	    string dKa = UpperStr(StringFromList(1,name,","))
+	    string dJ = UpperStr(StringFromList(2,name,","))
+	    variable Ka = round(str2Num(StringFromList(3,name,",")))
+	    string SR = UpperStr(StringFromList(4,name,","))
+	    variable S = round(str2num (StringFromList(5,name,",")))!=0 
+	
+	    if (Ka < 0)
+	        return ""
+	    elseif (Ka==0 && S != 0)
+	        return ""
+	    endif
+	    
+	    variable Ka2 = Ka har2num(dKa) - char2num("Q")
+	    variable J, J2
+	
+	    strswitch (dJ)
+	        // Treat P and R the same so that P and R lines can be fit to same polynomial 
+	        case "P":
+	        case "R":
+	            if (M < 0)
+	                J = -M
+	                J2 = J-1
+	            else
+	                J = M-1
+	                J2 = J+1
+	            endif
+	            break
+	        case "Q":
+	            J = abs(M)
+	            J2 = J
+	            break
+	        default:
+	            return ""
+	            break
+	      endswitch
+	    
+	    if (Ka > J || Ka2 > J2)
+	        return ""
+	    endif
+	    
+	    Variable S2 = abs(S+J2-J)
+	    
+	    strswitch (SR)
+	        case "A":
+	            if (mod(abs(Ka2 - Ka), 2) != 0)
+	                return ""
+	            endif
+	            S2=mod(S2+1,2)
+	            break
+	        case "B":
+	            if (mod(abs(Ka2 - Ka), 2) != 1)
+	                return ""
+	            endif
+	            S2=mod(S2,2)
+	            break
+	        case "C":
+	            if (mod(abs(Ka2 - Ka), 2) != 1)
+	                return ""
+	            endif
+	            S2=mod(S2+1,2)
+	            break
+	        default:
+	            S2 = NaN
+	            break
+	    endswitch
+	
+	    if (Ka2==0 && S2 != 0)
+	        return ""
+	    endif
+	    Variable Kc = J - Ka + S
+	    Variable Kc2 = J2 - Ka2 + S2
+	    String res
+	    sprintf res, "%3d%3d%3d  1      %3d%3d%3d  0      ", J2, Ka2, Kc2, J, Ka, Kc
+	    return res
+	End
 
 This above code uses the Series Name wave to assign prolate asymmetric top quantum
 numbers.   The series name should be a list of the form _name, DJ, DK, Ka, SR, s_ where _DJ_ is "P",
