@@ -114,7 +114,7 @@ update.  The author will try to note any upgrades that require this procedure he
 
 ## Getting Started with the Add-In
 
-0. Install Igor Pro or the Igor Pro demo. If you are new to Igor, read "Volume I: Getting Started" of the Igor manual.
+0. Install Igor Pro or the Igor Pro demo. If you are new to Igor, read [Volume I: Getting Started](http://www.wavemetrics.net/doc/igorman/I-01%20Intro.pdf) of the Igor manual.
 
 1. Copy the "LoomisWood.ipf" procedure file to the "User Procedures" subfolder of the IGOR program folder.
 The path for the "User Procedures" folder is typically "C:\Program Files\WaveMetrics\Igor Pro Folder\User Procedures" for a Windows PC.
