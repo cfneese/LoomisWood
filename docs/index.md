@@ -1,4 +1,4 @@
-#Loomis-Wood Manual
+# Loomis-Wood Manual
 
 Loomis-Wood Add-In
 
@@ -12,30 +12,27 @@ cfneese@uchicago.edu
 
 http://fermi.uchicago.edu/freeware/LoomisWood.shtml
 
-##Contents
+## Contents
 
-var toc = require('markdown-toc');
-toc('# One\n\n# Two').content;
+- [Theory](#theory)
+- [License](#license)
+- [Features](#features)
+- [System Requirements](#system-requirements)
+- [Upgrading](#upgrading)
+- [Getting Started with the Add-In](#getting-started-with-the-add-in)
+- [Working with Band Heads](#working-with-band-heads)
+- [How It Works](#how-it-works)
+- [Troubleshooting](#troubleshooting)
+- [Menu/Command Reference](#menu/command-reference)
+- [Keyboard Reference](#keyboard-reference)
+- [Function Reference](#function-reference)
+- [Structures](#structures)
+- [Customization](#customization)
+- [Revision List](#revision-list)
+- [To Do List](#to-do-list)
+- [References](#references)
 
-// Theory
-// License
-// Features
-// System Requirements
-// Upgrading
-// Getting Started with the Add-In
-// Working with Band Heads
-// How It Works
-// Troubleshooting
-// Menu/Command Reference
-// Keyboard Reference
-// Function Reference
-// Structures
-// Customization
-// Revision List
-// To Do List
-// References
-
-##Theory
+## Theory
 
 Most molecular spectra contain series of lines that are readily fitted to
 polynomials of the quantum number _J_, or some index directly related to _J_.
@@ -63,7 +60,7 @@ The first interactive Loomis-Wood applications by Winnewisser _et al._ appeared 
 the 1980s.
 The Loomis-Wood add-in follows in the tradition of these interactive programs.
 
-#License
+## License
 
 Copyright (c) 2005
 Christopher F. Neese
@@ -84,7 +81,7 @@ Columbus, Ohio, June 20-24, 2005.
 
 (Please check the website for latest information on citing this work.)
 
-#Features
+## Features
 
 * The add-in is Macintosh and Windows compatible. (Version 1.0 was not Macintosh compatible.)
 * The add-in provides an organized line/assignment database.
@@ -99,1257 +96,1018 @@ Igor’s features are available to the add-in.
 For example, printing and graphics export are provided by Igor, not the
 add-in.
 
-##System Requirements
+## System Requirements
 
 The add-in requires Igor 5.02 or later. Performance should be acceptable on any Pentium-4 based computer.
 
-# Upgrading
+## Upgrading
 
 The data format for version 2.x of the Loomis-Wood add-in is substantially
 different from version 1.0.  Therefore no direct upgrade route has been provided.
 If you need a method to upgrade an experiment using Loomis-Wood 1.0 to
 2.x please contact the author.
 
-<p class=TopicBody><span style='mso-bidi-font-family:"Times New Roman"'>If the
-user needs to update from version 2.x to a newer version of the Add-In, it may
-be necessary to close all LW plots and recreate them from the Loomis-Wood
-menu.<span style='mso-spacerun:yes'>  </span>This can be done without losing
-any assignments, and is only necessary if the user finds odd behavior after an
-update.<span style='mso-spacerun:yes'>  </span>The author will try to note any
-upgrades that require this procedure here.<o:p></o:p></span></p>
+If the user needs to update from version 2.x to a newer version of the Add-In, it may
+be necessary to close all LW plots and recreate them from the Loomis-Wood menu.
+This can be done without losing any assignments, and is only necessary if the user finds odd behavior after an
+update.  The author will try to note any upgrades that require this procedure here.
 
-<p class=Subtopic><span style='mso-bidi-font-family:"Times New Roman"'>Getting
-Started with the Add-In<o:p></o:p></span></p>
+## Getting Started with the Add-In
+0. Install Igor Pro or the Igor Pro demo. If you are new to Igor, read "Volume I: Getting Started" of the Igor manual.
 
-<p class=TopicBody><span style='mso-bidi-font-family:"Times New Roman"'>0.<span
-style='mso-tab-count:1'>     </span>Install Igor Pro or the Igor Pro demo.<span
-style='mso-spacerun:yes'>  </span>If you are new to Igor, read “Volume I:<span
-style='mso-spacerun:yes'>  </span><u><span style='color:blue'>Getting Started</span></u><span
-style='color:black'>” of the Igor manual.<o:p></o:p></span></span></p>
 
-<p class=TopicBody><span style='mso-bidi-font-family:"Times New Roman";
-color:black'>1.<span style='mso-tab-count:1'>     </span>Copy the
-&quot;LoomisWood.ipf&quot; procedure file to the &quot;User Procedures&quot;
-subfolder of the IGOR program folder.<span style='mso-spacerun:yes'> 
-</span>The path for the &quot;User Procedures&quot; folder is typically &quot;C:\Program
-Files\WaveMetrics\Igor Pro Folder\User Procedures&quot; for a Windows PC.<o:p></o:p></span></p>
+1. Copy the "LoomisWood.ipf" procedure file to the "User Procedures" subfolder of the IGOR program folder.
+The path for the "User Procedures" folder is typically "C:\Program Files\WaveMetrics\Igor Pro Folder\User Procedures" for a Windows PC.
 
-<p class=TopicBody><span style='mso-bidi-font-family:"Times New Roman";
-color:black'>2.<span style='mso-tab-count:1'>     </span>Load/Create a line
-list of your data in Igor.<span style='mso-spacerun:yes'>  </span>(A sample
-experiment, “ethylene-lw.pxp”, which includes a spectrum and line list of
-ethylene from HITRAN is provided with the add-in.)<span
-style='mso-spacerun:yes'>  </span>The Add-In requires a listing of line-center
-frequencies contained in a single 1D wave.<span style='mso-spacerun:yes'> 
-</span>A listing of line intensities and/or line widths is optional.<span
-style='mso-spacerun:yes'>  </span>If provided, these lists should be contained
-in separate 1D waves.<span style='mso-spacerun:yes'>  </span>The intensity wave
-should reflect absorption not transmission.<span style='mso-spacerun:yes'> 
-</span>Also, the values in the intensity wave should all be positive.<o:p></o:p></span></p>
+2. Load/Create a line list of your data in Igor.
+(A sample experiment, "ethylene-lw.pxp", which includes a spectrum and line list of
+ethylene from HITRAN is provided with the add-in.)
+The Add-In requires a listing of line-center frequencies contained in a single 1D wave.
+A listing of line intensities and/or line widths is optional.
+If provided, these lists should be contained in separate 1D waves.
+The intensity wave should reflect absorption not transmission.
+Also, the values in the intensity wave should all be positive.
 
-<p class=TopicBody><span style='mso-bidi-font-family:"Times New Roman";
-color:black'>3.<span style='mso-tab-count:1'>     </span>Open the procedure
-window of your IGOR experiment.<span style='mso-spacerun:yes'>  </span>(Press
-Ctrl-M.)<span style='mso-spacerun:yes'>  </span>Add the line <o:p></o:p></span></p>
+3. Open the procedure window of your Igor experiment. (Press Ctrl-M.)
+Add the line
+`#include "LoomisWood"` 
+to the top of the procedure window.
+This will create the **Loomis-Wood** menu and make available all of the procedures associated with this add-in.
 
-<p class=CodeIndented>#include &quot;LoomisWood&quot; </p>
+4. Create a Loomis-Wood data set by selecting **Loomis-Wood | Data Sets | Create a New Loomis-Wood Data Set...**.
+A dialog box will ask you for the name of the new folder, then a second dialog box will ask you to select the waves of your line listing.
+You can choose \_constant\_ if you do not have waves with line widths and/or line intensities.
+You can work with multiple data sets in the same Igor Experiment by creating multiple Loomis-Wood folders.
 
-<p class=TopicBody><span style='mso-bidi-font-family:"Times New Roman"'>to the
-top of the procedure window.<span style='mso-spacerun:yes'>  </span>This will
-create the <b>Loomis-Wood</b> menu and make available all of the procedures
-associated with this add-in.<o:p></o:p></span></p>
+5. A Loomis-Wood plot named "Plot0" will be created automatically.
+You can create multiple Loomis-Wood plots for the same Loomis-Wood folder by selecting
+**Loomis-Wood| Plots | Create a New Loomis-Wood Plot...**
+A dialog box will ask you for the Loomis-Wood folder containing the data for the plot, and a name for the subfolder that will contain data specific to the new Loomis-Wood plot.
 
-<p class=TopicBody><span style='mso-bidi-font-family:"Times New Roman"'>4.<span
-style='mso-tab-count:1'>     </span>Create a Loomis-Wood data set by selecting <b>Loomis-Wood
-| Data Sets | Create a New Loomis-Wood Data Set...</b>.<span
-style='mso-spacerun:yes'>  </span>A dialog box will ask you for the name of the
-new folder, then a second dialog box will ask you to select the waves of your
-line listing.<span style='mso-spacerun:yes'>  </span>You can choose _constant_
-if you do not have waves with line widths and/or line intensities.<span
-style='mso-spacerun:yes'>  </span>You can work with multiple data sets in the
-same Igor Experiment by creating multiple Loomis-Wood folders.<o:p></o:p></span></p>
+6. In the new plot you will see the lines from your data set represented as triangles.
+The height and width of these shapes will reflect the relative line intensities and the line widths of your data set.
+There is a cursor that you can move from line to line using the arrow keys.
+If you click on a single line, the cursor will jump to that line. At the top of the
+plot the details of the currently selected line are displayed.
+You can use the PageUp and PageDn keys to scroll the plot up or down to the region of interest.
 
-<p class=TopicBody><span style='mso-bidi-font-family:"Times New Roman"'>5.<span
-style='mso-tab-count:1'>     </span>A Loomis-Wood plot named &quot;Plot0&quot;
-will be created automatically.<span style='mso-spacerun:yes'>  </span>You can
-create multiple Loomis-Wood plots for the same Loomis-Wood folder by selecting <b>Loomis-Wood
-| Plots | Create a New Loomis-Wood Plot...</b><span style='mso-spacerun:yes'> 
-</span>A dialog box will ask you for the Loomis-Wood folder containing the data
-for the plot, and a name for the subfolder that will contain data specific to
-the new Loomis-Wood plot.<o:p></o:p></span></p>
-
-<p class=TopicBody><span style='mso-bidi-font-family:"Times New Roman"'>6.<span
-style='mso-tab-count:1'>     </span>In the new plot you will see the lines from
-your data set represented as triangles.<span style='mso-spacerun:yes'> 
-</span>The height and width of these shapes will reflect the relative line
-intensities and the line widths of your data set.<span
-style='mso-spacerun:yes'>  </span>There is a cursor that you can move from line
-to line using the arrow keys.<span style='mso-spacerun:yes'>  </span>If you
-click on a single line, the cursor will jump to that line. At the top of the
-plot the details of the currently selected line are displayed.<span
-style='mso-spacerun:yes'>  </span>You can use the PageUp and PageDn keys to
-scroll the plot up or down to the region of interest.<o:p></o:p></span></p>
-
-<p class=TopicBody><span style='mso-bidi-font-family:"Times New Roman"'>7.<span
-style='mso-tab-count:1'>     </span>Edit the band constants to make the
-Loomis-Wood plot match a series in your spectrum.<span
-style='mso-spacerun:yes'>  </span>Do this by choosing <b>Loomis-Wood | Plots |
-Edit Band Constants...</b>.<span style='mso-spacerun:yes'>  </span>Even if you
-do not have precise constants for your molecule, you will need to provide
+7. Edit the band constants to make the
+Loomis-Wood plot match a series in your spectrum.
+Do this by choosing **Loomis-Wood | Plots | Edit Band Constants...**.
+Even if you do not have precise constants for your molecule, you will need to provide
 initial guesses for the band origin and rotational constants to get a
-meaningful display.<o:p></o:p></span></p>
+meaningful display.
 
-<p class=TopicBody><span style='mso-bidi-font-family:"Times New Roman"'>8.<span
-style='mso-tab-count:1'>     </span>If your band constants are reasonable, you
-should be able to identify a series as a vertical line of triangles in the
-display area.<span style='mso-spacerun:yes'>  </span>You probably will need to
-scroll to the region of interest using the Page keys if you have not already
-done so.<span style='mso-spacerun:yes'>  </span>If you cannot identify a
-series, you will need to go back to step 7 and refine your constants.<o:p></o:p></span></p>
+8. If your band constants are reasonable, you should be able to identify a series as a vertical line of triangles in the
+display area.  You probably will need to scroll to the region of interest using the Page keys if you have not already
+done so.
+If you cannot identify a series, you will need to go back to step 7 and refine your constants.
 
-<p class=TopicBody><span style='mso-bidi-font-family:"Times New Roman"'>9.<span
-style='mso-tab-count:1'>     </span>The next step is to assign a series.<span
-style='mso-spacerun:yes'>  </span>Begin by creating a new series by choosing <b>Loomis-Wood
-| Series | Start a New Series...</b>.<span style='mso-spacerun:yes'> 
-</span>You will be asked to name the series and choose a color for the
-series.<span style='mso-spacerun:yes'>  </span>You can now assign the series by
-selecting the lines to assign with the cursor and pressing the Enter key.<span
-style='mso-spacerun:yes'>  </span>You can use the Delete key to remove an
-incorrect assignment.<o:p></o:p></span></p>
+9. The next step is to assign a series.
+Begin by creating a new series by choosing **Loomis-Wood | Series | Start a New Series...**.
+You will be asked to name the series and choose a color for the series.
+You can now assign the series by selecting the lines to assign with the cursor and pressing the Enter key. You can use the Delete key to remove an incorrect assignment.
 
-<p class=TopicBody><span style='mso-bidi-font-family:"Times New Roman"'>10.<span
-style='mso-tab-count:1'>   </span>Once you have a series assigned or partially
-assigned, you can refine the rotational constants by performing a fit.<span
-style='mso-spacerun:yes'>  </span>Do this by selecting <b>Loomis-Wood | Series
-| Fit Current Series</b>.<o:p></o:p></span></p>
+10. Once you have a series assigned or partially assigned, you can refine the rotational constants by performing a fit.
+Do this by selecting **Loomis-Wood | Series | Fit Current Series**.
 
-<p class=TopicBody><span style='mso-bidi-font-family:"Times New Roman"'>11.<span
-style='mso-tab-count:1'>   </span>If the value of <i>m</i> is off
-(corresponding to misassignment of <i>J</i>), then the constants produced by
-the fit will be meaningless.<span style='mso-spacerun:yes'>  </span>To correct
-this, choose <b>Loomis-Wood | Series | M-Shift Current Series…</b>.<span
-style='mso-spacerun:yes'>  </span>You will be asked for a correction which will
-be added to the current <i>m</i> values of the current series.<o:p></o:p></span></p>
+11. If the value of _m_ is off (corresponding to misassignment of _J_), then the constants produced by
+the fit will be meaningless.
+To correct this, choose **Loomis-Wood | Series | M-Shift Current Series…**.
+You will be asked for a correction which will be added to the current _m_ values of the current series.
 
-<p class=TopicBody><span style='mso-bidi-font-family:"Times New Roman"'>12.<span
-style='mso-tab-count:1'>   </span>Repeat steps 7-11 to assign additional
-series.<span style='mso-spacerun:yes'>  </span>A complete list of assignments
-can be created by selecting <b>Loomis-Wood | Data Sets | Extract Assignments...</b>.<o:p></o:p></span></p>
+12. Repeat steps 7-11 to assign additional series.
+A complete list of assignments can be created by selecting **Loomis-Wood | Data Sets | Extract Assignments...**.
 
-<p class=Subtopic><span style='mso-bidi-font-family:"Times New Roman"'>Working
-with Band Heads<o:p></o:p></span></p>
+## Working with Band Heads
 
-<p class=TopicBody><span style='mso-bidi-font-family:"Times New Roman"'>When a
-series has a band head, the fitting function is no longer monotonic.<span
-style='mso-spacerun:yes'>  </span>Since the add-in relies on inversion of the
-fitting function to create the Loomis-Wood plot, this causes problems.<span
-style='mso-spacerun:yes'>  </span>To deal with this problem, the add-in
-calculates the regions of monotonicity of the fitting function.<span
-style='mso-spacerun:yes'>  </span>Initially, the add-in uses the region of
-monotonicity that includes <i>m</i>=0.<span style='mso-spacerun:yes'> 
-</span>The <b>Loomis-Wood | Plots | Change Region...</b> command can be used to
-select another region of monotonicity.<span style='mso-spacerun:yes'> 
-</span>Using this command, both sides of a band head can be assigned.<o:p></o:p></span></p>
+When a series has a band head, the fitting function is no longer monotonic.
+Since the add-in relies on inversion of the fitting function to create the Loomis-Wood plot, this causes problems.To deal with this problem, the add-in calculates the regions of monotonicity of the fitting function.
+Initially, the add-in uses the region of monotonicity that includes _m_=0.
+The **Loomis-Wood | Plots | Change Region...** command can be used to select another region of monotonicity.
+Using this command, both sides of a band head can be assigned.
 
-<p class=TopicBody><span style='mso-bidi-font-family:"Times New Roman"'>Please
-note that when a series has a band head, the width of each line will get
-smaller as one approaches the band head.<span style='mso-spacerun:yes'> 
-</span>This gives the Loomis-Wood plot a triangular appearance.<span
-style='mso-spacerun:yes'>  </span>If you notice that a Loomis-Wood plot takes
-on a triangular or trapezoidal appearance, you can be pretty sure that your
-fitting function involves a band head.<o:p></o:p></span></p>
+Please note that when a series has a band head, the width of each line will get
+smaller as one approaches the band head.
+This gives the Loomis-Wood plot a triangular appearance.
+If you notice that a Loomis-Wood plot takes on a triangular or trapezoidal appearance, you can be pretty sure that your
+fitting function involves a band head.
 
-<p class=TopicBody><span style='mso-bidi-font-family:"Times New Roman"'>Finally
-note that as one works away from a band head the distance between lines can
-become quite large.<span style='mso-spacerun:yes'>  </span>If this occurs the
-Loomis-Wood plot may become unreadable.<span style='mso-spacerun:yes'> 
-</span>To fix this, you should zoom in on the horizontal axis. <span
-style='mso-spacerun:yes'> </span>This cannot be done with the mouse (as the
-add-in overrides mouse input), but can be done via the <b>Graph</b> menu or the
-command line.<span style='mso-spacerun:yes'>  </span>Also, you may need to edit
-the value of the FIVEMAX_PEAKS_PER_PLOT constant in the procedure file.<o:p></o:p></span></p>
+Finally note that as one works away from a band head the distance between lines can
+become quite large.  If this occurs the Loomis-Wood plot may become unreadable.
+To fix this, you should zoom in on the horizontal axis.  This cannot be done with the mouse (as the
+add-in overrides mouse input), but can be done via the *Graph* menu or the
+command line.
+Also, you may need to edit the value of the FIVEMAX_PEAKS_PER_PLOT constant in the procedure file.
 
-<p class=Subtopic><span style='mso-bidi-font-family:"Times New Roman"'>How it
-Works<o:p></o:p></span></p>
+## How it Works
 
-<p class=TopicBody><span style='mso-bidi-font-family:"Times New Roman"'>The
-Loomis-Wood Add-In makes extensive use of Igor's data folders.<span
-style='mso-spacerun:yes'>  </span>By using data folders, the add-in is able to
-work with multiple data sets and plots within a single IGOR experiment
-file.<span style='mso-spacerun:yes'>  </span>An additional advantage is that
-the add-in will not accidentally conflict with the user’s other data.<span
-style='mso-spacerun:yes'>  </span>Users unfamiliar with data folders in Igor
-may want to skim the “<u><span style='color:blue'>Data Folders</span></u><span
-style='color:black'>” chapter in the Igor manual.<span
-style='mso-spacerun:yes'>  </span>The Add-In will create a folder named
-“root:LW”.<span style='mso-spacerun:yes'>  </span>(The name of this folder can
-be changed by modifying the BASE_FOLDER strconstant in the procedure
-file.)<span style='mso-spacerun:yes'>  </span>Within this folder the Add-In
-will create data set folder(s).<span style='mso-spacerun:yes'>  </span>All of
-the data that the add-in needs for a data set is stored within the data set
-folder.<o:p></o:p></span></span></p>
+The Loomis-Wood Add-In makes extensive use of Igor's data folders.
+By using data folders, the add-in is able to work with multiple data sets and plots within a single Igor experiment
+file.
+An additional advantage is that
+the add-in will not accidentally conflict with the user’s other data.
+Users unfamiliar with data folders in Igor may want to skim the “Data Folders” chapter in the Igor manual.
+The Add-In will create a folder named "root:LW".
+(The name of this folder can be changed by modifying the BASE_FOLDER strconstant in the procedure file.)
+Within this folder the Add-In will create data set folder(s).
+All of the data that the add-in needs for a data set is stored within the data set folder.
 
-<p class=Subtopic><span style='mso-bidi-font-family:"Times New Roman"'>The
-Loomis-Wood data set folder:<o:p></o:p></span></p>
+### The Loomis-Wood data set folder:
 
-<p class=TopicBody><span style='mso-bidi-font-family:"Times New Roman"'>When a
-new Loomis-Wood data set folder is created, the following subfolders and waves
-are created within that folder:<o:p></o:p></span></p>
+When a new Loomis-Wood data set folder is created, the following subfolders and waves
+are created within that folder:
 
-<p class=TopicBody><span style='mso-bidi-font-family:"Times New Roman"'><span
-style='mso-tab-count:1'>        </span>Lines subfolder:<span
-style='mso-spacerun:yes'>  </span>Frequency, Intensity, Width, and Assignments<o:p></o:p></span></p>
+* Lines subfolder:
+    Frequency, Intensity, Width, and Assignments
+* Series subfolder:
+    Name, Color, Order, Data, and Shape
+* Band2Poly, Poly2Band, and BandCoeffLabels , and Colors
 
-<p class=TopicBody><span style='mso-bidi-font-family:"Times New Roman"'><span
-style='mso-tab-count:1'>        </span>Series subfolder:<span
-style='mso-spacerun:yes'>  </span>Name, Color, Order, Data, and Shape<o:p></o:p></span></p>
+The waves in the Lines subfolder are copied from the line listing used to create the Loomis-Wood folder.
+The waves will be sorted by frequency. Assignments is a text wave reflecting assignments.
+An unassigned line will have an empty string in this wave, where as an assigned line will contain a semicolon-separated list of assignments, e.g. "1:-29,1,1,1,;3:10,1,1,1,".
+The assignments in this wave are of the form "series:m,mask1,mask2,mask3,note", where _series_ is the number
+of the series, _m_ is the polynomial index (related to _J_), and _mask1_, _mask2_, and _mask3_ are 1 or 0 depending on whether the line is used in fitting or not, and _note_ is a note about the assignment.
 
-<p class=TopicBody><span style='mso-bidi-font-family:"Times New Roman"'><span
-style='mso-tab-count:1'>        </span>Band2Poly, Poly2Band, and
-BandCoeffLabels , and Colors<o:p></o:p></span></p>
+The waves in the Series subfolder contain information on assigned series.
+In particular, Data is a text wave with a semicolon separated list of assignments.
+The assignments in this wave are of the form "pnt:m,mask1,mask2,mask3,note", where _pnt_ is the point number
+in the Lines subfolder waves and _m_, _mask1_, _mask2_, _mask3_, and _note_ are the same as above.
+The first element in these waves applies to unassigned lines.
+This allows the color and shape of unassigned lines to be changed.
 
-<p class=TopicBody><span style='mso-bidi-font-family:"Times New Roman"'>The
-waves in the Lines subfolder are copied from the line listing used to create
-the Loomis-Wood folder.<span style='mso-spacerun:yes'>  </span>The waves will
-be sorted by frequency. Assignments is a text wave reflecting assignments.<span
-style='mso-spacerun:yes'>  </span>An unassigned line will have an empty string
-in this wave, where as an assigned line will contain a semicolon-separated list
-of assignments, e.g. &quot;1:-29,1,1,1,;3:10,1,1,1,&quot;.<span
-style='mso-spacerun:yes'>  </span>The assignments in this wave are of the form
-&quot;series:m,mask1,mask2,mask3,note&quot;, where <i>series</i> is the number
-of the series, <i>m</i> is the polynomial index (related to <i>J</i>), and <i>mask1,
-mask2, </i>and <i>mask3</i> are 1 or 0 depending on whether the line is used in
-fitting or not, and <i>note</i> is a note about the assignment.<o:p></o:p></span></p>
+The shape of a line is a hollow peak for Shape=0, a solid peak for Shape > 0 and invisible for Shape < 0.
+Note that invisible lines can still be selected with the cursor.
+The color of a line is a number corresponding to RGB pair in the Colors wave.
+If a line is assigned multiple times, it will take its color and shape from the first series in the Lines:Assignments string.
 
-<p class=TopicBody><span style='mso-bidi-font-family:"Times New Roman"'>The
-waves in the Series subfolder contain information on assigned series.<span
-style='mso-spacerun:yes'>  </span>In particular, Data is a text wave with a
-semicolon separated list of assignments.<span style='mso-spacerun:yes'> 
-</span>The assignments in this wave are of the form
-&quot;pnt:m,mask1,mask2,mask3,note&quot;, where <i>pnt</i> is the point number
-in the Lines subfolder waves and <i>m</i>, <i>mask1, mask2, mask3,</i> and <i>note</i>
-are the same as above.<span style='mso-spacerun:yes'>  </span>The first element
-in these waves applies to unassigned lines.<span style='mso-spacerun:yes'> 
-</span>This allows the color and shape of unassigned lines to be changed.<o:p></o:p></span></p>
+The Colors wave is a three-column wave containing RGB values.
+These values determine the colors associated with the Series:Color wave.
+The labels of this wave contain the names for these colors.
+The first row in these waves is used by default for unassigned lines.
+This wave can quickly be edited by selecting **Loomis-wood | Data Sets | Edit Colors...**.
 
-<p class=TopicBody><span style='mso-bidi-font-family:"Times New Roman"'>The
-shape of a line is a hollow peak for Shape=0, a solid peak for Shape &gt; 0 and
-invisible for Shape &lt; 0.<span style='mso-spacerun:yes'>  </span>Note that invisible
-lines can still be selected with the cursor.<span style='mso-spacerun:yes'> 
-</span>The color of a line is a number corresponding to RCG pair in the Colors
-wave.<span style='mso-spacerun:yes'>  </span>If a line is assigned multiple
-times, it will take its color and shape from the first series in the
-Lines.Assignments string.<o:p></o:p></span></p>
-
-<p class=TopicBody><span style='mso-bidi-font-family:"Times New Roman"'>The
-Colors wave is a three-column wave containing RGB values.<span
-style='mso-spacerun:yes'>  </span>These values determine the colors associated
-with the Series:Color wave.<span style='mso-spacerun:yes'>  </span>The labels
-of this wave contain the names for these colors.<span
-style='mso-spacerun:yes'>  </span>The first row in these waves is used by
-default for unassigned lines.<span style='mso-spacerun:yes'>  </span>This wave
-can quickly be edited by selecting Loomis-wood | Data Sets | Edit Colors...<o:p></o:p></span></p>
-
-<p class=TopicBody><span style='mso-bidi-font-family:"Times New Roman"'>The
-Band2Poly and Poly2Band are the linear transformation matrices between the
+The Band2Poly and Poly2Band are the linear transformation matrices between the
 polynomial coefficients and rotational constants. With these matrices, curve
 fitting can be done using a polynomial and then the results transformed into
-rotational constants.<span style='mso-spacerun:yes'>  </span>The default
-constants used are nu0, B&quot;, deltaB, D&quot;, deltaD, H&quot; and
-deltaH&quot;.<span style='mso-spacerun:yes'>  </span>If the user prefers a
-different set of constants (such as nu0, B&quot;, B', D&quot;, D', H&quot;, H')
-these two matrices can be edited.<span style='mso-spacerun:yes'>  </span>The
-BandCoeffLabels text wave simply contains descriptions for the rotational
-constants.<o:p></o:p></span></p>
+rotational constants.   The default constants used are nu0, B", deltaB, D", deltaD, H" and
+deltaH".   If the user prefers a different set of constants (such as nu0, B", B', D", D', H", H')
+these two matrices can be edited.
+The BandCoeffLabels text wave simply contains descriptions for the rotational constants.
 
-<p class=TopicBody><span style='mso-bidi-font-family:"Times New Roman"'>In
-addition to the above waves, the Loomis-Wood folder may contain a Plots folder
-(containing one or more plot folders), a SeriesFit folder, and/or an
-Assignments folder.<o:p></o:p></span></p>
+In addition to the above waves, the Loomis-Wood folder may contain a Plots folder (containing one or more plot folders),
+a SeriesFit folder, and/or an Assignments folder.
 
-<p class=TopicBody><span style='mso-bidi-font-family:"Times New Roman"'>The
-add-in’s “assignment database” is comprised essentially of the Series:Data and
-Lines:Assignments waves.<span style='mso-spacerun:yes'>  </span>By having the
-assignment information recorded both “by line” and “by series”, the add-in can
-quickly access assignment information.<span style='mso-spacerun:yes'>  </span>A
-catch to this system is that any function that modifies assignments must change
-both of these waves.<span style='mso-spacerun:yes'>  </span>If only one of
-these two waves is changed, the SynchronizeSeries2Lines() or
-SynchronizeLines2Series() functions can be used to recalculate the other wave.<o:p></o:p></span></p>
+The add-in’s "assignment database" is comprised essentially of the Series:Data and
+Lines:Assignments waves.   By having the assignment information recorded both “by line” and "by series", the add-in can
+quickly access assignment information.   A catch to this system is that any function that modifies assignments must change
+both of these waves.   If only one of these two waves is changed, the SynchronizeSeries2Lines() or
+SynchronizeLines2Series() functions can be used to recalculate the other wave.
 
-<p class=TopicBody><b><span style='mso-bidi-font-family:"Times New Roman"'>Warning:<span
-style='mso-spacerun:yes'>  </span>It is very important not to manually edit the
-waves in the Lines subfolder.<span style='mso-spacerun:yes'>  </span>Changing
-these waves can scramble assignments!!!<o:p></o:p></span></b></p>
+**Warning:  It is very important not to manually edit the waves in the Lines subfolder. Changing these waves can scramble assignments!!!**
 
-<p class=TopicBody><span style='mso-bidi-font-family:"Times New Roman"'>If one
-does need to edit the waves in the Lines subfolder, one should call <b>Loomis-wood
-| Data Sets | Synchronize Series to Lines</b> when finished.<span
-style='mso-spacerun:yes'>  </span>This routine will sort the waves and update
-the Series folder so that the Loomis-Wood add-in continues to function.<span
-style='mso-spacerun:yes'>  </span>Even with this function, functionality can be
-lost if one is not careful.<span style='mso-spacerun:yes'>  </span>Make sure
-your experiment is saved before trying this!!!<o:p></o:p></span></p>
+If one does need to edit the waves in the Lines subfolder, one should call **Loomis-wood | Data Sets | Synchronize Series to Lines** when finished.
+This routine will sort the waves and update the Series folder so that the Loomis-Wood add-in continues to function.
+Even with this function, functionality can be lost if one is not careful.
+Make sure your experiment is saved before trying this!!!
 
-<p class=TopicBody><span style='mso-bidi-font-family:"Times New Roman"'>An
-alternative to manually editing the Lines subfolder is the <b>Data Sets |
-Update Line List...</b> command.<span style='mso-spacerun:yes'>  </span>This
-command is provided for situations where the line list is not static.<span
-style='mso-spacerun:yes'>  </span>For example, if the user wants to measure
-lines as the assignment progresses you would call this function each time you
-measured new lines.<o:p></o:p></span></p>
+An alternative to manually editing the Lines subfolder is the **Data Sets | Update Line List...** command.   This
+command is provided for situations where the line list is not static.
+For example, if the user wants to measure lines as the assignment progresses you would call this function each time you
+measured new lines.
 
-<p class=TopicBody><b><span style='mso-bidi-font-family:"Times New Roman"'>The
-waves in the Series subfolder may be edited but should not be sorted or
-redimensioned.<span style='mso-spacerun:yes'>  </span>The Data wave in the
-Series subfolder should not be manually edited.<o:p></o:p></span></b></p>
+**The waves in the Series subfolder may be edited but should not be sorted or redimensioned.
+The Data wave in the Series subfolder should not be manually edited.**
 
-<p class=TopicBody><span style='mso-bidi-font-family:"Times New Roman"'>If one
-does need to sort the waves in his folder, run the <b>Loomis-wood | Data Sets |
-Synchronize Lines to Series</b> when finished.<span style='mso-spacerun:yes'> 
-</span>Again make sure your experiment is saved before trying this!!!<o:p></o:p></span></p>
+If one does need to sort the waves in his folder, run the **Loomis-wood | Data Sets | Synchronize Lines to Series** when finished.  Again make sure your experiment is saved before trying this!!!
 
-<p class=TopicBody><b><span style='mso-bidi-font-family:"Times New Roman"'>Band2Poly
-and Poly2Band may be edited, but they must be matrix inverses of each other.<o:p></o:p></span></b></p>
+Band2Poly and Poly2Band may be edited, but they must be matrix inverses of each other.
 
-<p class=Subtopic><span style='mso-bidi-font-family:"Times New Roman"'>The
-Loomis-Wood plot folder:<o:p></o:p></span></p>
+### The Loomis-Wood plot folder:
 
-<p class=TopicBody><span style='mso-bidi-font-family:"Times New Roman"'>A
-Loomis-Wood plot folder contains the waves used to render a Loomis-Wood
-plot.<span style='mso-spacerun:yes'>  </span>In particular, each plot has a
-wave named BandCoeff that contains the rotational constants used to create the
-Loomis-Wood plot.<span style='mso-spacerun:yes'>  </span>A Loomis-Wood folder
-can contain multiple Loomis-Wood folders so that different plots of the same
-data set can be shown concurrently.<span style='mso-spacerun:yes'>  </span>Four
-dependency formulas keep the data in the Loomis-Wood plot folder synchronized so
-that the display is accurate:<o:p></o:p></span></p>
+A Loomis-Wood plot folder contains the waves used to render a Loomis-Wood plot.
+In particular, each plot has a wave named BandCoeff that contains the rotational constants used to create the Loomis-Wood plot.
+A Loomis-Wood folder can contain multiple Loomis-Wood folders so that different plots of the same
+data set can be shown concurrently.   Four dependency formulas keep the data in the Loomis-Wood plot folder synchronized so that the display is accurate:
 
-<p class=CodeIndented>BandCoeffUpdate := DoBandCoeffUpdate(BandCoeff)</p>
+`BandCoeffUpdate := DoBandCoeffUpdate(BandCoeff)
 
-<p class=CodeIndented>TriangleUpdate := DoTriangleUpdate(Line_LWm,
-::Lines:Assignments, ::Series:Color,</p>
+TriangleUpdate := DoTriangleUpdate(Line_LWm,::Lines:Assignments, ::Series:Color, ::Series:Shape, StartM, EndM, Zoom)
 
-<p class=CodeIndented><span style='mso-tab-count:1'>   </span>::Series:Shape,
-StartM, EndM, Zoom)</p>
+SeriesOrder := DoSeriesOrderUpdate(::Series:Order, CurrentSeries)
 
-<p class=CodeIndented>SeriesOrder := DoSeriesOrderUpdate(::Series:Order, CurrentSeries)</p>
+SeriesNameUpdate := DoSeriesNameUpdate(::Series:Name, CurrentSeries)`
 
-<p class=CodeIndented>SeriesNameUpdate := DoSeriesNameUpdate(::Series:Name,
-CurrentSeries)</p>
+The use of dependencies to keep the Loomis-Wood plot accurate is important, since the
+data that trigger these dependencies are not necessarily changed programmatically.
 
-<p class=CodeIndented><o:p>&nbsp;</o:p></p>
+DoBandCoeffUpdate calculates Line_LWm and Line_DF (delta frequency) whenever BandCoeff
+changes.   The Loomis-Wood plot is essentially a scatter plot of Line_LWm vs. Line_DF.
+Since BandCoeff changes rather infrequently, Line_LWm and Line_DF can be calculated completely whenever BandCoeff changes, without performance degradation.
 
-<p class=TopicBody><span style='mso-bidi-font-family:"Times New Roman"'>The use
-of dependencies to keep the Loomis-Wood plot accurate is important, since the
-data that trigger these dependencies are not necessarily changed
-programmatically.<o:p></o:p></span></p>
-
-<p class=TopicBody><span style='mso-bidi-font-family:"Times New Roman"'>DoBandCoeffUpdate
-calculates Line_LWm and Line_DF (delta frequency) whenever BandCoeff
-changes.<span style='mso-spacerun:yes'>  </span>The Loomis-Wood plot is
-essentially a scatter plot of Line_LWm vs. Line_DF.<span
-style='mso-spacerun:yes'>  </span>Since BandCoeff changes rather infrequently,
-Line_LWm and Line_DF can be calculated completely whenever BandCoeff changes,
-without performance degradation.<o:p></o:p></span></p>
-
-<p class=TopicBody><span style='mso-bidi-font-family:"Times New Roman"'>However,
-in order to get the triangle line shape that reflects intensity, width, and
+However, in order to get the triangle line shape that reflects intensity, width, and
 assignment in the Loomis-Wood plot, we actually plot Triangle_Yup,
 Triangle_Ydown vs Triangle_X, with the mode of Triangle_Yup set to Fill to
-Next.<span style='mso-spacerun:yes'>  </span>The Triangle_ waves (including
-Triangle_Color) are calculated by DoTriangleUpdate.<o:p></o:p></span></p>
+Next.   The Triangle_ waves (including Triangle_Color) are calculated by DoTriangleUpdate.
 
-<p class=TopicBody><span style='mso-bidi-font-family:"Times New Roman"'>DoTriangleUpdate
-executes whenever the ::Lines:Assignments wave is changed.<span
-style='mso-spacerun:yes'>  </span>This occurs whenever an assignment is made,
-changed or removed.<span style='mso-spacerun:yes'>  </span>The response of
+DoTriangleUpdate executes whenever the ::Lines:Assignments wave is changed.
+This occurs whenever an assignment is made, changed or removed.   The response of
 making an assignment must be rapid, hence this function must execute as quickly
-as possible.<span style='mso-spacerun:yes'>  </span>Thus, the Triangle_ waves
-do not contain information to render the entire line list, but just the portion
-of the line list that is to be displayed.<span style='mso-spacerun:yes'> 
-</span>Furthermore, the size of these waves is fixed at
-FIVEMAX_PEAKS_PER_PLOT.<span style='mso-spacerun:yes'>  </span>Redimensioning
-the Triangle_ waves takes too much time.<o:p></o:p></span></p>
+as possible.   Thus, the Triangle_ waves do not contain information to render the entire line list, but just the portion of the line list that is to be displayed.  
+Furthermore, the size of these waves is fixed at FIVEMAX_PEAKS_PER_PLOT.
+Redimensioning the Triangle_ waves takes too much time.
 
-<p class=TopicBody><span style='mso-bidi-font-family:"Times New Roman"'>The
-DoSeriesOrderUpdate() function updates the SeriesOrder variable whenever the
-user changes the Series:Order wave or changes the current series.<span
-style='mso-spacerun:yes'>  </span>This is done so that the order SetVariable
-control of the Loomis-Wood plot can reference a variable (SeriesOrder) instead
-of an element of a wave (::Series:Order[CurrentSeries]).<span
-style='mso-spacerun:yes'>  </span><o:p></o:p></span></p>
+The DoSeriesOrderUpdate() function updates the SeriesOrder variable whenever the
+user changes the Series:Order wave or changes the current series.
+This is done so that the order SetVariable control of the Loomis-Wood plot can reference a variable (SeriesOrder) instead of an element of a wave (::Series:Order[CurrentSeries]).
 
-<p class=TopicBody><span style='mso-bidi-font-family:"Times New Roman"'>The
-DoSeriesNameUpdate() function updates the current series popup menu whenever
-the user changes the Series:Name wave or changes the current series.<o:p></o:p></span></p>
+The DoSeriesNameUpdate() function updates the current series popup menu whenever
+the user changes the Series:Name wave or changes the current series.
 
-<p class=Subtopic><span style='mso-bidi-font-family:"Times New Roman"'>Useful
-Data in the Loomis-Wood plot folder:<o:p></o:p></span></p>
+### Useful Data in the Loomis-Wood plot folder:
 
-<p class=TopicBody><span style='mso-bidi-font-family:"Times New Roman"'>There
-are several waves and variables created in the Loomis-Wood plot folder that may
-be useful to the user.<span style='mso-spacerun:yes'>  </span>In particular,
-the user may wish to create dependencies to these variables to keep a graph of
-the original spectrum synchronized with a Loomis-Wood plot.<span
-style='mso-spacerun:yes'>  </span>(See the chapter “<u><span style='color:blue'>Dependencies</span></u><span
-style='color:black'>” in the Igor manual for more information.)<span
-style='mso-spacerun:yes'>  </span>Please note that these variables should be
-considered “read-only.”<o:p></o:p></span></span></p>
+There are several waves and variables created in the Loomis-Wood plot folder that may be useful to the user.
+In particular, the user may wish to create dependencies to these variables to keep a graph of the original spectrum synchronized with a Loomis-Wood plot.
+(See the chapter "Dependencies" in the Igor manual for more information.)
+Please note that these variables should be considered "read-only."
 
-<p class=TopicBody><span style='mso-bidi-font-family:"Times New Roman";
-color:black'>The following list is the data most useful for creating other
-displays.<span style='mso-spacerun:yes'>  </span>The data in the SeriesFit and
-Assignments folders (described below) will also be useful.<o:p></o:p></span></p>
+The following list is the data most useful for creating other
+displays.   The data in the SeriesFit and
+Assignments folders (described below) will also be useful.
 
-<p class=KeyList><span style='mso-bidi-font-family:"Times New Roman"'>startNu,
-endNu<span style='mso-tab-count:1'>                 </span>The starting and
-ending frequency of the Loomis-Wood plot.<span style='mso-spacerun:yes'> 
-</span>Note that endNu &lt; startNu is possible when d</span><span
-style='font-family:Symbol;mso-bidi-font-family:Symbol'>n</span>/d<i>m</i> &lt;
-0.</p>
+* startNu, endNu
+    The starting and ending frequency of the Loomis-Wood plot.  Note that endNu < startNu is possible when d_nu_/d_m_ < 0.
 
-<p class=KeyList>startM, endM<span style='mso-tab-count:1'>                    </span>The
-starting and ending <i>m</i> of the Loomis-Wood plot.</p>
+* startM, endM
+    The starting and ending _m_ of the Loomis-Wood plot.
 
-<p class=KeyList>startP, endP<span style='mso-tab-count:1'>                     </span>The
-start and ending point numbers of the lines drawn in the Loomis-Wood plot.<span
-style='mso-spacerun:yes'>  </span>Note that the number of lines drawn is
-limited by the constant FIVEMAX_PEAKS_PER_PLOT.</p>
+* startP, endP
+    The start and ending point numbers of the lines drawn in the Loomis-Wood plot.
+    Note that the number of lines drawn is limited by the constant FIVEMAX_PEAKS_PER_PLOT.
 
-<p class=KeyList>minNu, maxNu<span style='mso-tab-count:1'>                  </span>The
-current frequency limits of monotonicity of the fitting polynomial.<span
-style='mso-spacerun:yes'>  </span>Note that if d<span style='font-family:Symbol;
-mso-bidi-font-family:Symbol'>n</span>/d<i>m</i> &lt; 0, minNu corresponds to
-maxM and maxNu corresponds to minNu.</p>
+* minNu, maxNu
+    The current frequency limits of monotonicity of the fitting polynomial.
+    Note that if d_nu_/d_m_ < 0, minNu corresponds to maxM and maxNu corresponds to minNu.
 
-<p class=KeyList>minM, maxM<span style='mso-tab-count:1'>                    </span>The
-current <i>m</i> limits of monotonicity of the polynomial.</p>
+* minM, maxM
+    The current _m_ limits of monotonicity of the polynomial.
 
-<p class=KeyList>minP, maxP<span style='mso-tab-count:1'>                     </span>The
-first and last point number (from the Lines data folder) that are within the
-limits of monotonicity.</p>
+* minP, maxP
+    The first and last point number (from the Lines data folder) that are within the limits of monotonicity.
 
-<p class=KeyList>lwCursor_P<span style='mso-tab-count:1'>                      </span>The
-point number of the line selected by the Loomis-wood cursor.</p>
+* lwCursor_P
+    The point number of the line selected by the Loomis-wood cursor.
 
-<p class=KeyList>lwCursor_M<span style='mso-tab-count:1'>                      </span>The
-<i>m</i> value of the line selected by the Loomis-wood cursor.</p>
+* lwCursor_M
+    The _m_ value of the line selected by the Loomis-wood cursor.
 
-<p class=KeyList>lwCursor_Nu<span style='mso-tab-count:1'>                     </span>The
-frequency of the line selected by the Loomis-wood cursor.</p>
+* lwCursor_Nu
+    The frequency of the line selected by the Loomis-wood cursor.
 
-<p class=KeyList>lwCursor_dNu<span style='mso-tab-count:1'>                   </span>The
-residual of the line selected by the Loomis-wood cursor.<span
-style='mso-spacerun:yes'>  </span>(this is the horizontal axis of the
-Loomis-Wood plot.)</p>
+* lwCursor_dNu
+    The residual of the line selected by the Loomis-wood cursor.
+    (this is the horizontal axis of the Loomis-Wood plot.)
 
-<p class=KeyList>lwCursor_I<span style='mso-tab-count:1'>                        </span>The
-intensity of the line selected by the Loomis-wood cursor.</p>
+* lwCursor_I
+    The intensity of the line selected by the Loomis-wood cursor.
 
-<p class=KeyList>lwCursor_W<span style='mso-tab-count:1'>                      </span>The
-width of the line selected by the Loomis-wood cursor.</p>
+* lwCursor_W
+The width of the line selected by the Loomis-wood cursor.
 
-<p class=KeyList>CombX<span style='mso-tab-count:1'>                            </span>The
-frequency values of the fitting polynomial.<span style='mso-spacerun:yes'> 
-</span>Append CombY vs CombX to a graph of the spectrum and set the mode to
-sticks to zero to show the fitting polynomial on the original spectrum</p>
+* CombX
+    The frequency values of the fitting polynomial.  
+    Append CombY vs CombX to a graph of the spectrum and set the mode to sticks to zero to show the fitting polynomial on the original spectrum.
 
-<p class=KeyList>CombY<span style='mso-tab-count:1'>                            </span>A
-wave of ones of the same length as CombX.</p>
+* CombY    
+    A wave of ones of the same length as CombX.
 
-<p class=KeyList>CombM<span style='mso-tab-count:1'>                           </span>The
-<i>m</i> values corresponding do CombX.</p>
+* CombM   
+    The _m_ values corresponding do CombX.
 
-<p class=Subtopic><span style='mso-bidi-font-family:"Times New Roman"'>The
-SeriesFit folder:<o:p></o:p></span></p>
+### The SeriesFit folder:
 
-<p class=TopicBody><span style='mso-bidi-font-family:"Times New Roman"'>The
-SeriesFit folder is where data for a series is extracted for the <b>Series |
-View Current Series…</b> and <b>Series | Fit Current Series</b> commands.<span
-style='mso-spacerun:yes'>  </span>In this folder, you will find the following
-waves:<o:p></o:p></span></p>
+The SeriesFit folder is where data for a series is extracted for the **Series |
+View Current Series…** and **Series | Fit Current Series** commands.<span
+style='mso-spacerun:yes'>  In this folder, you will find the following
+waves:
 
-<p class=KeyList><span style='mso-bidi-font-family:"Times New Roman"'>Frequency<span
-style='mso-tab-count:1'>                        </span>the frequency of the
-line.<o:p></o:p></span></p>
+* Frequency
+    the frequency of the line.
 
-<p class=KeyList><span style='mso-bidi-font-family:"Times New Roman"'>Intensity<span
-style='mso-tab-count:1'>                           </span>the intensity of the
-line.<o:p></o:p></span></p>
+* Intensity   
+    the intensity of the line.
 
-<p class=KeyList><span style='mso-bidi-font-family:"Times New Roman"'>Width<span
-style='mso-tab-count:1'>                               </span>the width of the
-line.<o:p></o:p></span></p>
+* Width       
+    the width of the line.
 
-<p class=KeyList><span style='mso-bidi-font-family:"Times New Roman"'>theM<span
-style='mso-tab-count:1'>                                </span>the y-axis of
-the Loomis-Wood plot<o:p></o:p></span></p>
+* theM        
+    the y-axis of the Loomis-Wood plot
 
-<p class=KeyList><span style='mso-bidi-font-family:"Times New Roman"'>Select<span
-style='mso-tab-count:1'>                              </span>a flag indicating
-whether this line will used in fitting.<o:p></o:p></span></p>
+* Select      
+    a flag indicating whether this line will used in fitting.
 
-<p class=KeyList><span style='mso-bidi-font-family:"Times New Roman"'>Residual<span
-style='mso-tab-count:1'>                          </span>the x-axis of the
-Loomis-Wood plot<o:p></o:p></span></p>
+* Residual  
+    the x-axis of the Loomis-Wood plot
 
-<p class=TopicBody><span style='mso-bidi-font-family:"Times New Roman"'>If the
-series is fit, the following waves will contain the results of the fit:<o:p></o:p></span></p>
+If the series is fit, the following waves will contain the results of the fit:
 
-<p class=KeyList><span style='mso-bidi-font-family:"Times New Roman"'>M_Correl<span
-style='mso-tab-count:1'>                          </span>the correlation matrix<o:p></o:p></span></p>
+* M_Correl  
+    the correlation matrix
 
-<p class=KeyList><span style='mso-bidi-font-family:"Times New Roman"'>M_Covar<span
-style='mso-tab-count:1'>                          </span>the covariance matrix<o:p></o:p></span></p>
+* M_Covar  
+    the covariance matrix
 
-<p class=KeyList><span style='mso-bidi-font-family:"Times New Roman"'>W_Coef<span
-style='mso-tab-count:1'>                           </span>the coefficients of
-the fit<o:p></o:p></span></p>
+* W_Coef   
+    the coefficients of the fit
 
-<p class=KeyList><span style='mso-bidi-font-family:"Times New Roman"'>W_Sigma<span
-style='mso-tab-count:1'>                         </span>the error in the
-coefficients of the fit<o:p></o:p></span></p>
+* W_Sigma 
+    the error in the coefficients of the fit
 
-<p class=TopicBody><span style='mso-bidi-font-family:"Times New Roman"'><o:p>&nbsp;</o:p></span></p>
+Note the data in this folder is not synchronized with the Loomis-Wood data set.<span
+style='mso-spacerun:yes'>  Editing the data in this folder will not
+assign , unassign, mask, or unmask lines in the data set.
 
-<p class=TopicBody><span style='mso-bidi-font-family:"Times New Roman"'>Note
-the data in this folder is not synchronized with the Loomis-Wood data set.<span
-style='mso-spacerun:yes'>  </span>Editing the data in this folder will not
-assign , unassign, mask, or unmask lines in the data set.<o:p></o:p></span></p>
+### Assignments folder:
 
-<p class=Subtopic><span style='mso-bidi-font-family:"Times New Roman"'>The
-Assignments folder:<o:p></o:p></span></p>
-
-<p class=TopicBody><span style='mso-bidi-font-family:"Times New Roman"'>The
-Assignments folder is where the data from the <b>Data Sets | Extract
-Assignments…</b> command is collected.<span style='mso-spacerun:yes'> 
-</span>(The waves in this folder must be updated manually using the Extract
-Assignments command.)<span style='mso-spacerun:yes'>  </span>When the user
+The
+Assignments folder is where the data from the **Data Sets | Extract
+Assignments…** command is collected.  
+(The waves in this folder must be updated manually using the Extract
+Assignments command.)   When the user
 selects Extract Assignments, a dialog will ask for an Assignment Function.<span
-style='mso-spacerun:yes'>  </span>This function is user supplied and must use
-the following prototype:<o:p></o:p></span></p>
+style='mso-spacerun:yes'>  This function is user supplied and must use
+the following prototype:
 
-<p class=CodeIndented>function LWLabelProto(a, s)</p>
+<p class=CodeIndented>function LWLabelProto(a, s)
 
-<p class=CodeIndented><span style='mso-tab-count:1'>   </span>STRUCT
-AssignmentListStruct &amp;a</p>
+<p class=CodeIndented>   STRUCT
+AssignmentListStruct &amp;a
 
-<p class=CodeIndented><span style='mso-tab-count:1'>   </span>STRUCT
-SeriesStruct &amp;s</p>
+<p class=CodeIndented>   STRUCT
+SeriesStruct &amp;s
 
-<p class=CodeIndented>end</p>
+<p class=CodeIndented>end
 
-<p class=TopicBody><span style='mso-bidi-font-family:"Times New Roman"'>By
+By
 implementing this function, the Extract Assignments command can generate a
 complete set of quantum numbers compatible with other fitting programs such as
-CALFIT.<span style='mso-spacerun:yes'>  </span>Some example code is: <o:p></o:p></span></p>
+CALFIT.   Some example code is: 
 
-<p class=CodeIndented>function ProlateAsym(a, s)</p>
+<p class=CodeIndented>function ProlateAsym(a, s)
 
-<p class=CodeIndented><span style='mso-tab-count:1'>   </span>STRUCT
-AssignmentListStruct &amp;a</p>
+<p class=CodeIndented>   STRUCT
+AssignmentListStruct &amp;a
 
-<p class=CodeIndented><span style='mso-tab-count:1'>   </span>STRUCT SeriesStruct
-&amp;s</p>
+<p class=CodeIndented>   STRUCT SeriesStruct
+&amp;s
 
-<p class=CodeIndented><span style='mso-tab-count:2'>       </span></p>
+<p class=CodeIndented><span style='mso-tab-count:2'>       
 
-<p class=CodeIndented><span style='mso-tab-count:1'>   </span>variable i, imax,
-freq, weight</p>
+<p class=CodeIndented>   variable i, imax,
+freq, weight
 
-<p class=CodeIndented><span style='mso-tab-count:1'>   </span>imax =
-numpnts(a.Frequency)</p>
+<p class=CodeIndented>   imax =
+numpnts(a.Frequency)
 
-<p class=CodeIndented><span style='mso-tab-count:1'>   </span></p>
+<p class=CodeIndented>   
 
-<p class=CodeIndented><span style='mso-tab-count:1'>   </span>string DF =
-GetDataFolder(1)</p>
+<p class=CodeIndented>   string DF =
+GetDataFolder(1)
 
-<p class=CodeIndented><span style='mso-tab-count:1'>   </span>SetDataFolder
-GetWavesDataFolder(a.Frequency, 1)</p>
+<p class=CodeIndented>   SetDataFolder
+GetWavesDataFolder(a.Frequency, 1)
 
-<p class=CodeIndented><span style='mso-tab-count:1'>   </span>Make/T/O/N=(imax)
-QN_US, QN_LS</p>
+<p class=CodeIndented>   Make/T/O/N=(imax)
+QN_US, QN_LS
 
-<p class=CodeIndented><span style='mso-tab-count:1'>   </span>SetDataFolder DF</p>
+<p class=CodeIndented>   SetDataFolder DF
 
-<p class=CodeIndented><o:p>&nbsp;</o:p></p>
+<p class=CodeIndented><o:p>&nbsp;</o:p>
 
-<p class=CodeIndented><span style='mso-tab-count:1'>   </span>string QN</p>
+<p class=CodeIndented>   string QN
 
-<p class=CodeIndented><span style='mso-tab-count:1'>   </span>for (i=0 ; i &lt;
-imax ; i += 1)</p>
+<p class=CodeIndented>   for (i=0 ; i &lt;
+imax ; i += 1)
 
-<p class=CodeIndented><span style='mso-tab-count:1'>   </span><span
-style='mso-tab-count:1'>   </span>freq = a.Frequency[i]</p>
+<p class=CodeIndented>      freq = a.Frequency[i]
 
-<p class=CodeIndented><span style='mso-tab-count:2'>       </span>weight =
-a.LSmask[i] &amp;&amp; a.USmask[i]</p>
+<p class=CodeIndented><span style='mso-tab-count:2'>       weight =
+a.LSmask[i] &amp;&amp; a.USmask[i]
 
-<p class=CodeIndented><span style='mso-tab-count:2'>       </span>QN =
-ProlateAsymQN(s.Name[a.SeriesIndex[i]], a.theM[i])</p>
+<p class=CodeIndented><span style='mso-tab-count:2'>       QN =
+ProlateAsymQN(s.Name[a.SeriesIndex[i]], a.theM[i])
 
-<p class=CodeIndented><span style='mso-tab-count:2'>       </span>QN_US[i] =
-QN[0,11]</p>
+<p class=CodeIndented><span style='mso-tab-count:2'>       QN_US[i] =
+QN[0,11]
 
-<p class=CodeIndented><span style='mso-tab-count:2'>       </span>QN_LS[i] =
-QN[12,23]</p>
+<p class=CodeIndented><span style='mso-tab-count:2'>       QN_LS[i] =
+QN[12,23]
 
-<p class=CodeIndented><span style='mso-tab-count:2'>       </span>sprintf QN,
-&quot;%s %14.6f %14.6f %15.6f&quot;, QN, freq, -0.001, weight</p>
+<p class=CodeIndented><span style='mso-tab-count:2'>       sprintf QN,
+"%s %14.6f %14.6f %15.6f", QN, freq, -0.001, weight
 
-<p class=CodeIndented><span style='mso-tab-count:2'>       </span>a.Assignment[i]
-= QN</p>
+<p class=CodeIndented><span style='mso-tab-count:2'>       a.Assignment[i]
+= QN
 
-<p class=CodeIndented><span style='mso-tab-count:1'>   </span>endfor</p>
+<p class=CodeIndented>   endfor
 
-<p class=CodeIndented>end</p>
+<p class=CodeIndented>end
 
-<p class=CodeIndented><o:p>&nbsp;</o:p></p>
+<p class=CodeIndented><o:p>&nbsp;</o:p>
 
-<p class=CodeIndented>Function/S ProlateAsymQN(name, m)</p>
+<p class=CodeIndented>Function/S ProlateAsymQN(name, m)
 
-<p class=CodeIndented><span style='mso-tab-count:1'>   </span>string name</p>
+<p class=CodeIndented>   string name
 
-<p class=CodeIndented><span style='mso-tab-count:1'>   </span>variable m</p>
+<p class=CodeIndented>   variable m
 
-<p class=CodeIndented><span style='mso-tab-count:1'>   </span></p>
+<p class=CodeIndented>   
 
-<p class=CodeIndented><span style='mso-tab-count:1'>   </span>if (
-ItemsInList(name,&quot;,&quot;) != 6 )</p>
+<p class=CodeIndented>   if (
+ItemsInList(name,",") != 6 )
 
-<p class=CodeIndented><span style='mso-tab-count:2'>       </span>return
-&quot;&quot;</p>
+<p class=CodeIndented><span style='mso-tab-count:2'>       return
+""
 
-<p class=CodeIndented><span style='mso-tab-count:1'>   </span>endif</p>
+<p class=CodeIndented>   endif
 
-<p class=CodeIndented><span style='mso-tab-count:1'>   </span></p>
+<p class=CodeIndented>   
 
-<p class=CodeIndented><span style='mso-tab-count:1'>   </span>string dKa =
-UpperStr(StringFromList(1,name,&quot;,&quot;))</p>
+<p class=CodeIndented>   string dKa =
+UpperStr(StringFromList(1,name,","))
 
-<p class=CodeIndented><span style='mso-tab-count:1'>   </span>string dJ =
-UpperStr(StringFromList(2,name,&quot;,&quot;))</p>
+<p class=CodeIndented>   string dJ =
+UpperStr(StringFromList(2,name,","))
 
-<p class=CodeIndented><span style='mso-tab-count:1'>   </span>variable Ka =
-round(str2Num(StringFromList(3,name,&quot;,&quot;)))</p>
+<p class=CodeIndented>   variable Ka =
+round(str2Num(StringFromList(3,name,",")))
 
-<p class=CodeIndented><span style='mso-tab-count:1'>   </span>string SR =
-UpperStr(StringFromList(4,name,&quot;,&quot;))</p>
+<p class=CodeIndented>   string SR =
+UpperStr(StringFromList(4,name,","))
 
-<p class=CodeIndented><span style='mso-tab-count:1'>   </span>variable S =
-round(str2num (StringFromList(5,name,&quot;,&quot;)))!=0</p>
+<p class=CodeIndented>   variable S =
+round(str2num (StringFromList(5,name,",")))!=0
 
-<p class=CodeIndented><span style='mso-tab-count:1'>   </span></p>
+<p class=CodeIndented>   
 
-<p class=CodeIndented><span style='mso-tab-count:1'>   </span>if (Ka &lt; 0)</p>
+<p class=CodeIndented>   if (Ka &lt; 0)
 
-<p class=CodeIndented><span style='mso-tab-count:2'>       </span>return
-&quot;&quot;</p>
+<p class=CodeIndented><span style='mso-tab-count:2'>       return
+""
 
-<p class=CodeIndented><span style='mso-tab-count:1'>   </span>elseif (Ka==0
-&amp;&amp; S != 0)</p>
+<p class=CodeIndented>   elseif (Ka==0
+&amp;&amp; S != 0)
 
-<p class=CodeIndented><span style='mso-tab-count:2'>       </span>return
-&quot;&quot;</p>
+<p class=CodeIndented><span style='mso-tab-count:2'>       return
+""
 
-<p class=CodeIndented><span style='mso-tab-count:1'>   </span>endif</p>
+<p class=CodeIndented>   endif
 
-<p class=CodeIndented><span style='mso-tab-count:1'>   </span></p>
+<p class=CodeIndented>   
 
-<p class=CodeIndented><span style='mso-tab-count:1'>   </span>variable Ka2 = Ka
-+ char2num(dKa) - char2num(&quot;Q&quot;)</p>
+<p class=CodeIndented>   variable Ka2 = Ka
++ char2num(dKa) - char2num("Q")
 
-<p class=CodeIndented><span style='mso-tab-count:1'>   </span>variable J, J2</p>
+<p class=CodeIndented>   variable J, J2
 
-<p class=CodeIndented><o:p>&nbsp;</o:p></p>
+<p class=CodeIndented><o:p>&nbsp;</o:p>
 
-<p class=CodeIndented><span style='mso-tab-count:1'>   </span>strswitch (dJ)</p>
+<p class=CodeIndented>   strswitch (dJ)
 
-<p class=CodeIndented><span style='mso-tab-count:2'>       </span>// Treat P
-and R the same so that P and R lines can be fir to same polynomial </p>
+<p class=CodeIndented><span style='mso-tab-count:2'>       // Treat P
+and R the same so that P and R lines can be fir to same polynomial 
 
-<p class=CodeIndented><span style='mso-tab-count:2'>       </span>case
-&quot;P&quot;:</p>
+<p class=CodeIndented><span style='mso-tab-count:2'>       case
+"P":
 
-<p class=CodeIndented><span style='mso-tab-count:2'>       </span>case
-&quot;R&quot;:</p>
+<p class=CodeIndented><span style='mso-tab-count:2'>       case
+"R":
 
-<p class=CodeIndented><span style='mso-tab-count:3'>          </span>if (M &lt;
-0)</p>
+<p class=CodeIndented><span style='mso-tab-count:3'>          if (M &lt;
+0)
 
-<p class=CodeIndented><span style='mso-tab-count:4'>              </span>J = -M</p>
+<p class=CodeIndented><span style='mso-tab-count:4'>              J = -M
 
-<p class=CodeIndented><span style='mso-tab-count:4'>              </span>J2 =
-J-1</p>
+<p class=CodeIndented><span style='mso-tab-count:4'>              J2 =
+J-1
 
-<p class=CodeIndented><span style='mso-tab-count:3'>          </span>else</p>
+<p class=CodeIndented><span style='mso-tab-count:3'>          else
 
-<p class=CodeIndented><span style='mso-tab-count:4'>              </span>J =
-M-1</p>
+<p class=CodeIndented><span style='mso-tab-count:4'>              J =
+M-1
 
-<p class=CodeIndented><span style='mso-tab-count:4'>              </span>J2 =
-J+1</p>
+<p class=CodeIndented><span style='mso-tab-count:4'>              J2 =
+J+1
 
-<p class=CodeIndented><span style='mso-tab-count:3'>          </span>endif</p>
+<p class=CodeIndented><span style='mso-tab-count:3'>          endif
 
-<p class=CodeIndented><span style='mso-tab-count:1'>   </span><span
-style='mso-tab-count:2'>       </span>break</p>
+<p class=CodeIndented>   <span
+style='mso-tab-count:2'>       break
 
-<p class=CodeIndented><span style='mso-tab-count:2'>       </span>case
-&quot;Q&quot;:</p>
+<p class=CodeIndented><span style='mso-tab-count:2'>       case
+"Q":
 
-<p class=CodeIndented><span style='mso-tab-count:3'>          </span>J = abs(M)</p>
+<p class=CodeIndented><span style='mso-tab-count:3'>          J = abs(M)
 
-<p class=CodeIndented><span style='mso-tab-count:3'>          </span>J2 = J</p>
+<p class=CodeIndented><span style='mso-tab-count:3'>          J2 = J
 
-<p class=CodeIndented><span style='mso-tab-count:3'>          </span>break</p>
+<p class=CodeIndented><span style='mso-tab-count:3'>          break
 
-<p class=CodeIndented><span style='mso-tab-count:2'>       </span>default:</p>
+<p class=CodeIndented><span style='mso-tab-count:2'>       default:
 
-<p class=CodeIndented><span style='mso-tab-count:3'>          </span>return
-&quot;&quot;</p>
+<p class=CodeIndented><span style='mso-tab-count:3'>          return
+""
 
-<p class=CodeIndented><span style='mso-tab-count:3'>          </span>break</p>
+<p class=CodeIndented><span style='mso-tab-count:3'>          break
 
-<p class=CodeIndented><span style='mso-tab-count:1'>   </span>endswitch</p>
+<p class=CodeIndented>   endswitch
 
-<p class=CodeIndented><span style='mso-tab-count:1'>   </span></p>
+<p class=CodeIndented>   
 
-<p class=CodeIndented><span style='mso-tab-count:1'>   </span>if (Ka &gt; J ||
-Ka2 &gt; J2)</p>
+<p class=CodeIndented>   if (Ka &gt; J ||
+Ka2 &gt; J2)
 
-<p class=CodeIndented><span style='mso-tab-count:2'>       </span>return
-&quot;&quot;</p>
+<p class=CodeIndented><span style='mso-tab-count:2'>       return
+""
 
-<p class=CodeIndented><span style='mso-tab-count:1'>   </span>endif</p>
+<p class=CodeIndented>   endif
 
-<p class=CodeIndented><span style='mso-tab-count:1'>   </span></p>
+<p class=CodeIndented>   
 
-<p class=CodeIndented><span style='mso-tab-count:1'>   </span>Variable S2 =
-abs(S+J2-J)</p>
+<p class=CodeIndented>   Variable S2 =
+abs(S+J2-J)
 
-<p class=CodeIndented><span style='mso-tab-count:1'>   </span>strswitch (SR)</p>
+<p class=CodeIndented>   strswitch (SR)
 
-<p class=CodeIndented><span style='mso-tab-count:2'>       </span>case
-&quot;A&quot;:</p>
+<p class=CodeIndented><span style='mso-tab-count:2'>       case
+"A":
 
-<p class=CodeIndented><span style='mso-tab-count:3'>          </span>if (
-mod(abs(Ka2 - Ka), 2) != 0)</p>
+<p class=CodeIndented><span style='mso-tab-count:3'>          if (
+mod(abs(Ka2 - Ka), 2) != 0)
 
-<p class=CodeIndented><span style='mso-tab-count:4'>              </span>return
-&quot;&quot;</p>
+<p class=CodeIndented><span style='mso-tab-count:4'>              return
+""
 
-<p class=CodeIndented><span style='mso-tab-count:3'>          </span>endif</p>
+<p class=CodeIndented><span style='mso-tab-count:3'>          endif
 
-<p class=CodeIndented><span style='mso-tab-count:3'>          </span>S2=mod(S2+1,2)</p>
+<p class=CodeIndented><span style='mso-tab-count:3'>          S2=mod(S2+1,2)
 
-<p class=CodeIndented><span style='mso-tab-count:3'>          </span>break</p>
+<p class=CodeIndented><span style='mso-tab-count:3'>          break
 
-<p class=CodeIndented><span style='mso-tab-count:2'>       </span>case
-&quot;B&quot;:</p>
+<p class=CodeIndented><span style='mso-tab-count:2'>       case
+"B":
 
-<p class=CodeIndented><span style='mso-tab-count:3'>          </span>if (
-mod(abs(Ka2 - Ka), 2) != 1)</p>
+<p class=CodeIndented><span style='mso-tab-count:3'>          if (
+mod(abs(Ka2 - Ka), 2) != 1)
 
-<p class=CodeIndented><span style='mso-tab-count:4'>              </span>return
-&quot;&quot;</p>
+<p class=CodeIndented><span style='mso-tab-count:4'>              return
+""
 
-<p class=CodeIndented><span style='mso-tab-count:3'>          </span>endif</p>
+<p class=CodeIndented><span style='mso-tab-count:3'>          endif
 
-<p class=CodeIndented><span style='mso-tab-count:3'>          </span>S2=mod(S2,2)</p>
+<p class=CodeIndented><span style='mso-tab-count:3'>          S2=mod(S2,2)
 
-<p class=CodeIndented><span style='mso-tab-count:3'>          </span>break</p>
+<p class=CodeIndented><span style='mso-tab-count:3'>          break
 
-<p class=CodeIndented><span style='mso-tab-count:2'>       </span>case
-&quot;C&quot;:</p>
+<p class=CodeIndented><span style='mso-tab-count:2'>       case
+"C":
 
-<p class=CodeIndented><span style='mso-tab-count:3'>          </span>if (
-mod(abs(Ka2 - Ka), 2) != 1)</p>
+<p class=CodeIndented><span style='mso-tab-count:3'>          if (
+mod(abs(Ka2 - Ka), 2) != 1)
 
-<p class=CodeIndented><span style='mso-tab-count:4'>              </span>return
-&quot;&quot;</p>
+<p class=CodeIndented><span style='mso-tab-count:4'>              return
+""
 
-<p class=CodeIndented><span style='mso-tab-count:3'>          </span>endif</p>
+<p class=CodeIndented><span style='mso-tab-count:3'>          endif
 
-<p class=CodeIndented><span style='mso-tab-count:3'>          </span>S2=mod(S2+1,2)</p>
+<p class=CodeIndented><span style='mso-tab-count:3'>          S2=mod(S2+1,2)
 
-<p class=CodeIndented><span style='mso-tab-count:3'>          </span>break</p>
+            break
+        default:
+            S2 = NaN
+            break
+    endswitch
 
-<p class=CodeIndented><span style='mso-tab-count:2'>       </span>default:</p>
+    if (Ka2==0 && S2 != 0)
+        return ""
+    endif
+    Variable Kc = J - Ka + S
+    Variable Kc2 = J2 - Ka2 + S2
+    String res
+    sprintf res, "%3d%3d%3d  1      %3d%3d%3d  0      ", J2, Ka2, Kc2, J, Ka, Kc
+    return res
+End
+`
 
-<p class=CodeIndented><span style='mso-tab-count:3'>          </span>S2 = NaN</p>
+This above code uses the Series Name wave to assign prolate asymmetric top quantum
+numbers.   The series name should be a list of the form _name, DJ, DK, Ka, SR, s_ where _DJ_ is "P",
+"Q", or "R", _DK_ is "P", "Q", or "R", etc., _SR_ is "A", "B", or "C", and _s_ = _Ka_ + _Kc_ -­ _J_.
+Using the above code as an example, it should be fairly easy to create an assignment function for any type
+of molecule.
 
-<p class=CodeIndented><span style='mso-tab-count:3'>          </span>break</p>
+Note that the data in this folder is not synchronized with the Loomis-Wood data set.
+Editing the data in this folder will not assign , unassign, mask, or unmask lines in the
+data set.
 
-<p class=CodeIndented><span style='mso-tab-count:1'>   </span>endswitch<span
-style='mso-tab-count:1'> </span></p>
+## Troubleshooting
 
-<p class=CodeIndented><o:p>&nbsp;</o:p></p>
+If you have problems with the add-in, please try the following.
 
-<p class=CodeIndented><span style='mso-tab-count:1'>   </span>if (Ka2==0
-&amp;&amp; S2 != 0)</p>
+1. If one of the add-in routines aborts, Igor may be left in one of the Loomis-Wood data folders. The telltale symptom of this problem is "missing" data.
+You can check the current data folder using the Data Browser, or simply change the datafolder by typing:
+`SetDataFolder root:` in the Command Window.
 
-<p class=CodeIndented><span style='mso-tab-count:2'>       </span>return
-&quot;&quot;</p>
+2. If something goes wrong with the Loomis-Wood display, simply close the plot, then Create a New Loomis-Wood Plot
+from the Loomis-Wood menu.
+This can be done without losing any assignments, and will correct any problems created by
+bad constants or accidental user modifications of the graph or underling dependancies.
+(Often, you can reuse the existing plot folder name during this fix without any problems.)
 
-<p class=CodeIndented><span style='mso-tab-count:1'>   </span>endif</p>
+3. The Loomis-Wood add-in will only display lines within a single monotonic region of the fit polynomial.
+(See Working with Band Heads.)
 
-<p class=CodeIndented><span style='mso-tab-count:1'>   </span></p>
+4. Most of the menu items in the **Loomis-Wood** menu are only available if the top graph is a Loomis-Wood plot.
+If a menu item is disabled, make sure you have a Loomis-Wood plot as the top graph.
 
-<p class=CodeIndented><span style='mso-tab-count:1'>   </span>Variable Kc = J -
-Ka + S</p>
+5. If the Loomis-Wood plot does not respond to keystrokes, check to make sure the plot is the active
+window.   You may also find that the plot only responds to keystrokes when the mouse cursor is over the plot area.
 
-<p class=CodeIndented><span style='mso-tab-count:1'>   </span>Variable Kc2 = J2
-- Ka2 + S2</p>
+## Menu/Command Reference
 
-<p class=CodeIndented><span style='mso-tab-count:1'>   </span></p>
+<p class=Subtopic>Data
+Sets | Create a New Loomis-Wood Data Set...<span style='mso-tab-count:2'>       
+    NewLWDataSet()
 
-<p class=CodeIndented><span style='mso-tab-count:1'>   </span>String res</p>
-
-<p class=CodeIndented><span style='mso-tab-count:1'>   </span>sprintf res,
-&quot;%3d%3d%3d<span style='mso-spacerun:yes'>  </span>1%3d%3d%3d<span
-style='mso-spacerun:yes'>  </span>0<span style='mso-spacerun:yes'>           
-</span>&quot;, J2, Ka2, Kc2, J, Ka, Kc</p>
-
-<p class=CodeIndented><span style='mso-tab-count:1'>   </span>return res</p>
-
-<p class=CodeIndented>End</p>
-
-<p class=TopicBody><span style='mso-bidi-font-family:"Times New Roman"'><o:p>&nbsp;</o:p></span></p>
-
-<p class=TopicBody><span style='mso-bidi-font-family:"Times New Roman"'>This
-above code uses the Series Name wave to assign prolate asymmetric top quantum
-numbers.<span style='mso-spacerun:yes'>  </span>The series name should be a
-list of the form <i>name, </i></span><i><span style='font-family:Symbol;
-mso-bidi-font-family:Symbol'>D</span>J, </i><i><span style='font-family:Symbol;
-mso-bidi-font-family:Symbol'>D</span>K, Ka, SR, s</i> where <i><span
-style='font-family:Symbol;mso-bidi-font-family:Symbol'>D</span>J</i> is “P”,
-”Q”, or “R”, <i><span style='font-family:Symbol;mso-bidi-font-family:Symbol'>D</span>K</i>
-is “P”, ”Q”, or “R”, etc., SR is “A”, ”B”, or “C”, and <i>s</i> = <i>Ka</i> + <i>Kc</i>
-­ <i>J</i>.<span style='mso-spacerun:yes'>  </span>Using the above code as an
-example, it should be fairly easy to create an assignment function for any type
-of molecule.</p>
-
-<p class=TopicBody>Note that the data in this folder is not synchronized with
-the Loomis-Wood data set.<span style='mso-spacerun:yes'>  </span>Editing the
-data in this folder will not assign , unassign, mask, or unmask lines in the
-data set.</p>
-
-<p class=Subtopic><span style='mso-bidi-font-family:"Times New Roman"'>Troubleshooting<o:p></o:p></span></p>
-
-<p class=TopicBody><span style='mso-bidi-font-family:"Times New Roman"'>If you
-have problems with the add-in, please try the following.<o:p></o:p></span></p>
-
-<p class=TopicBody><span style='mso-bidi-font-family:"Times New Roman"'>1.<span
-style='mso-tab-count:1'>     </span>If one of the add-in routines aborts, Igor
-may be left in one of the Loomis-Wood data folders.<span
-style='mso-spacerun:yes'>  </span>The telltale symptom of this problem is
-&quot;missing&quot; data.<span style='mso-spacerun:yes'>  </span>You can check
-the current data folder using the Data Browser, or simply change the datafolder
-by typing:<o:p></o:p></span></p>
-
-<p class=CodeIndented>SetDataFolder root:</p>
-
-<p class=TopicBody><span style='mso-bidi-font-family:"Times New Roman"'>in the
-Command Window.<o:p></o:p></span></p>
-
-<p class=TopicBody><span style='mso-bidi-font-family:"Times New Roman"'>2.<span
-style='mso-tab-count:1'>     </span>If something goes wrong with the
-Loomis-Wood display, simply close the plot, then Create a New Loomis-Wood Plot
-from the Loomis-Wood menu.<span style='mso-spacerun:yes'>  </span>This can be
-done without losing any assignments, and will correct any problems created by
-bad constants or accidental user modifications of the graph or underling dependancies.<span
-style='mso-spacerun:yes'>  </span>(Often, you can reuse the existing plot
-folder name during this fix without any problems.)<o:p></o:p></span></p>
-
-<p class=TopicBody><span style='mso-bidi-font-family:"Times New Roman"'>3.<span
-style='mso-tab-count:1'>     </span>The Loomis-Wood add-in will only display
-lines within a single monotonic region of the fit polynomial.<span
-style='mso-spacerun:yes'>  </span>(See <u><span style='color:blue'>Working with
-Band Heads</span></u><span style='color:black'>.)<o:p></o:p></span></span></p>
-
-<p class=TopicBody><span style='mso-bidi-font-family:"Times New Roman";
-color:black'>4.<span style='mso-tab-count:1'>     </span>Most of the menu items
-in the LoomisWood menu are only available if the top graph is a Loomis-Wood
-plot.<span style='mso-spacerun:yes'>  </span>If a menu item is disabled, make
-sure you have a Loomis-Wood plot as the top graph.<o:p></o:p></span></p>
-
-<p class=TopicBody><span style='mso-bidi-font-family:"Times New Roman";
-color:black'>5.<span style='mso-tab-count:1'>     </span>If the Loomis-Wood
-plot does not respond to keystrokes, check to make sure the plot is the active
-window.<span style='mso-spacerun:yes'>  </span>You may also find that the plot
-only responds to keystrokes when the mouse cursor is over the plot area.<o:p></o:p></span></p>
-
-<p class=Subtopic><span style='mso-bidi-font-family:"Times New Roman"'>Menu/Command
-Reference<o:p></o:p></span></p>
-
-<p class=Subtopic><span style='mso-bidi-font-family:"Times New Roman"'>Data
-Sets | Create a New Loomis-Wood Data Set...<span style='mso-tab-count:2'>                               </span>NewLWDataSet()<o:p></o:p></span></p>
-
-<p class=TopicBody><span style='mso-bidi-font-family:"Times New Roman"'>This
-command creates a new Loomis-Wood data set.<span style='mso-spacerun:yes'> 
-</span>The user will be asked for a folder name, then for a wave containing
+This
+command creates a new Loomis-Wood data set.  
+The user will be asked for a folder name, then for a wave containing
 line frequencies and optional intensities and widths.<span
-style='mso-spacerun:yes'>  </span>These waves will be used to create a new data
-set folder and a default plot named “Plot0” will be created.<o:p></o:p></span></p>
+style='mso-spacerun:yes'>  These waves will be used to create a new data
+set folder and a default plot named “Plot0” will be created.
 
-<p class=Subtopic><span style='mso-bidi-font-family:"Times New Roman"'>Data Sets
-| Delete a Loomis-Wood Data Set...<span style='mso-tab-count:2'>                                       </span>DeleteLWDataSet(&quot;&quot;)<o:p></o:p></span></p>
+<p class=Subtopic>Data Sets
+| Delete a Loomis-Wood Data Set...<span style='mso-tab-count:2'>               
+    DeleteLWDataSet("")
 
-<p class=TopicBody><span style='mso-bidi-font-family:"Times New Roman"'>This
+This
 command will delete an existing Loomis-Wood data set.<span
-style='mso-spacerun:yes'>  </span>With a null (“”) argument a dialog will ask
-for the name of the folder.<span style='mso-spacerun:yes'>  </span>Otherwise,
+style='mso-spacerun:yes'>  With a null (“”) argument a dialog will ask
+for the name of the folder.   Otherwise,
 the argument should be the path-free name of the folder to delete.<span
-style='mso-spacerun:yes'>  </span>Before calling this command, all plot windows
-should be closed.<o:p></o:p></span></p>
+style='mso-spacerun:yes'>  Before calling this command, all plot windows
+should be closed.
 
-<p class=Subtopic><span style='mso-bidi-font-family:"Times New Roman"'>Data
-Sets | View Line List...<span style='mso-tab-count:2'>                                                                  </span>ViewLineList()<o:p></o:p></span></p>
+<p class=Subtopic>Data
+Sets | View Line List...<span style='mso-tab-count:2'>                                          
+    ViewLineList()
 
-<p class=TopicBody><span style='mso-bidi-font-family:"Times New Roman"'>This
+This
 command will create a table of the waves in the Lines subfolder of the data set
-associated with the top LW plot.<span style='mso-spacerun:yes'>  </span>This
-data should not be manually edited, but if editing is necessary, call the <b>Data
-Sets | Synchronize Series to Lines</b> command when finished.<o:p></o:p></span></p>
+associated with the top LW plot.   This
+data should not be manually edited, but if editing is necessary, call the **Data
+Sets | Synchronize Series to Lines** command when finished.
 
-<p class=Subtopic><span style='mso-bidi-font-family:"Times New Roman"'>Data
-Sets | View Series List...<span style='mso-tab-count:1'>                                       </span>(F8)<span
-style='mso-tab-count:1'>                  </span>ViewSeriesList()<o:p></o:p></span></p>
+<p class=Subtopic>Data
+Sets | View Series List...               
+    (F8)                  ViewSeriesList()
 
-<p class=TopicBody><span style='mso-bidi-font-family:"Times New Roman"'>This
+This
 command will create a table of the waves in the Series subfolder of the data
-set associated with the top LW plot.<span style='mso-spacerun:yes'> 
-</span>This data can be manually edited, but if sorting or reordering is
-neccessary, call the <b>Data Sets | Synchronize Lines to Series</b> command
-when finished.<o:p></o:p></span></p>
+set associated with the top LW plot.  
+This data can be manually edited, but if sorting or reordering is
+neccessary, call the **Data Sets | Synchronize Lines to Series** command
+when finished.
 
-<p class=Subtopic><span style='mso-bidi-font-family:"Times New Roman"'>Data
-Sets | Fit All Series<span style='mso-tab-count:1'>                                               </span>(Shift-F9)<span
-style='mso-tab-count:1'>          </span>FitAll()<o:p></o:p></span></p>
+<p class=Subtopic>Data
+Sets | Fit All Series                       
+    (Shift-F9)          FitAll()
 
-<p class=TopicBody><span style='mso-bidi-font-family:"Times New Roman"'>This
+This
 command will fit each series in the Data Set and create a report in a notebook
-named LWresults.<span style='mso-spacerun:yes'>  </span>The Command also
+named LWresults.   The Command also
 creates a two-dimensional wave of the band coefficients in the Series folder
-named BandCoeffTable.<o:p></o:p></span></p>
+named BandCoeffTable.
 
-<p class=Subtopic><span style='mso-bidi-font-family:"Times New Roman"'>Data
-Sets | Extract Assignments...<span style='mso-tab-count:1'>                                </span>(F9)<span
-style='mso-tab-count:1'>                  </span>ExtractAssignments(&quot;&quot;)<o:p></o:p></span></p>
+<p class=Subtopic>Data
+Sets | Extract Assignments...        
+    (F9)                  ExtractAssignments("")
 
-<p class=TopicBody><span style='mso-bidi-font-family:"Times New Roman"'>This
+This
 command will create a table containing a listing of the assigned lines in the
-data set.<span style='mso-spacerun:yes'>  </span>With a null (“”) argument, the
+data set.   With a null (“”) argument, the
 user will be asked for an optional assignment function.<span
-style='mso-spacerun:yes'>  </span>This function can be used to quickly convert
+style='mso-spacerun:yes'>  This function can be used to quickly convert
 the add-ins listing to a form suitable for a separate fitting program.<span
-style='mso-spacerun:yes'>  </span>See “The Assignments folder” above.<o:p></o:p></span></p>
+style='mso-spacerun:yes'>  See “The Assignments folder” above.
 
-<p class=TopicBody><span style='mso-bidi-font-family:"Times New Roman"'>Please
+Please
 note that the data in the resulting table is not synchronized with the master
-line list.<span style='mso-spacerun:yes'>  </span>.<span
-style='mso-spacerun:yes'>  </span>Editing the data in this table will not
-assign , unassign, mask, or unmask lines in the data set.<o:p></o:p></span></p>
+line list.   .<span
+style='mso-spacerun:yes'>  Editing the data in this table will not
+assign , unassign, mask, or unmask lines in the data set.
 
-<p class=Subtopic><span style='mso-bidi-font-family:"Times New Roman"'>Data
-Sets | Update Line List...<span style='mso-tab-count:2'>                                                              </span>UpdateLinesFolder(NaN)<o:p></o:p></span></p>
+<p class=Subtopic>Data
+Sets | Update Line List...<span style='mso-tab-count:2'>                                      
+    UpdateLinesFolder(NaN)
 
-<p class=TopicBody><span style='mso-bidi-font-family:"Times New Roman"'>This
+This
 command is designed to be run when your line-listing as been modified outside
-of the add-in.<span style='mso-spacerun:yes'>  </span>For example, if you
+of the add-in.   For example, if you
 re-measure lines or add lines to the line listing, you should call this
-function.<span style='mso-spacerun:yes'>  </span>You can also call this
+function.   You can also call this
 function to add or remove widths and/or intensities from the data-folder.<span
-style='mso-spacerun:yes'>  </span>(Backup your data first, as assignments can
-be lost.)<span style='mso-spacerun:yes'>  </span>With NaN as an argument, the
-user will be asked for a tolerance.<span style='mso-spacerun:yes'>  </span>If
+style='mso-spacerun:yes'>  (Backup your data first, as assignments can
+be lost.)   With NaN as an argument, the
+user will be asked for a tolerance.   If
 lines have only been added ore removed, then tolerance can be 0.<span
-style='mso-spacerun:yes'>  </span>If the line centers have changed however,
-tolerance should be larger than zero.<span style='mso-spacerun:yes'>  </span>If
+style='mso-spacerun:yes'>  If the line centers have changed however,
+tolerance should be larger than zero.   If
 a line in the new line listing is within +/- tolerance of the old listing, then
 the two lines are considered the same, and the new line will inherit the
-assignments of the old line.<span style='mso-spacerun:yes'>  </span>If there
+assignments of the old line.   If there
 are multiple new lines within +/- tolerance of the old line, the closest new
 line will inherit the assignments of the old line.<span
-style='mso-spacerun:yes'>  </span>If no line in the new listing is within +/-
+style='mso-spacerun:yes'>  If no line in the new listing is within +/-
 tolerance of an assigned line in the old listing, then a warning will be
-printed to the history window.<o:p></o:p></span></p>
+printed to the history window.
 
-<p class=TopicBody><span style='mso-bidi-font-family:"Times New Roman"'>The
+The
 first thing this command does is duplicate the Lines folder as LinesBak.<span
-style='mso-spacerun:yes'>  </span>Thus, if you have problems, you can copy the
-data from the LinesBak subfolder back to the Lines subfolder.<o:p></o:p></span></p>
+style='mso-spacerun:yes'>  Thus, if you have problems, you can copy the
+data from the LinesBak subfolder back to the Lines subfolder.
 
-<p class=Subtopic><span style='mso-bidi-font-family:"Times New Roman"'>Data
-Sets | Synchronize Series to Lines<span style='mso-tab-count:2'>                                               </span>SynchronizeLines2Series()<o:p></o:p></span></p>
+<p class=Subtopic>Data
+Sets | Synchronize Series to Lines<span style='mso-tab-count:2'>                       
+    SynchronizeLines2Series()
 
-<p class=TopicBody><span style='mso-bidi-font-family:"Times New Roman"'>This
+This
 command sorts the waves in the Lines subfolder by Lines:Frequency, then
 recreates the Series:Data wave from the Lines:Assignments wave.<span
-style='mso-spacerun:yes'>  </span>This is necessary when the waves in the Lines
-folder are manually edited.<o:p></o:p></span></p>
+style='mso-spacerun:yes'>  This is necessary when the waves in the Lines
+folder are manually edited.
 
-<p class=Subtopic><span style='mso-bidi-font-family:"Times New Roman"'>Data
-Sets | Synchronize Lines to Series<span style='mso-tab-count:2'>                                               </span>SynchronizeSeries2Lines()<o:p></o:p></span></p>
+<p class=Subtopic>Data
+Sets | Synchronize Lines to Series<span style='mso-tab-count:2'>                       
+    SynchronizeSeries2Lines()
 
-<p class=TopicBody><span style='mso-bidi-font-family:"Times New Roman"'>This
+This
 command recreates the Lines:Assignments wave from the Series:Data wave.<span
-style='mso-spacerun:yes'>  </span>This is necessary when the waves in the Series
-folder are manually sorted, redimensioned or otherwise reordered.<o:p></o:p></span></p>
+style='mso-spacerun:yes'>  This is necessary when the waves in the Series
+folder are manually sorted, redimensioned or otherwise reordered.
 
-<p class=Subtopic><span style='mso-bidi-font-family:"Times New Roman"'>Data
-Sets | Edit Colors<span style='mso-tab-count:2'>                                                                         </span>EditColors()<o:p></o:p></span></p>
+<p class=Subtopic>Data
+Sets | Edit Colors<span style='mso-tab-count:2'>                                                 
+    EditColors()
 
-<p class=TopicBody><span style='mso-bidi-font-family:"Times New Roman"'>This
+This
 command creates a table containing the Colors wave.<span
-style='mso-spacerun:yes'>  </span>This table can be manually edited as needed.<o:p></o:p></span></p>
+style='mso-spacerun:yes'>  This table can be manually edited as needed.
 
-<p class=Subtopic><span style='mso-bidi-font-family:"Times New Roman"'><o:p>&nbsp;</o:p></span></p>
+<p class=Subtopic><o:p>&nbsp;</o:p>
 
-<p class=Subtopic><span style='mso-bidi-font-family:"Times New Roman"'>Plots |
-Create a New Loomis-Wood Plot...<span style='mso-tab-count:2'>                                            </span>NewLWPlot(&quot;&quot;,&quot;&quot;)<o:p></o:p></span></p>
+<p class=Subtopic>Plots |
+Create a New Loomis-Wood Plot...<span style='mso-tab-count:2'>                    
+    NewLWPlot("","")
 
-<p class=TopicBody><span style='mso-bidi-font-family:"Times New Roman"'>This
-command creates another Loomis-Wood plot.<span style='mso-spacerun:yes'> 
-</span>With null arguments, the user will be asked for an existing data set and
-a name for the new plot.<o:p></o:p></span></p>
+This
+command creates another Loomis-Wood plot.  
+With null arguments, the user will be asked for an existing data set and
+a name for the new plot.
 
-<p class=Subtopic><span style='mso-bidi-font-family:"Times New Roman"'>Plots |
-Change M-axis scaling...<span style='mso-tab-count:1'>                                   </span>(F11)<span
-style='mso-tab-count:1'>                 </span>ChangeRange(0,0)<o:p></o:p></span></p>
+<p class=Subtopic>Plots |
+Change M-axis scaling...           
+    (F11)                 ChangeRange(0,0)
 
-<p class=TopicBody><span style='mso-bidi-font-family:"Times New Roman"'>This
+This
 command can be used to change the y-axis scaling of a Loomis-Wood plot.<span
-style='mso-spacerun:yes'>  </span>With 0,0 as the arguments, the user will be
-asked for the new minimum and maximum values for <i>m</i>.<o:p></o:p></span></p>
+style='mso-spacerun:yes'>  With 0,0 as the arguments, the user will be
+asked for the new minimum and maximum values for _m_.
 
-<p class=Subtopic><span style='mso-bidi-font-family:"Times New Roman"'>Plots |
-Edit Band Constants...<span style='mso-tab-count:1'>                                      </span>(F12)<span
-style='mso-tab-count:1'>                 </span>EditBandConstants()<o:p></o:p></span></p>
+<p class=Subtopic>Plots |
+Edit Band Constants...              
+    (F12)                 EditBandConstants()
 
-<p class=TopicBody><span style='mso-bidi-font-family:"Times New Roman"'>This
+This
 command allows the user to manually edit the constants used to draw the lop
-Loomis-Wood plot.<span style='mso-spacerun:yes'>  </span>This is necessary in
+Loomis-Wood plot.   This is necessary in
 the beginning of an assignment to get the assignment started.<span
-style='mso-spacerun:yes'>  </span>After the assignment is started, one usually
-adjusts the constants via <b>Series | Fit Current Series</b>.<span
-style='mso-spacerun:yes'>  </span>The change can be undone with <b>Series |
-Undo Last Fit</b>.<o:p></o:p></span></p>
+style='mso-spacerun:yes'>  After the assignment is started, one usually
+adjusts the constants via **Series | Fit Current Series**.<span
+style='mso-spacerun:yes'>  The change can be undone with **Series |
+Undo Last Fit**.
 
-<p class=Subtopic><span style='mso-bidi-font-family:"Times New Roman"'>Plots |
-Change Region...<span style='mso-tab-count:1'>                                              </span>(Shift-F12)<span
-style='mso-tab-count:1'>        </span>ChangeRegion()<o:p></o:p></span></p>
+<p class=Subtopic>Plots |
+Change Region...                      
+    (Shift-F12)        ChangeRegion()
 
-<p class=TopicBody><span style='mso-bidi-font-family:"Times New Roman"'>This
+This
 command allows the user to select which monotonic region the plot
-displays.<span style='mso-spacerun:yes'>  </span>This is necessary when working
-with series that involve band heads.<span style='mso-spacerun:yes'>  </span>See
-<u><span style='color:blue'>Working with Band Heads</span></u><span
-style='color:black'> for more details.<o:p></o:p></span></span></p>
+displays.   This is necessary when working
+with series that involve band heads.   See
+<u><span style='color:blue'>Working with Band Heads</u><span
+style='color:black'> for more details.
 
-<p class=Subtopic><span style='mso-bidi-font-family:"Times New Roman"'><o:p>&nbsp;</o:p></span></p>
+<p class=Subtopic><o:p>&nbsp;</o:p>
 
-<p class=Subtopic><span style='mso-bidi-font-family:"Times New Roman"'>Series |
-Start a New Series...<span style='mso-tab-count:1'>                                        </span>(F2)<span
-style='mso-tab-count:1'>                  </span>AddSeries()<o:p></o:p></span></p>
+<p class=Subtopic>Series |
+Start a New Series...                
+    (F2)                  AddSeries()
 
-<p class=TopicBody><span style='mso-bidi-font-family:"Times New Roman"'>Starts
-a new series.<span style='mso-spacerun:yes'>  </span>The user will be asked for
-a name and color for the new series.<o:p></o:p></span></p>
+Starts
+a new series.   The user will be asked for
+a name and color for the new series.
 
-<p class=Subtopic><span style='mso-bidi-font-family:"Times New Roman"'>Series |
-Select a Series…<span style='mso-tab-count:1'>                                             </span>(F3)<span
-style='mso-tab-count:1'>                  </span>SelectSeries()<o:p></o:p></span></p>
+<p class=Subtopic>Series |
+Select a Series…                     
+    (F3)                  SelectSeries()
 
-<p class=TopicBody><span style='mso-bidi-font-family:"Times New Roman"'>Changes
-the current series.<o:p></o:p></span></p>
+Changes
+the current series.
 
-<p class=Subtopic><span style='mso-bidi-font-family:"Times New Roman"'>Series |
-Delete a Series…<span style='mso-tab-count:1'>                                             </span>(F4)<span
-style='mso-tab-count:1'>                  </span>DeleteSeries()<o:p></o:p></span></p>
+<p class=Subtopic>Series |
+Delete a Series…                     
+    (F4)                  DeleteSeries()
 
-<p class=TopicBody><span style='mso-bidi-font-family:"Times New Roman"'>Deletes
-a series.<o:p></o:p></span></p>
+Deletes
+a series.
 
-<p class=Subtopic><span style='mso-bidi-font-family:"Times New Roman"'>Series |
-Fit Current Series<span style='mso-tab-count:1'>                                            </span>(F5)<span
-style='mso-tab-count:1'>                  </span>Print
-FitSeries(GetCurrentSeriesNumber())<o:p></o:p></span></p>
+<p class=Subtopic>Series |
+Fit Current Series                    
+    (F5)                  Print
+FitSeries(GetCurrentSeriesNumber())
 
-<p class=TopicBody><span style='mso-bidi-font-family:"Times New Roman"'>Fits
-the current series.<span style='mso-spacerun:yes'>  </span>Can be undone with <b>Series
-| Undo Last Fit</b>.<o:p></o:p></span></p>
+Fits
+the current series.   Can be undone with **Series
+| Undo Last Fit**.
 
-<p class=Subtopic><span style='mso-bidi-font-family:"Times New Roman"'>Series |
-Undo Last Fit<span style='mso-tab-count:1'>                                                   </span>(Shift-F5)<span
-style='mso-tab-count:1'>          </span>UndoFit()<o:p></o:p></span></p>
+<p class=Subtopic>Series |
+Undo Last Fit                           
+    (Shift-F5)          UndoFit()
 
-<p class=TopicBody><span style='mso-bidi-font-family:"Times New Roman"'>Reverts
+Reverts
 the constants used in the topmost Loomis-Wood plot to their<span
-style='mso-spacerun:yes'>  </span>previous values.<span
-style='mso-spacerun:yes'>  </span>(The Undo level is only one.)<o:p></o:p></span></p>
+style='mso-spacerun:yes'>  previous values.<span
+style='mso-spacerun:yes'>  (The Undo level is only one.)
 
-<p class=Subtopic><span style='mso-bidi-font-family:"Times New Roman"'>Series |
-M-Shift Current Series<span style='mso-tab-count:1'>                                     </span>(F6)<span
-style='mso-tab-count:1'>                  </span>ShiftSeries(GetCurrentSeriesNumber(),0,1)<o:p></o:p></span></p>
+<p class=Subtopic>Series |
+M-Shift Current Series             
+    (F6)                  ShiftSeries(GetCurrentSeriesNumber(),0,1)
 
-<p class=TopicBody><span style='mso-bidi-font-family:"Times New Roman"'>This
-command adjusts the assignment of <i>m</i> for the current series and adjusts
-the current constants to reflect this change.<o:p></o:p></span></p>
+This
+command adjusts the assignment of _m_ for the current series and adjusts
+the current constants to reflect this change.
 
-<p class=Subtopic><span style='mso-bidi-font-family:"Times New Roman"'>Series |
-View Current Series…<span style='mso-tab-count:1'>                                     </span>(F7)<span
-style='mso-tab-count:1'>                  </span>ViewSeries(GetCurrentSeriesNumber())<o:p></o:p></span></p>
+<p class=Subtopic>Series |
+View Current Series…             
+    (F7)                  ViewSeries(GetCurrentSeriesNumber())
 
-<p class=TopicBody><span style='mso-bidi-font-family:"Times New Roman"'>This
+This
 command creates a table containing the current series.<span
-style='mso-spacerun:yes'>  </span>This table is not updated when new
-assignments are made, but is updated upon a fit.<o:p></o:p></span></p>
+style='mso-spacerun:yes'>  This table is not updated when new
+assignments are made, but is updated upon a fit.
 
-<p class=TopicBody><span style='mso-bidi-font-family:"Times New Roman"'>Please
+Please
 note that the data in the resulting table is not synchronized with the master
-line list.<span style='mso-spacerun:yes'>  </span>.<span
-style='mso-spacerun:yes'>  </span>Editing the data in this table will not
-assign , unassign, mask, or unmask lines in the data set.<o:p></o:p></span></p>
+line list.   .<span
+style='mso-spacerun:yes'>  Editing the data in this table will not
+assign , unassign, mask, or unmask lines in the data set.
 
-<p class=Subtopic><span style='mso-bidi-font-family:"Times New Roman"'>Series |
-View Series List...<span style='mso-tab-count:1'>                                           </span>(F8)<span
-style='mso-tab-count:1'>                  </span>ViewSeriesList()<o:p></o:p></span></p>
+<p class=Subtopic>Series |
+View Series List...                   
+    (F8)                  ViewSeriesList()
 
-<p class=TopicBody><span style='mso-bidi-font-family:"Times New Roman"'>Same as
-<b>Data Sets | View Series List...</b>.<o:p></o:p></span></p>
+Same as
+**Data Sets | View Series List...**.
 
-<p class=Subtopic><span style='mso-bidi-font-family:"Times New Roman"'><o:p>&nbsp;</o:p></span></p>
+<p class=Subtopic><o:p>&nbsp;</o:p>
 
-<p class=Subtopic><span style='mso-bidi-font-family:"Times New Roman"'>Keyboard
-Reference<o:p></o:p></span></p>
+<p class=Subtopic>Keyboard
+Reference
 
-<p class=Subtopic><span style='mso-bidi-font-family:"Times New Roman"'>F2<span
-style='mso-tab-count:1'>                                                                                </span>Start
-a New Series...<o:p></o:p></span></p>
+<p class=Subtopic>F2                                                        
+    Start
+a New Series...
 
-<p class=Subtopic><span style='mso-bidi-font-family:"Times New Roman"'>F3<span
-style='mso-tab-count:1'>                                                                                </span>Select
-a Series…<o:p></o:p></span></p>
+<p class=Subtopic>F3                                                        
+    Select
+a Series…
 
-<p class=Subtopic><span style='mso-bidi-font-family:"Times New Roman"'>F4<span
-style='mso-tab-count:1'>                                                                                </span>Delete
-a Series…<o:p></o:p></span></p>
+<p class=Subtopic>F4                                                        
+    Delete
+a Series…
 
-<p class=Subtopic><span style='mso-bidi-font-family:"Times New Roman"'>F5<span
-style='mso-tab-count:1'>                                                                                </span>Fit
-Current Series<o:p></o:p></span></p>
+<p class=Subtopic>F5                                                        
+    Fit
+Current Series
 
-<p class=Subtopic><span style='mso-bidi-font-family:"Times New Roman"'>Shift-F5<span
-style='mso-tab-count:1'>                                                                        </span>Undo
-Last Fit<o:p></o:p></span></p>
+<p class=Subtopic>Shift-F5                                                
+    Undo
+Last Fit
 
-<p class=Subtopic><span style='mso-bidi-font-family:"Times New Roman"'>F6<span
-style='mso-tab-count:1'>                                                                                </span>M-Shift
-Current Series<o:p></o:p></span></p>
+<p class=Subtopic>F6                                                        
+    M-Shift
+Current Series
 
-<p class=Subtopic><span style='mso-bidi-font-family:"Times New Roman"'>F7<span
-style='mso-tab-count:1'>                                                                                </span>View
-Current Series…<o:p></o:p></span></p>
+<p class=Subtopic>F7                                                        
+    View
+Current Series…
 
-<p class=Subtopic><span style='mso-bidi-font-family:"Times New Roman"'>F8<span
-style='mso-tab-count:1'>                                                                                </span>View
-Series List...<o:p></o:p></span></p>
+<p class=Subtopic>F8                                                        
+    View
+Series List...
 
-<p class=Subtopic><span style='mso-bidi-font-family:"Times New Roman"'>F9<span
-style='mso-tab-count:1'>                                                                                </span>Extract
-Assignments...<o:p></o:p></span></p>
+<p class=Subtopic>F9                                                        
+    Extract
+Assignments...
 
-<p class=Subtopic><span style='mso-bidi-font-family:"Times New Roman"'>F11<span
-style='mso-tab-count:1'>                                                                               </span>Change
-M-axis Scaling...<o:p></o:p></span></p>
+<p class=Subtopic>F11                                                       
+    Change
+M-axis Scaling...
 
-<p class=Subtopic><span style='mso-bidi-font-family:"Times New Roman"'>F12<span
-style='mso-tab-count:1'>                                                                               </span>Edit
-Band Constants...<o:p></o:p></span></p>
+<p class=Subtopic>F12                                                       
+    Edit
+Band Constants...
 
-<p class=TopicBody><span style='mso-bidi-font-family:"Times New Roman"'>The
-actions corresponding to the function keys are described above.<o:p></o:p></span></p>
+The
+actions corresponding to the function keys are described above.
 
-<p class=Subtopic><span style='mso-bidi-font-family:"Times New Roman"'>Enter<span
-style='mso-tab-count:1'>                                                                            </span>Assign
-Line<o:p></o:p></span></p>
+<p class=Subtopic>Enter                                                    
+    Assign
+Line
 
-<p class=TopicBody><span style='mso-bidi-font-family:"Times New Roman"'>Enter
-assigns the current line to the current series.<span style='mso-spacerun:yes'> 
-</span>There is no menu command corresponding to this action.<o:p></o:p></span></p>
+Enter
+assigns the current line to the current series.  
+There is no menu command corresponding to this action.
 
-<p class=Subtopic><span style='mso-bidi-font-family:"Times New Roman"'>Delete (Ctrl-Backspace)<span
-style='mso-tab-count:1'>                                                 </span>Unassign
-Line (From Current Series)<o:p></o:p></span></p>
+<p class=Subtopic>Delete (Ctrl-Backspace)                         
+    Unassign
+Line (From Current Series)
 
-<p class=TopicBody><span style='mso-bidi-font-family:"Times New Roman"'>Delete
+Delete
 unassigns the current line from the current series.<span
-style='mso-spacerun:yes'>  </span>There is no menu command corresponding to
-this action.<o:p></o:p></span></p>
+style='mso-spacerun:yes'>  There is no menu command corresponding to
+this action.
 
-<p class=Subtopic><span style='mso-bidi-font-family:"Times New Roman"'>Backspace<span
-style='mso-tab-count:1'>                                                                    </span>Reserved<o:p></o:p></span></p>
+<p class=Subtopic>Backspace                                            
+    Reserved
 
-<p class=Subtopic><span style='mso-bidi-font-family:"Times New Roman"'>Home<span
-style='mso-tab-count:1'>                                                                           </span>Reserved<o:p></o:p></span></p>
+<p class=Subtopic>Home                                                   
+    Reserved
 
-<p class=Subtopic><span style='mso-bidi-font-family:"Times New Roman"'>End<span
-style='mso-tab-count:1'>                                                                              </span>Reserved<o:p></o:p></span></p>
+<p class=Subtopic>End                                                      
+    Reserved
 
-<p class=Subtopic><span style='mso-bidi-font-family:"Times New Roman"'>Up<span
-style='mso-tab-count:1'>                                                                                </span>Move
-Cursor Up<o:p></o:p></span></p>
+<p class=Subtopic>Up                                                        
+    Move
+Cursor Up
 
-<p class=Subtopic><span style='mso-bidi-font-family:"Times New Roman"'>Down<span
-style='mso-tab-count:1'>                                                                           </span>Move
-Cursor Down<o:p></o:p></span></p>
+<p class=Subtopic>Down                                                   
+    Move
+Cursor Down
 
-<p class=Subtopic><span style='mso-bidi-font-family:"Times New Roman"'>Left<span
-style='mso-tab-count:1'>                                                                              </span>Move
-Cursor Left<o:p></o:p></span></p>
+<p class=Subtopic>Left                                                      
+    Move
+Cursor Left
 
-<p class=Subtopic><span style='mso-bidi-font-family:"Times New Roman"'>Right<span
-style='mso-tab-count:1'>                                                                            </span>Move
-Cursor Right<o:p></o:p></span></p>
+<p class=Subtopic>Right                                                    
+    Move
+Cursor Right
 
-<p class=TopicBody><span style='mso-bidi-font-family:"Times New Roman"'>The
-cursor can also be moved by single-clicking a line with the mouse.<o:p></o:p></span></p>
+The
+cursor can also be moved by single-clicking a line with the mouse.
 
-<p class=Subtopic><span style='mso-bidi-font-family:"Times New Roman"'>PageUp/PageDn<span
-style='mso-tab-count:1'>                                                           </span>Scroll
-Up/Down<o:p></o:p></span></p>
+<p class=Subtopic>PageUp/PageDn                                   
+    Scroll
+Up/Down
 
-<p class=TopicBody><span style='mso-bidi-font-family:"Times New Roman"'>The
-graph can also be scrolled using the <b>Change M-axis Scaling...</b> (F7)
-command.<o:p></o:p></span></p>
+The
+graph can also be scrolled using the **Change M-axis Scaling...** (F7)
+command.
 
-<p class=Subtopic><span style='mso-bidi-font-family:"Times New Roman"'>K<span
-style='mso-tab-count:1'>                                                                                  </span>Toggle
-Loomis-Wood Fit Flag<o:p></o:p></span></p>
+<p class=Subtopic>K                                                          
+    Toggle
+Loomis-Wood Fit Flag
 
-<p class=Subtopic><span style='mso-bidi-font-family:"Times New Roman"'>U<span
-style='mso-tab-count:1'>                                                                                  </span>Toggle
-Upper State Fit Flag<o:p></o:p></span></p>
+<p class=Subtopic>U                                                          
+    Toggle
+Upper State Fit Flag
 
-<p class=Subtopic><span style='mso-bidi-font-family:"Times New Roman"'>L<span
-style='mso-tab-count:1'>                                                                                  </span>Toggle
-Lower State Fit Flag<o:p></o:p></span></p>
+<p class=Subtopic>L                                                          
+    Toggle
+Lower State Fit Flag
 
-<p class=TopicBody><span style='mso-bidi-font-family:"Times New Roman"'>The
+The
 Loomis-Wood fit Flag determines whether the add-in uses a line in a fit or
-not.<span style='mso-spacerun:yes'>  </span>The other two fit flags are
-provided for external use.<span style='mso-spacerun:yes'>  </span>There are no
+not.   The other two fit flags are
+provided for external use.   There are no
 menu commands corresponding to K, U, or L but the flags can also be toggled
-with the listbox in the control bar of a Loomis-Wood plot.<o:p></o:p></span></p>
+with the listbox in the control bar of a Loomis-Wood plot.
 
-<p class=Subtopic><span style='mso-bidi-font-family:"Times New Roman"'>Loomis-Wood
-Toolbar<o:p></o:p></span></p>
+<p class=Subtopic>Loomis-Wood
+Toolbar
 
-<p class=Subtopic><span style='mso-bidi-font-family:"Times New Roman"'><!--[if gte vml 1]><v:shapetype
+<p class=Subtopic><!--[if gte vml 1]><v:shapetype
  id="_x0000_t75" coordsize="21600,21600" o:spt="75" o:preferrelative="t"
  path="m@4@5l@4@11@9@11@9@5xe" filled="f" stroked="f">
  <v:stroke joinstyle="miter"/>
@@ -1373,605 +1131,496 @@ Toolbar<o:p></o:p></span></p>
  height:39pt'>
  <v:imagedata src="image001.png" o:title=""/>
 </v:shape><![endif]--><![if !vml]><img width=623 height=52
-src="image002.jpg" v:shapes="_x0000_i1025"><![endif]><o:p></o:p></span></p>
+src="image002.jpg" v:shapes="_x0000_i1025"><![endif]>
 
-<p class=KeyList><span style='mso-bidi-font-family:"Times New Roman"'>P<span
-style='mso-tab-count:1'>                                     </span>The point
-number of the selected line.<span style='mso-spacerun:yes'> 
-</span>(Non-editable)<o:p></o:p></span></p>
+P             
+    The point
+number of the selected line.  
+(Non-editable)
 
-<p class=KeyList><span style='mso-bidi-font-family:"Times New Roman"'>Nu<span
-style='mso-tab-count:1'>                                   </span>The frequency
-of the selected line.<span style='mso-spacerun:yes'>  </span>(Non-editable)<o:p></o:p></span></p>
+Nu           
+    The frequency
+of the selected line.   (Non-editable)
 
-<p class=KeyList><span style='mso-bidi-font-family:"Times New Roman"'>dNu<span
-style='mso-tab-count:1'>                                 </span>The residual of
-the selected line. (X-axis of plot)<span style='mso-spacerun:yes'> 
-</span>(Non-editable)<o:p></o:p></span></p>
+dNu         
+    The residual of
+the selected line. (X-axis of plot)  
+(Non-editable)
 
-<p class=KeyList><span style='mso-bidi-font-family:"Times New Roman"'>W<span
-style='mso-tab-count:1'>                                    </span>The width of
-the selected line.<span style='mso-spacerun:yes'>  </span>(Non-editable)<o:p></o:p></span></p>
+W            
+    The width of
+the selected line.   (Non-editable)
 
-<p class=KeyList><span style='mso-bidi-font-family:"Times New Roman"'>I<span
-style='mso-tab-count:1'>                                      </span>The
-intensity of the selected line.<span style='mso-spacerun:yes'> 
-</span>(Non-editable)<o:p></o:p></span></p>
+I              
+    The
+intensity of the selected line.  
+(Non-editable)
 
-<p class=KeyList><span style='mso-bidi-font-family:"Times New Roman"'>M<span
-style='mso-tab-count:1'>                                    </span>The <i>m</i>
-selected line.<span style='mso-spacerun:yes'>  </span>(Y-axis of plot)<span
-style='mso-spacerun:yes'>  </span>(Non-editable)<o:p></o:p></span></p>
+M            
+    The _m_
+selected line.   (Y-axis of plot)<span
+style='mso-spacerun:yes'>  (Non-editable)
 
-<p class=KeyList><span style='mso-bidi-font-family:"Times New Roman"'>dM<span
-style='mso-tab-count:1'>                                  </span>The relative
-residual of the selected line.<span style='mso-spacerun:yes'>  </span>(Non-editable)<o:p></o:p></span></p>
+dM          
+    The relative
+residual of the selected line.   (Non-editable)
 
-<p class=KeyList><span style='mso-bidi-font-family:"Times New Roman"'>Current
-Series<span style='mso-tab-count:1'>                  </span>The current series
-being assigned.<span style='mso-spacerun:yes'>  </span>Changing the series here
-is equivalent to <b>Series | Select a Series…<o:p></o:p></b></span></p>
+Current
+Series                  The current series
+being assigned.   Changing the series here
+is equivalent to **Series | Select a Series…<o:p></o:p>**
 
-<p class=KeyList><span style='mso-bidi-font-family:"Times New Roman"'>Order<span
-style='mso-tab-count:1'>                               </span>The order to
-which the current series will be fit.<span style='mso-spacerun:yes'> 
-</span>Editing this value is equivalent to modifying Order on the <b>Data Sets
-| View Series List...</b> table.<o:p></o:p></span></p>
+Order       
+    The order to
+which the current series will be fit.  
+Editing this value is equivalent to modifying Order on the **Data Sets
+| View Series List...** table.
 
-<p class=KeyList><span style='mso-bidi-font-family:"Times New Roman"'>Zoom<span
-style='mso-tab-count:1'>                              </span>The magnification
-on the triangle heights in the plot.<span style='mso-spacerun:yes'> 
-</span>Increase this value to focus on weaker series.<o:p></o:p></span></p>
+Zoom      
+    The magnification
+on the triangle heights in the plot.  
+Increase this value to focus on weaker series.
 
-<p class=KeyList><span style='mso-bidi-font-family:"Times New Roman"'>Assignments
-List Box<span style='mso-tab-count:1'>       </span>The assignments of the
+Assignments
+List Box       The assignments of the
 current line are listed in the list box on the right hand side of the toolbar.<span
-style='mso-spacerun:yes'>  </span>This is where you can add a note to an
+style='mso-spacerun:yes'>  This is where you can add a note to an
 assignment, as well as toggle the various flags associated with the assignment
-(akin to <b>K</b>, <b>U</b>, and <b>L</b> on the keyboard )<o:p></o:p></span></p>
+(akin to **K**, **U**, and **L** on the keyboard )
 
-<p class=Subtopic><span style='mso-bidi-font-family:"Times New Roman"'>Function
-List<o:p></o:p></span></p>
+<p class=Subtopic>Function
+List
 
-<p class=TopicBody><span style='mso-bidi-font-family:"Times New Roman"'>The
+The
 functions below are listed in the order they appear in the source code.<span
-style='mso-spacerun:yes'>  </span>In addition, three slashes “///” are used to
+style='mso-spacerun:yes'>  In addition, three slashes “///” are used to
 create comments corresponding to the headings below, allowing for quick
-searching.<span style='mso-spacerun:yes'>  </span>Only functions used by the
+searching.   Only functions used by the
 menus or various dependency formulas are non-static.<span
-style='mso-spacerun:yes'>  </span>However, the procedure file defines LWA as a
+style='mso-spacerun:yes'>  However, the procedure file defines LWA as a
 module name so static procedures are available using the module syntax.<span
-style='mso-spacerun:yes'>  </span>For example:<o:p></o:p></span></p>
+style='mso-spacerun:yes'>  For example:
 
-<p class=CodeIndented>LWA#VMoveCursor(-1)</p>
+<p class=CodeIndented>LWA#VMoveCursor(-1)
 
-<p class=TopicBody><span style='mso-bidi-font-family:"Times New Roman"'>This
+This
 has been done to minimize the risk of namespace conflicts and to prevent the
-accidental use of some functions.<span style='mso-spacerun:yes'>  </span>For
+accidental use of some functions.   For
 example the above function returns an error message if the tow window is not a
-Loomis-Wood plot.<o:p></o:p></span></p>
+Loomis-Wood plot.
 
-<p class=TopicBody><span style='mso-bidi-font-family:"Times New Roman"'>A
+A
 description of most of the non-static functions can be found above.<span
-style='mso-spacerun:yes'>  </span>The static functions are described (as
-needed) in the source code.<o:p></o:p></span></p>
+style='mso-spacerun:yes'>  The static functions are described (as
+needed) in the source code.
 
-<p class=Subtopic><span style='mso-bidi-font-family:"Times New Roman"'>Menu
-support functions:<o:p></o:p></span></p>
+<p class=Subtopic>Menu
+support functions:
 
-<p class=CodeIndented>static function/S OnLWmenuBuild()</p>
+<p class=CodeIndented>static function/S OnLWmenuBuild()
 
-<p class=CodeIndented>static function/S LWDynamicMenuItem()</p>
+<p class=CodeIndented>static function/S LWDynamicMenuItem()
 
-<p class=CodeIndented>static function About()</p>
+<p class=CodeIndented>static function About()
 
-<p class=Subtopic><span style='mso-bidi-font-family:"Times New Roman"'>General
-utility functions:<o:p></o:p></span></p>
+<p class=Subtopic>General
+utility functions:
 
-<p class=CodeIndented>static function BinarySearch2(w, y)</p>
+<p class=CodeIndented>static function BinarySearch2(w, y)
 
-<p class=CodeIndented>static function/S Real1DWaveList(arg1,arg2,arg3)</p>
+<p class=CodeIndented>static function/S Real1DWaveList(arg1,arg2,arg3)
 
-<p class=CodeIndented>static function/S FolderList(sourceFolderStr)</p>
+<p class=CodeIndented>static function/S FolderList(sourceFolderStr)
 
-<p class=CodeIndented>static function/S TextWave2List(theTextWave)</p>
+<p class=CodeIndented>static function/S TextWave2List(theTextWave)
 
-<p class=CodeIndented>static function/S DimLabels2List(w, dim)</p>
+<p class=CodeIndented>static function/S DimLabels2List(w, dim)
 
-<p class=CodeIndented>static function/S List2DimLabels(w, dim, list)</p>
+<p class=CodeIndented>static function/S List2DimLabels(w, dim, list)
 
-<p class=CodeIndented>static function/S StandardBandLabels(order)</p>
+<p class=CodeIndented>static function/S StandardBandLabels(order)
 
-<p class=CodeIndented>static function StandardBand2Poly(row, column, deltaJ)</p>
+<p class=CodeIndented>static function StandardBand2Poly(row, column, deltaJ)
 
-<p class=CodeIndented>static function poly2(coeff, order, theX)</p>
+<p class=CodeIndented>static function poly2(coeff, order, theX)
 
-<p class=CodeIndented>static function/C bound_poly(coeff, order, theX)</p>
+<p class=CodeIndented>static function/C bound_poly(coeff, order, theX)
 
-<p class=CodeIndented>static function CompareFunctions(f1, f2)</p>
+<p class=CodeIndented>static function CompareFunctions(f1, f2)
 
-<p class=Subtopic><span style='mso-bidi-font-family:"Times New Roman"'>Misc.
-Loomis-Wood functions:<o:p></o:p></span></p>
+<p class=Subtopic>Misc.
+Loomis-Wood functions:
 
-<p class=CodeIndented>static function isTopWinLWPlot(theWinType)</p>
+<p class=CodeIndented>static function isTopWinLWPlot(theWinType)
 
-<p class=CodeIndented>static function/S GetPlotList()</p>
+<p class=CodeIndented>static function/S GetPlotList()
 
-<p class=CodeIndented>static function/S GetPlotFolderList()</p>
+<p class=CodeIndented>static function/S GetPlotFolderList()
 
 <p class=CodeIndented>static function GetFolders(theWinType, DataSet,
-PlotFolder)</p>
+PlotFolder)
 
-<p class=CodeIndented>static function ValidateSourceFolder (DataSet)</p>
+<p class=CodeIndented>static function ValidateSourceFolder (DataSet)
 
-<p class=Subtopic><span style='mso-bidi-font-family:"Times New Roman"'>Main
-Loomis-Wood interface functions:<o:p></o:p></span></p>
+<p class=Subtopic>Main
+Loomis-Wood interface functions:
 
-<p class=CodeIndented>function NewLWDataSet()</p>
+<p class=CodeIndented>function NewLWDataSet()
 
-<p class=CodeIndented>static function/S GetNewLWDataFolder()</p>
+<p class=CodeIndented>static function/S GetNewLWDataFolder()
 
 <p class=CodeIndented>static function GetPeakfinderWaves(Line_Frequency, Line_Intensity,
-Line_Width)</p>
+Line_Width)
 
 <p class=CodeIndented>static function VerifyInputWaveDims(Line_Frequencies,
-Line_Intensities, Line_Widths)</p>
+Line_Intensities, Line_Widths)
 
 <p class=CodeIndented>static function
-GetNumLines(Line_Frequencies,Line_Intensities,Line_Widths)</p>
+GetNumLines(Line_Frequencies,Line_Intensities,Line_Widths)
 
-<p class=CodeIndented>static function NewLinesFolder(SourceDF, LWDF)</p>
+<p class=CodeIndented>static function NewLinesFolder(SourceDF, LWDF)
 
-<p class=CodeIndented>static function NewSeriesFolder(DataSet)</p>
+<p class=CodeIndented>static function NewSeriesFolder(DataSet)
 
-<p class=CodeIndented>function DeleteLWDataSet(DataSet)</p>
+<p class=CodeIndented>function DeleteLWDataSet(DataSet)
 
-<p class=CodeIndented>function DeleteLWPlotFolder(PlotFolder)</p>
+<p class=CodeIndented>function DeleteLWPlotFolder(PlotFolder)
 
-<p class=CodeIndented>function ViewLineList()</p>
+<p class=CodeIndented>function ViewLineList()
 
-<p class=CodeIndented>function EditColors()</p>
+<p class=CodeIndented>function EditColors()
 
-<p class=CodeIndented>function NewLWPlot(DataSet, PlotFolder)</p>
+<p class=CodeIndented>function NewLWPlot(DataSet, PlotFolder)
 
-<p class=Subtopic><span style='mso-bidi-font-family:"Times New Roman"'>Data
-dependency functions:<o:p></o:p></span></p>
+<p class=Subtopic>Data
+dependency functions:
 
-<p class=CodeIndented>function DoBandCoeffUpdate(BandCoeff)</p>
+<p class=CodeIndented>function DoBandCoeffUpdate(BandCoeff)
 
-<p class=CodeIndented>function DoSeriesOrderUpdate(Series_Order, CurrentSeries)</p>
+<p class=CodeIndented>function DoSeriesOrderUpdate(Series_Order, CurrentSeries)
 
 <p class=CodeIndented>function DoTriangleUpdate(LWm, Assignments, Series_Color,
-Series_Shape, StartM, EndM, Zoom)</p>
+Series_Shape, StartM, EndM, Zoom)
 
-<p class=Subtopic><span style='mso-bidi-font-family:"Times New Roman"'>Loomis-Wood
-plot hook functions:<o:p></o:p></span></p>
+<p class=Subtopic>Loomis-Wood
+plot hook functions:
 
-<p class=CodeIndented>function LWHookFunction(s)</p>
+<p class=CodeIndented>function LWHookFunction(s)
 
 <p class=CodeIndented>function OrderSetVarProc(ctrlName,varNum,varStr,varName) :
-SetVariableControl</p>
+SetVariableControl
 
 <p class=CodeIndented>function
-CurrentSeriesPopupMenuControl(ctrlName,popNum,popStr) : PopupMenuControl</p>
+CurrentSeriesPopupMenuControl(ctrlName,popNum,popStr) : PopupMenuControl
 
-<p class=CodeIndented>function ListBoxProc(LB_Struct) : ListBoxControl</p>
+<p class=CodeIndented>function ListBoxProc(LB_Struct) : ListBoxControl
 
-<p class=Subtopic><span style='mso-bidi-font-family:"Times New Roman"'>Loomis-Wood
-plot event handlers:<o:p></o:p></span></p>
+<p class=Subtopic>Loomis-Wood
+plot event handlers:
 
-<p class=CodeIndented>static function HitTest(s)</p>
+<p class=CodeIndented>static function HitTest(s)
 
-<p class=CodeIndented>static function NearestPeak(theX, theY)</p>
+<p class=CodeIndented>static function NearestPeak(theX, theY)
 
-<p class=CodeIndented>static function VerticalScroll(Amount)</p>
+<p class=CodeIndented>static function VerticalScroll(Amount)
 
-<p class=CodeIndented>static function LinesPerFrame()</p>
+<p class=CodeIndented>static function LinesPerFrame()
 
-<p class=CodeIndented>static function UpdateCursor()</p>
+<p class=CodeIndented>static function UpdateCursor()
 
 <p class=CodeIndented>static function AssignmentString2ListBoxWaves(str,
-seriesNames, tw, sw)</p>
+seriesNames, tw, sw)
 
-<p class=CodeIndented>static function MoveCursor(theP)</p>
+<p class=CodeIndented>static function MoveCursor(theP)
 
-<p class=CodeIndented>static function CursorPosition()</p>
+<p class=CodeIndented>static function CursorPosition()
 
-<p class=CodeIndented>static function CursorM()</p>
+<p class=CodeIndented>static function CursorM()
 
-<p class=CodeIndented>static function VMoveCursor(Amount)</p>
+<p class=CodeIndented>static function VMoveCursor(Amount)
 
-<p class=CodeIndented>static function HMoveCursor(Amount)</p>
+<p class=CodeIndented>static function HMoveCursor(Amount)
 
-<p class=CodeIndented>function ChangeRange(theMin, theMax)<span
-style='mso-tab-count:1'>  </span>//F11</p>
+<p class=CodeIndented>function ChangeRange(theMin, theMax)  //F11
 
-<p class=Subtopic><span style='mso-bidi-font-family:"Times New Roman"'>Series-related
-functions:<o:p></o:p></span></p>
+<p class=Subtopic>Series-related
+functions:
 
-<p class=CodeIndented>function AddSeries()<span style='mso-tab-count:1'> </span>//
-F2</p>
+<p class=CodeIndented>function AddSeries() //
+F2
 
-<p class=CodeIndented>function SelectSeries()<span style='mso-tab-count:1'> </span>//
-F3</p>
+<p class=CodeIndented>function SelectSeries() //
+F3
 
-<p class=CodeIndented>static function ChangeCurrentSeries(theSeries)</p>
+<p class=CodeIndented>static function ChangeCurrentSeries(theSeries)
 
-<p class=CodeIndented>function DeleteSeries()<span style='mso-tab-count:1'> </span>//
-F4</p>
+<p class=CodeIndented>function DeleteSeries() //
+F4
 
-<p class=CodeIndented>function GetCurrentSeriesNumber()</p>
+<p class=CodeIndented>function GetCurrentSeriesNumber()
 
 <p class=CodeIndented>function/S FitSeries(theSeries)<span style='mso-tab-count:
-1'>   </span>// F5</p>
+1'>   // F5
 
-<p class=CodeIndented>function/S GetFitRes(s)</p>
+<p class=CodeIndented>function/S GetFitRes(s)
 
-<p class=CodeIndented>function FitAll()</p>
+<p class=CodeIndented>function FitAll()
 
-<p class=CodeIndented>function/S UndoFit()<span style='mso-tab-count:1'> </span>//
-Shift-F5</p>
+<p class=CodeIndented>function/S UndoFit() //
+Shift-F5
 
-<p class=CodeIndented>static function FetchSeries(theSeries)</p>
+<p class=CodeIndented>static function FetchSeries(theSeries)
 
 <p class=CodeIndented>function ShiftSeries(theSeries, theShift,
-autoFixConstants)<span style='mso-tab-count:1'>   </span>// F6</p>
+autoFixConstants)   // F6
 
-<p class=CodeIndented>static function ShiftConstants(theShift)</p>
+<p class=CodeIndented>static function ShiftConstants(theShift)
 
 <p class=CodeIndented>function ViewSeries(theSeries)<span style='mso-tab-count:
-1'> </span>// F7</p>
+1'> // F7
 
-<p class=CodeIndented>function ViewSeriesList()<span style='mso-tab-count:1'>  </span>//
-F8</p>
+<p class=CodeIndented>function ViewSeriesList()  //
+F8
 
 <p class=CodeIndented>function EditBandConstants()<span style='mso-tab-count:
-2'>      </span>//F12</p>
+2'>      //F12
 
-<p class=CodeIndented>static function ChangeRegions()</p>
+<p class=CodeIndented>static function ChangeRegions()
 
-<p class=Subtopic><span style='mso-bidi-font-family:"Times New Roman"'>Assignment-related
-functions:<o:p></o:p></span></p>
+<p class=Subtopic>Assignment-related
+functions:
 
-<p class=CodeIndented>structure AssignmentStruct</p>
+<p class=CodeIndented>structure AssignmentStruct
 
-<p class=CodeIndented>static function ReadAssignment(theP, theSeries, s)</p>
+<p class=CodeIndented>static function ReadAssignment(theP, theSeries, s)
 
-<p class=CodeIndented>static function AssignLine2(s)</p>
+<p class=CodeIndented>static function AssignLine2(s)
 
 <p class=CodeIndented>static function AssignLine(theP, theSeries, theM, LWmask,
-USmask, LSmask, Notes)</p>
+USmask, LSmask, Notes)
 
-<p class=CodeIndented>static function UnAssignLine(theP, theSeries)</p>
+<p class=CodeIndented>static function UnAssignLine(theP, theSeries)
 
-<p class=CodeIndented>function ExtractAssignments(functionName)<span
-style='mso-tab-count:1'>    </span>// F9</p>
+<p class=CodeIndented>function ExtractAssignments(functionName)    // F9
 
-<p class=Subtopic><span style='mso-bidi-font-family:"Times New Roman"'>Structures:<o:p></o:p></span></p>
+<p class=Subtopic>Structures:
 
-<p class=CodeIndented>structure SeriesStruct</p>
+<p class=CodeIndented>structure SeriesStruct
 
-<p class=CodeIndented>static function GetSeriesStruct(DataSet, s, [flag])</p>
+<p class=CodeIndented>static function GetSeriesStruct(DataSet, s, [flag])
 
-<p class=CodeIndented>structure LinesStruct</p>
+<p class=CodeIndented>structure LinesStruct
 
-<p class=CodeIndented>static function GetLinesStruct(DataSet, s, [flag])</p>
+<p class=CodeIndented>static function GetLinesStruct(DataSet, s, [flag])
 
-<p class=CodeIndented>structure AssignmentListStruct</p>
+<p class=CodeIndented>structure AssignmentListStruct
 
 <p class=CodeIndented>static function GetAssignmentListStruct(DataSet, s,
-[flag])</p>
+[flag])
 
-<p class=CodeIndented>structure SeriesFitStruct</p>
+<p class=CodeIndented>structure SeriesFitStruct
 
-<p class=CodeIndented>static function GetSeriesFitStruct(DataSet, s, [flag])</p>
+<p class=CodeIndented>static function GetSeriesFitStruct(DataSet, s, [flag])
 
-<p class=Subtopic><span style='mso-bidi-font-family:"Times New Roman"'>New
-stuff:<o:p></o:p></span></p>
+<p class=Subtopic>New
+stuff:
 
-<p class=CodeIndented>function SynchronizeSeries2Lines()</p>
+<p class=CodeIndented>function SynchronizeSeries2Lines()
 
-<p class=CodeIndented>function SynchronizeLines2Series()</p>
+<p class=CodeIndented>function SynchronizeLines2Series()
 
-<p class=CodeIndented>function UpdateLinesFolder(FreqTol)</p>
+<p class=CodeIndented>function UpdateLinesFolder(FreqTol)
 
-<p class=Subtopic><span style='mso-bidi-font-family:"Times New Roman"'>Structures<o:p></o:p></span></p>
+<p class=Subtopic>Structures
 
-<p class=TopicBody><span style='mso-bidi-font-family:"Times New Roman"'>The
+The
 data contained in the Lines, Series, Assignments, and SeriesFit subfolders is
-accessible through structures.<span style='mso-spacerun:yes'>  </span>Use the
+accessible through structures.   Use the
 GetLinesStruct(), GetSeriesStruct(), GetAssignmentListStruct(), and
 GetSeriesFitStruct() functions to create a structure referencing these
-folders.<span style='mso-spacerun:yes'>  </span>This greatly simplifies writing
-functions to access this data, and simplifies the code of the add-in as well.<o:p></o:p></span></p>
+folders.   This greatly simplifies writing
+functions to access this data, and simplifies the code of the add-in as well.
 
-<p class=TopicBody><span style='mso-bidi-font-family:"Times New Roman"'>The
+The
 add-in does not implement structures for the data in a plot subfolder.<span
-style='mso-spacerun:yes'>  </span>The reason for this is that many of the
+style='mso-spacerun:yes'>  The reason for this is that many of the
 functions that use this data need fast response to prevent the add-in from
-becoming sluggish.<span style='mso-spacerun:yes'>  </span>Since dereferencing a
+becoming sluggish.   Since dereferencing a
 global data object involves a significant overhead, it is best to only
-dereference (using NVAR, SVAR, and WAVE). the objects needed.<o:p></o:p></span></p>
+dereference (using NVAR, SVAR, and WAVE). the objects needed.
 
-<p class=Subtopic><span style='mso-bidi-font-family:"Times New Roman"'>Customization<o:p></o:p></span></p>
+## Customization
 
-<p class=TopicBody><span style='mso-bidi-font-family:"Times New Roman"'>There are
-several function of the Add-In that the user may want to customize.<span
-style='mso-spacerun:yes'>  </span>The most important is the Extract Assignments
-feature, which has already been discussed.<span style='mso-spacerun:yes'> 
-</span>(See <u><span style='color:blue'>The Assignments Folder:</span></u><span
-style='color:black'>.)<span style='mso-spacerun:yes'>  </span>There are several
-other function this user may want to customize.<span style='mso-spacerun:yes'> 
-</span>Most of these can be changed using </span><u><span style='color:blue'>Function
-Overrides</span></u><span style='color:black'>, although you can edit the main
-procedure file if you want.<span style='mso-spacerun:yes'>  </span>Functions
-the user may want to customize are:<o:p></o:p></span></span></p>
+There are several function of the Add-In that the user may want to customize.<span
+style='mso-spacerun:yes'>  The most important is the Extract Assignments
+feature, which has already been discussed.  
+(See <u><span style='color:blue'>The Assignments Folder:</u><span
+style='color:black'>.)   There are several
+other function this user may want to customize.  
+Most of these can be changed using <u><span style='color:blue'>Function
+Overrides</u><span style='color:black'>, although you can edit the main
+procedure file if you want.   Functions
+the user may want to customize are:
 
-<p class=CodeIndented>static function/S StandardBandLabels(order)</p>
+<p class=CodeIndented>static function/S StandardBandLabels(order)
 
-<p class=CodeIndented>static function StandardBand2Poly(row, column, deltaJ)</p>
+<p class=CodeIndented>static function StandardBand2Poly(row, column, deltaJ)
 
 <p class=TopicBody style='margin-left:.5in'><span style='mso-bidi-font-family:
 "Times New Roman"'>These two functions create the Band2Poly, Poly2Band and
-BandCoeffLabels waves.<span style='mso-spacerun:yes'>  </span>If one overrides
+BandCoeffLabels waves.   If one overrides
 these functions, you can alter the fitting constants for all new data sets in
-an entire experiment.<span style='mso-spacerun:yes'>  </span>(You can also edit
-these waves manually on a per-data-set basis.)<span style='mso-spacerun:yes'> 
-</span>For example, you may prefer to fit series in terms of <i>B</i>’ and <i>B</i>”
-instead of <i>B</i>” and </span><span style='font-family:Symbol;mso-bidi-font-family:
-Symbol'>D</span><i>B</i>.<span style='mso-spacerun:yes'>  </span>Another
+an entire experiment.   (You can also edit
+these waves manually on a per-data-set basis.)  
+For example, you may prefer to fit series in terms of _B_’ and _B_”
+instead of _B_” and <span style='font-family:Symbol;mso-bidi-font-family:
+Symbol'>D_B_.   Another
 example would be changing the fitting for <span style='font-family:Symbol;
-mso-bidi-font-family:Symbol'>D</span><i>J</i> = 2 transitions.<span
-style='mso-spacerun:yes'>  </span>If you want to change the fitting to a
+mso-bidi-font-family:Symbol'>D_J_ = 2 transitions.<span
+style='mso-spacerun:yes'>  If you want to change the fitting to a
 non-polynomial model, a lot more work is involved.<span
-style='mso-spacerun:yes'>  </span>However it should be possible by editing any
-function that uses the PolyCoeff wave.</p>
+style='mso-spacerun:yes'>  However it should be possible by editing any
+function that uses the PolyCoeff wave.
 
-<p class=CodeIndented>function/S GetFitRes(s)</p>
+<p class=CodeIndented>function/S GetFitRes(s)
 
 <p class=TopicBody style='margin-left:.5in'><span style='mso-bidi-font-family:
 "Times New Roman"'>Overriding this function allows the user to customize the
-output the fitting routine prints after every fit.<o:p></o:p></span></p>
+output the fitting routine prints after every fit.
 
-<p class=Subtopic><span style='mso-bidi-font-family:"Times New Roman"'>Globalization<o:p></o:p></span></p>
+<p class=Subtopic>Globalization
 
-<p class=TopicBody><span style='mso-bidi-font-family:"Times New Roman"'>All
+All
 text used in dialogs is contained in strconstants at the top of the procedure
-file.<span style='mso-spacerun:yes'>  </span>If someone needs to translate the
+file.   If someone needs to translate the
 text, all that needs to be edited are these constants, and the menu that
-immediately follows these constants.<o:p></o:p></span></p>
+immediately follows these constants.
 
-<p class=Subtopic><span style='mso-bidi-font-family:"Times New Roman"'>Revision
-Notes<o:p></o:p></span></p>
+## Revision Notes
 
-<p class=KeyList><span style='mso-bidi-font-family:"Times New Roman"'>1.00<span
-style='mso-tab-count:1'>                                 </span>Loomis-Wood
-Add-In first released.<o:p></o:p></span></p>
+1.00
+     
+    Loomis-Wood Add-In first released.
 
-<p class=KeyList><span style='mso-bidi-font-family:"Times New Roman"'>2.00<span
-style='mso-tab-count:1'>                                 </span>LWA is no
-longer dependant on SetWindowExt XOP, but requires Igor 5.02.<span
-style='mso-spacerun:yes'>  </span>LWA currently does not respond to wheel or
-double-click mouse events, because of this change.<span
-style='mso-spacerun:yes'>  </span>However, it should be Mac compatible.<o:p></o:p></span></p>
+2.00         
 
-<p class=KeyList><span style='mso-bidi-font-family:"Times New Roman"'>2.01<span
-style='mso-tab-count:1'>                                 </span>Colors are now
-based upon a RGB color wave named M_Colors.<o:p></o:p></span></p>
+    LWA is no longer dependant on SetWindowExt XOP, but requires Igor 5.02.
+    LWA currently does not respond to wheel or double-click mouse events, because of this change.
+    However, it should be Mac compatible.
 
-<p class=KeyList><span style='mso-bidi-font-family:"Times New Roman"'><span
-style='mso-tab-count:1'>                                       </span>The
-control bar of a Loomis-Wood plot is now a sub-window.<o:p></o:p></span></p>
+2.01         
 
-<p class=KeyList><span style='mso-bidi-font-family:"Times New Roman"'><span
-style='mso-tab-count:1'>                                       </span>A zoom
-feature was added.<o:p></o:p></span></p>
+    Colors are now based upon a RGB color wave named M_Colors.
+        
+    The control bar of a Loomis-Wood plot is now a sub-window.
+               
+    A zoom feature was added.
+               
+    Assignments are now tracked with text waves.
+               
+    More error handling was added to FitSeries.
+     
+    Added Undo last fit.
+               
+    All Make commands specify precision explicitly, preventing accidental use of single precision.
 
-<p class=KeyList><span style='mso-bidi-font-family:"Times New Roman"'><span
-style='mso-tab-count:1'>                                       </span>Assignments
-are now tracked with text waves.<o:p></o:p></span></p>
+2.05
+     
+    Reorganized data folder structures:
+               
+    Waves that previously began with “Peak_” are now in the Lines subfolder. Waves that previously began with "Series_" are in the Series subfolder.   All plot folders are now within a Plots subfolder instead of in the base LW data folder.
 
-<p class=KeyList><span style='mso-bidi-font-family:"Times New Roman"'><span
-style='mso-tab-count:1'>                                       </span>More
-error handling was added to FitSeries.<o:p></o:p></span></p>
+               
+    Added structures and functions to create structures so that coding with the new
+folder structure is more transparent.
+               
+    Reorganized Loomis-Wood menu.
+             
+    Converted control bar of Loomis-Wood graphs to a subwindow.
 
-<p class=KeyList><span style='mso-bidi-font-family:"Times New Roman"'><span
-style='mso-tab-count:1'>                                       </span>Added
-Undo last fit.<o:p></o:p></span></p>
+2.06
 
-<p class=KeyList><span style='mso-bidi-font-family:"Times New Roman"'><span
-style='mso-tab-count:1'>                                       </span>All Make
-commands specify precision explicitly, preventing accidental use of single
-precision.<o:p></o:p></span></p>
+    M_Colors renamed to just Colors and ColorNames wave removed.  The color names are now labels in the Colors wave.
 
-<p class=KeyList><span style='mso-bidi-font-family:"Times New Roman"'>2.05<span
-style='mso-tab-count:1'>                                 </span>Reorganized
-data folder structures:<o:p></o:p></span></p>
+    Added line breaks to strings used in dialogs.
 
-<p class=KeyList><span style='mso-bidi-font-family:"Times New Roman"'><span
-style='mso-tab-count:1'>                                       </span>Waves
-that previously began with “Peak_” are now in the Lines subfolder.<span
-style='mso-spacerun:yes'>  </span>Waves that previously began with “Series_”
-are in the Series subfolder.<span style='mso-spacerun:yes'>  </span>All plot
-folders are now within a Plots subfolder instead of in the base LW data folder.<o:p></o:p></span></p>
+    Added "Update Line List", "Synchronize Series to Lines", and "Synchronize Lines to Series" commands.
 
-<p class=KeyList><span style='mso-bidi-font-family:"Times New Roman"'><span
-style='mso-tab-count:1'>                                       </span>Added
-structures and functions to create structures so that coding with the new
-folder structure is more transparent.<o:p></o:p></span></p>
+    Rewrote code that creates Loomis-wood graph windows (in the NewLWplot function).
 
-<p class=KeyList><span style='mso-bidi-font-family:"Times New Roman"'><span
-style='mso-tab-count:1'>                                       </span>Reorganized
-Loomis-Wood menu.<o:p></o:p></span></p>
+    Implemented an assignment structure.
 
-<p class=KeyList><span style='mso-bidi-font-family:"Times New Roman"'><span
-style='mso-tab-count:1'>                                       </span>Converted
-control bar of Loomis-Wood graphs to a subwindow.<o:p></o:p></span></p>
+    Added upper and lower state flags and note to assignments.
+           
+    Added ListBox control to control bar.
 
-<p class=KeyList><span style='mso-bidi-font-family:"Times New Roman"'>2.06 <span
-style='mso-tab-count:1'>                                </span>M_Colors renamed
-to just Colors and ColorNames wave removed.<span style='mso-spacerun:yes'> 
-</span>The color names are now labels in the Colors wave.<o:p></o:p></span></p>
+    Added Create/Modify Comb waves to DoBandCoeffUpdate() function.
 
-<p class=KeyList><span style='mso-bidi-font-family:"Times New Roman"'><span
-style='mso-tab-count:1'>                                       </span>Added
-line breaks to strings used in dialogs.<o:p></o:p></span></p>
+    Added static GetFolders() function.
 
-<p class=KeyList><span style='mso-bidi-font-family:"Times New Roman"'><span
-style='mso-tab-count:1'>                                       </span>Added
-“Update Line List”, “Synchronize Series to Lines”, and “Synchronize Lines to
-Series” commands.<o:p></o:p></span></p>
+    Added “Fit All” command.
 
-<p class=KeyList><span style='mso-bidi-font-family:"Times New Roman"'><span
-style='mso-tab-count:1'>                                       </span>Rewrote
-code that creates Loomis-wood graph windows (in the NewLWplot function).<o:p></o:p></span></p>
+    Added user enabled assignment function to “Extract Assignments” command.
 
-<p class=KeyList><span style='mso-bidi-font-family:"Times New Roman"'><span
-style='mso-tab-count:1'>                                       </span>Implemented
-an assignment structure.<o:p></o:p></span></p>
+2.07         
 
-<p class=KeyList><span style='mso-bidi-font-family:"Times New Roman"'><span
-style='mso-tab-count:1'>                                       </span>Added
-upper and lower state flags and note to assignments.<o:p></o:p></span></p>
+    Reordered code and eliminated some old commented code.
 
-<p class=KeyList><span style='mso-bidi-font-family:"Times New Roman"'><span
-style='mso-tab-count:1'>                                       </span>Added
-ListBox control to control bar.<o:p></o:p></span></p>
+    Added GetPlotList(), GetPlotFolderList()
 
-<p class=KeyList><span style='mso-bidi-font-family:"Times New Roman"'><span
-style='mso-tab-count:1'>                                       </span>Added
-Create/Modify Comb waves to DoBandCoeffUpdate() function.<o:p></o:p></span></p>
+    Implemented SeriesFit structure.   Modified FetchSeries(), ViewSeries(), and FitSeries()
 
-<p class=KeyList><span style='mso-bidi-font-family:"Times New Roman"'><span
-style='mso-tab-count:1'>                                       </span>Added
-static GetFolders() function.<o:p></o:p></span></p>
+    Edit Band Constants is now Undoable via UndoFit().
 
-<p class=KeyList><span style='mso-bidi-font-family:"Times New Roman"'><span
-style='mso-tab-count:1'>                                       </span>Added
-“Fit All” command.<o:p></o:p></span></p>
+    Added CompareFunctions() and FunctionList2().  Removed TestLWLabelProto() and LWLabelList()
+               
+    Added optional flag parameter to GetLinesStruct(), and GetSeriesStruct().  Removed GetLinesStruct2().
 
-<p class=KeyList><span style='mso-bidi-font-family:"Times New Roman"'><span
-style='mso-tab-count:1'>                                       </span>Added
-user enabled assignment function to “Extract Assignments” command.<o:p></o:p></span></p>
+    FIVEMAX_PEAKS_PER_PLOT can now be changed without recreating the Loomis-Wood plot
 
-<p class=KeyList><span style='mso-bidi-font-family:"Times New Roman"'>2.07<span
-style='mso-tab-count:1'>                                 </span>Reordered code
-and eliminated some old commented code.<o:p></o:p></span></p>
+    Added DoSeriesNameUpdate() and moved command that updates the Current Series popup from ChangeCurrentSeries() to DoSeriesNameUpdate().  Now the popup updates when Series:Name is edited.
 
-<p class=KeyList><span style='mso-bidi-font-family:"Times New Roman"'><span
-style='mso-tab-count:1'>                                       </span>Added
-GetPlotList(), GetPlotFolderList()<o:p></o:p></span></p>
+    Edited DeleteSeries(). DeleteSeries() now uses SynchronizeLines2Series() simplifying the code.  DeleteSeries() also goes through all plots and adjusts CurrentSeries as needed.
 
-<p class=KeyList><span style='mso-bidi-font-family:"Times New Roman"'><span
-style='mso-tab-count:1'>                                       </span>Implemented
-SeriesFit structure.<span style='mso-spacerun:yes'>  </span>Modified
-FetchSeries(), ViewSeries(), and FitSeries()<o:p></o:p></span></p>
+    Added a Colors wave to the Assignments folder.
 
-<p class=KeyList><span style='mso-bidi-font-family:"Times New Roman"'><span
-style='mso-tab-count:1'>                                       </span>Edit Band
-Constants is now Undoable via UndoFit().<o:p></o:p></span></p>
+2.08         
+    Table Windows are now named.
+    The name is the Data Set folder name + “_AL”, “_LL”, “_SL”, “_CS”, or “_CT”.
+    Each call to a view function no longer creates a new window.
 
-<p class=KeyList><span style='mso-bidi-font-family:"Times New Roman"'><span
-style='mso-tab-count:1'>                                       </span>Added
-CompareFunctions() and FunctionList2().<span style='mso-spacerun:yes'> 
-</span>Removed TestLWLabelProto() and LWLabelList()<o:p></o:p></span></p>
+    Fixed several problems relating to “backwards series” (d_nu__/ d_m_ < 0).
 
-<p class=KeyList><span style='mso-bidi-font-family:"Times New Roman"'><span
-style='mso-tab-count:1'>                                       </span>Added
-optional flag parameter to GetLinesStruct(), and GetSeriesStruct().<span
-style='mso-spacerun:yes'>  </span>Removed GetLinesStruct2().<o:p></o:p></span></p>
+    Killing Loomis-Wood plot now attempts to delete the plot folder.
+    This will quietly fail if the user has created any windows referencing the data in this folder.
+   
+    Implemented MatrixOp in several places for cleaner code.
 
-<p class=KeyList><span style='mso-bidi-font-family:"Times New Roman"'><span
-style='mso-tab-count:1'>                                       </span>FIVEMAX_PEAKS_PER_PLOT
-can now be changed without recreating the Loomis-Wood plot<o:p></o:p></span></p>
+    Changed LWLabelProto(), and modified ExtractAssignments() accordingly.
 
-<p class=KeyList><span style='mso-bidi-font-family:"Times New Roman"'><span
-style='mso-tab-count:1'>                                       </span>Added
-DoSeriesNameUpdate() and moved command that updates the Current Series popup
-from ChangeCurrentSeries() to DoSeriesNameUpdate().<span
-style='mso-spacerun:yes'>  </span>Now the popup updates when Series:Name is
-edited.<o:p></o:p></span></p>
+   
+    ExtractAssignments() now remembers last used Assignment Function.
 
-<p class=KeyList><span style='mso-bidi-font-family:"Times New Roman"'><span
-style='mso-tab-count:1'>                                       </span>Edited
-DeleteSeries().<span style='mso-spacerun:yes'>  </span>DeleteSeries() now uses
-SynchronizeLines2Series() simplifying the code.<span style='mso-spacerun:yes'> 
-</span>DeleteSeries() also goes through all plots and adjusts CurrentSeries as
-needed.<o:p></o:p></span></p>
+    Added ChangeRegions() function and modified DoBandCoeffUpdate().
+    The Add-In now has a method to handle band heads.
 
-<p class=KeyList><span style='mso-bidi-font-family:"Times New Roman"'><span
-style='mso-tab-count:1'>                                       </span>Added a
-Colors wave to the Assignments folder.<o:p></o:p></span></p>
+    Added GetFitRes().
 
-<p class=KeyList><span style='mso-bidi-font-family:"Times New Roman"'>2.08<span
-style='mso-tab-count:1'>                                 </span>Table Windows
-are now named.<span style='mso-spacerun:yes'>  </span>The name is the Data Set
-folder name + “_AL”, “_LL”, “_SL”, “_CS”, or “_CT”.<span
-style='mso-spacerun:yes'>  </span>Each call to a view function no longer
-creates a new window.<o:p></o:p></span></p>
+    Series with Shape= -1 are now hidden.
 
-<p class=KeyList><span style='mso-bidi-font-family:"Times New Roman"'><span
-style='mso-tab-count:1'>                                       </span>Fixed
-several problems relating to “backwards series” (d</span><span
-style='font-family:Symbol;mso-bidi-font-family:Symbol'>n</span> / d<i>m</i>
-&lt; 0).</p>
+## To Do List
+* Feature to synchronize LW plot with spectrum plot. (Currently, this can be done manually by creating a dependency to the variables in the Plot folder.)
+* Implement structure for Cursor data and move Cursor data to subfolder
+* Implement structure for Plot data
+* Import/Export feature
 
-<p class=KeyList><span style='mso-tab-count:1'>                                       </span>Killing
-Loomis-Wood plot now attempts to delete the plot folder.<span
-style='mso-spacerun:yes'>  </span>This will quietly fail if the user has
-created any windows referencing the data in this folder.</p>
+## References
 
-<p class=KeyList><span style='mso-tab-count:1'>                                       </span>Implemented
-MatrixOp in several places for cleaner code.</p>
+F. W. Loomis and R. W. Wood _Phys. Rev._ 32, 223-236 (1928).
 
-<p class=KeyList><span style='mso-tab-count:1'>                                       </span>Changed
-LWLabelProto(), and modified ExtractAssignments() accordingly.</p>
+J. F. Scott and K. Narahari Rao _J. Mol. Spectrosc._ 20, 461-463 (1966).
 
-<p class=KeyList><span style='mso-tab-count:1'>                                       </span>ExtractAssignments()
-now remembers last used Assignment Function.</p>
+Brenda P. Winnewisser, Jürgen Reinstädtler, Koichi M. T. Yamada , and Jörg Behrend, 
+_J. Mol. Spectrosc._ 136, 12 (1989)
 
-<p class=KeyList><span style='mso-tab-count:1'>                                       </span>Added
-ChangeRegions() function and modified DoBandCoeffUpdate().<span
-style='mso-spacerun:yes'>  </span>The Add-In now has a method to handle band
-heads.</p>
 
-<p class=KeyList><span style='mso-tab-count:1'>                                       </span>Added
-GetFitRes().</p>
-
-<p class=KeyList><span style='mso-tab-count:1'>                                       </span>Series
-with Shape= -1 are now hidden.</p>
-
-<p class=Subtopic><span style='mso-bidi-font-family:"Times New Roman"'>To Do
-List<o:p></o:p></span></p>
-
-<p class=TopicBody><span style='mso-bidi-font-family:"Times New Roman"'>Feature
-to synchronize LW plot with spectrum plot.<span style='mso-spacerun:yes'> 
-</span>(Currently, this can be done manually by creating a dependency to the
-variables in the Plot folder.)<o:p></o:p></span></p>
-
-<p class=TopicBody><span style='mso-bidi-font-family:"Times New Roman"'>Implement
-structure for Cursor data and move Cursor data to subfolder<o:p></o:p></span></p>
-
-<p class=TopicBody><span style='mso-bidi-font-family:"Times New Roman"'>Implement
-structure for Plot data<o:p></o:p></span></p>
-
-<p class=TopicBody><span style='mso-bidi-font-family:"Times New Roman"'>Import/Export
-feature<o:p></o:p></span></p>
-
-<p class=Subtopic><span style='mso-bidi-font-family:"Times New Roman"'>References<o:p></o:p></span></p>
-
-<p class=TopicBody><span style='mso-bidi-font-family:"Times New Roman"'>F. W.
-Loomis and R. W. Wood <i>Phys. Rev. </i>32, 223-236 (1928).<o:p></o:p></span></p>
-
-<p class=TopicBody><span style='mso-bidi-font-family:"Times New Roman"'>J. F.
-Scott and K. Narahari Rao <i>J. Mol. Spectrosc. </i>20, 461-463 (1966).<o:p></o:p></span></p>
-
-<p class=TopicBody><span style='mso-bidi-font-family:"Times New Roman"'>Brenda
-P. Winnewisser, Jürgen Reinstädtler, Koichi M. T. Yamada , and Jörg Behrend, <i>J.
-Mol. Spectrosc. </i>136, 12{16 (1989)<o:p></o:p></span></p>
-
-</div>
-
-</body>
-
-</html>
