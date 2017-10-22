@@ -1,10 +1,11 @@
-﻿# Loomis-Wood Manual
+﻿
+# Loomis-Wood Manual
 
 Loomis-Wood Add-In
 
 Version 2.08
 
-June 3, 2005
+June 3, 2005  (Converted to MarkDown October 22, 2017)
 
 Christopher F. Neese
 
@@ -23,12 +24,12 @@ http://fermi.uchicago.edu/freeware/LoomisWood.shtml
 - [Working with Band Heads](#working-with-band-heads)
 - [How It Works](#how-it-works)
 - [Troubleshooting](#troubleshooting)
-- [Menu/Command Reference](#menu/command-reference)
+- [Menu/Command Reference](#menucommand-reference)
 - [Keyboard Reference](#keyboard-reference)
 - [Function Reference](#function-reference)
 - [Structures](#structures)
 - [Customization](#customization)
-- [Revision List](#revision-list)
+- [Revision Notes](#revision-notes)
 - [To Do List](#to-do-list)
 - [References](#references)
 
@@ -288,13 +289,10 @@ In particular, each plot has a wave named BandCoeff that contains the rotational
 A Loomis-Wood folder can contain multiple Loomis-Wood folders so that different plots of the same
 data set can be shown concurrently.   Four dependency formulas keep the data in the Loomis-Wood plot folder synchronized so that the display is accurate:
 
-`BandCoeffUpdate := DoBandCoeffUpdate(BandCoeff)
-
-TriangleUpdate := DoTriangleUpdate(Line_LWm,::Lines:Assignments, ::Series:Color, ::Series:Shape, StartM, EndM, Zoom)
-
-SeriesOrder := DoSeriesOrderUpdate(::Series:Order, CurrentSeries)
-
-SeriesNameUpdate := DoSeriesNameUpdate(::Series:Name, CurrentSeries)`
+	BandCoeffUpdate := DoBandCoeffUpdate(BandCoeff)
+	TriangleUpdate := DoTriangleUpdate(Line_LWm,::Lines:Assignments, ::Series:Color, ::Series:Shape, StartM, EndM, Zoom)
+	SeriesOrder := DoSeriesOrderUpdate(::Series:Order, CurrentSeries)
+	SeriesNameUpdate := DoSeriesNameUpdate(::Series:Name, CurrentSeries)`
 
 The use of dependencies to keep the Loomis-Wood plot accurate is important, since the
 data that trigger these dependencies are not necessarily changed programmatically.
@@ -334,7 +332,7 @@ displays.   The data in the SeriesFit and
 Assignments folders (described below) will also be useful.
 
 * startNu, endNu
-    The starting and ending frequency of the Loomis-Wood plot.  Note that endNu < startNu is possible when d_nu_/d_m_ < 0.
+    The starting and ending frequency of the Loomis-Wood plot.  Note that endNu < startNu is possible when dν/d_m_ < 0.
 
 * startM, endM
     The starting and ending _m_ of the Loomis-Wood plot.
@@ -345,7 +343,7 @@ Assignments folders (described below) will also be useful.
 
 * minNu, maxNu
     The current frequency limits of monotonicity of the fitting polynomial.
-    Note that if d_nu_/d_m_ < 0, minNu corresponds to maxM and maxNu corresponds to minNu.
+    Note that if dν/d_m_ < 0, minNu corresponds to maxM and maxNu corresponds to minNu.
 
 * minM, maxM
     The current _m_ limits of monotonicity of the polynomial.
@@ -385,8 +383,7 @@ The width of the line selected by the Loomis-wood cursor.
 ### The SeriesFit folder:
 
 The SeriesFit folder is where data for a series is extracted for the **Series |
-View Current Series…** and **Series | Fit Current Series** commands.<span
-style='mso-spacerun:yes'>  In this folder, you will find the following
+View Current Series…** and **Series | Fit Current Series** commands.  In this folder, you will find the following
 waves:
 
 * Frequency
@@ -421,8 +418,7 @@ If the series is fit, the following waves will contain the results of the fit:
 * W_Sigma 
     the error in the coefficients of the fit
 
-Note the data in this folder is not synchronized with the Loomis-Wood data set.<span
-style='mso-spacerun:yes'>  Editing the data in this folder will not
+Note the data in this folder is not synchronized with the Loomis-Wood data set.  Editing the data in this folder will not
 assign , unassign, mask, or unmask lines in the data set.
 
 ### Assignments folder:
@@ -431,8 +427,7 @@ The Assignments folder is where the data from the **Data Sets | Extract
 Assignments...** command is collected.  
 (The waves in this folder must be updated manually using the Extract
 Assignments command.)   When the user
-selects Extract Assignments, a dialog will ask for an Assignment Function.<span
-style='mso-spacerun:yes'>  This function is user supplied and must use
+selects Extract Assignments, a dialog will ask for an Assignment Function.  This function is user supplied and must use
 the following prototype:
 
     function LWLabelProto(a, s)
@@ -591,374 +586,191 @@ window.   You may also find that the plot only responds to keystrokes when the 
 
 ## Menu/Command Reference
 
-<p class=Subtopic>Data
-Sets | Create a New Loomis-Wood Data Set...<span style='mso-tab-count:2'>       
-    NewLWDataSet()
+**Data Sets | Create a New Loomis-Wood Data Set...**            NewLWDataSet()
 
-This
-command creates a new Loomis-Wood data set.  
+This command creates a new Loomis-Wood data set.  
 The user will be asked for a folder name, then for a wave containing
-line frequencies and optional intensities and widths.<span
-style='mso-spacerun:yes'>  These waves will be used to create a new data
+line frequencies and optional intensities and widths.  These waves will be used to create a new data
 set folder and a default plot named “Plot0” will be created.
 
-<p class=Subtopic>Data Sets
-| Delete a Loomis-Wood Data Set...<span style='mso-tab-count:2'>               
-    DeleteLWDataSet("")
+**Data Sets | Delete a Loomis-Wood Data Set...**                    DeleteLWDataSet("")
 
-This
-command will delete an existing Loomis-Wood data set.<span
-style='mso-spacerun:yes'>  With a null (“”) argument a dialog will ask
+This command will delete an existing Loomis-Wood data set.  With a null ("") argument a dialog will ask
 for the name of the folder.   Otherwise,
-the argument should be the path-free name of the folder to delete.<span
-style='mso-spacerun:yes'>  Before calling this command, all plot windows
+the argument should be the path-free name of the folder to delete.  Before calling this command, all plot windows
 should be closed.
 
-<p class=Subtopic>Data
-Sets | View Line List...<span style='mso-tab-count:2'>                                          
-    ViewLineList()
+**Data Sets | View Line List...**                                               ViewLineList()
 
-This
-command will create a table of the waves in the Lines subfolder of the data set
+This command will create a table of the waves in the Lines subfolder of the data set
 associated with the top LW plot.   This
-data should not be manually edited, but if editing is necessary, call the **Data
-Sets | Synchronize Series to Lines** command when finished.
+data should not be manually edited, but if editing is necessary, call the **Data Sets | Synchronize Series to Lines** command when finished.
 
-<p class=Subtopic>Data
-Sets | View Series List...               
-    (F8)                  ViewSeriesList()
+**Data Sets | View Series List...**                  (F8)                  ViewSeriesList()
 
-This
-command will create a table of the waves in the Series subfolder of the data
+This command will create a table of the waves in the Series subfolder of the data
 set associated with the top LW plot.  
 This data can be manually edited, but if sorting or reordering is
 neccessary, call the **Data Sets | Synchronize Lines to Series** command
 when finished.
 
-<p class=Subtopic>Data
-Sets | Fit All Series                       
-    (Shift-F9)          FitAll()
+**Data Sets | Fit All Series**                           (Shift-F9)          FitAll()
 
-This
-command will fit each series in the Data Set and create a report in a notebook
-named LWresults.   The Command also
-creates a two-dimensional wave of the band coefficients in the Series folder
+This command will fit each series in the Data Set and create a report in a notebook
+named LWresults.   The Command also creates a two-dimensional wave of the band coefficients in the Series folder
 named BandCoeffTable.
 
-<p class=Subtopic>Data
-Sets | Extract Assignments...        
-    (F9)                  ExtractAssignments("")
+**Data Sets | Extract Assignments...**          (F9)                  ExtractAssignments("")
 
 This
 command will create a table containing a listing of the assigned lines in the
 data set.   With a null (“”) argument, the
-user will be asked for an optional assignment function.<span
-style='mso-spacerun:yes'>  This function can be used to quickly convert
-the add-ins listing to a form suitable for a separate fitting program.<span
-style='mso-spacerun:yes'>  See “The Assignments folder” above.
+user will be asked for an optional assignment function.  This function can be used to quickly convert
+the add-ins listing to a form suitable for a separate fitting program.  See “The Assignments folder” above.
 
-Please
-note that the data in the resulting table is not synchronized with the master
-line list.   .<span
-style='mso-spacerun:yes'>  Editing the data in this table will not
-assign , unassign, mask, or unmask lines in the data set.
+Please note that the data in the resulting table is not synchronized with the master
+line list.  Editing the data in this table will not
+assign, unassign, mask, or unmask lines in the data set.
 
-<p class=Subtopic>Data
-Sets | Update Line List...<span style='mso-tab-count:2'>                                      
+**Data Sets | Update Line List...**                                       
     UpdateLinesFolder(NaN)
 
-This
-command is designed to be run when your line-listing as been modified outside
+This command is designed to be run when your line-listing as been modified outside
 of the add-in.   For example, if you
 re-measure lines or add lines to the line listing, you should call this
 function.   You can also call this
-function to add or remove widths and/or intensities from the data-folder.<span
-style='mso-spacerun:yes'>  (Backup your data first, as assignments can
+function to add or remove widths and/or intensities from the data-folder.  (Backup your data first, as assignments can
 be lost.)   With NaN as an argument, the
 user will be asked for a tolerance.   If
-lines have only been added ore removed, then tolerance can be 0.<span
-style='mso-spacerun:yes'>  If the line centers have changed however,
+lines have only been added ore removed, then tolerance can be 0.  If the line centers have changed however,
 tolerance should be larger than zero.   If
 a line in the new line listing is within +/- tolerance of the old listing, then
 the two lines are considered the same, and the new line will inherit the
 assignments of the old line.   If there
 are multiple new lines within +/- tolerance of the old line, the closest new
-line will inherit the assignments of the old line.<span
-style='mso-spacerun:yes'>  If no line in the new listing is within +/-
+line will inherit the assignments of the old line.  If no line in the new listing is within +/-
 tolerance of an assigned line in the old listing, then a warning will be
 printed to the history window.
 
-The
-first thing this command does is duplicate the Lines folder as LinesBak.<span
-style='mso-spacerun:yes'>  Thus, if you have problems, you can copy the
+The first thing this command does is duplicate the Lines folder as LinesBak.  Thus, if you have problems, you can copy the
 data from the LinesBak subfolder back to the Lines subfolder.
 
-<p class=Subtopic>Data
-Sets | Synchronize Series to Lines<span style='mso-tab-count:2'>                       
-    SynchronizeLines2Series()
+**Data Sets | Synchronize Series to Lines**                            SynchronizeLines2Series()
 
-This
-command sorts the waves in the Lines subfolder by Lines:Frequency, then
-recreates the Series:Data wave from the Lines:Assignments wave.<span
-style='mso-spacerun:yes'>  This is necessary when the waves in the Lines
+This command sorts the waves in the Lines subfolder by Lines:Frequency, then
+recreates the Series:Data wave from the Lines:Assignments wave.  This is necessary when the waves in the Lines
 folder are manually edited.
 
-<p class=Subtopic>Data
-Sets | Synchronize Lines to Series<span style='mso-tab-count:2'>                       
-    SynchronizeSeries2Lines()
+**Data Sets | Synchronize Lines to Series**                            SynchronizeSeries2Lines()
 
-This
-command recreates the Lines:Assignments wave from the Series:Data wave.<span
-style='mso-spacerun:yes'>  This is necessary when the waves in the Series
+This command recreates the Lines:Assignments wave from the Series:Data wave.  This is necessary when the waves in the Series
 folder are manually sorted, redimensioned or otherwise reordered.
 
-<p class=Subtopic>Data
-Sets | Edit Colors<span style='mso-tab-count:2'>                                                 
-    EditColors()
+**Data Sets | Edit Colors**                                                      EditColors()
 
-This
-command creates a table containing the Colors wave.<span
-style='mso-spacerun:yes'>  This table can be manually edited as needed.
+Thiscommand creates a table containing the Colors wave.  This table can be manually edited as needed.
 
-<p class=Subtopic><o:p>&nbsp;</o:p>
 
-<p class=Subtopic>Plots |
-Create a New Loomis-Wood Plot...<span style='mso-tab-count:2'>                    
-    NewLWPlot("","")
+**Plots | Create a New Loomis-Wood Plot...**                         NewLWPlot("","")
 
-This
-command creates another Loomis-Wood plot.  
+This command creates another Loomis-Wood plot.  
 With null arguments, the user will be asked for an existing data set and
 a name for the new plot.
 
-<p class=Subtopic>Plots |
-Change M-axis scaling...           
-    (F11)                 ChangeRange(0,0)
+**Plots | Change M-axis scaling...**               (F11)                 ChangeRange(0,0)
 
-This
-command can be used to change the y-axis scaling of a Loomis-Wood plot.<span
-style='mso-spacerun:yes'>  With 0,0 as the arguments, the user will be
+This command can be used to change the y-axis scaling of a Loomis-Wood plot.  With 0,0 as the arguments, the user will be
 asked for the new minimum and maximum values for _m_.
 
-<p class=Subtopic>Plots |
-Edit Band Constants...              
-    (F12)                 EditBandConstants()
+**Plots | Edit Band Constants...**                  (F12)                 EditBandConstants()
 
-This
-command allows the user to manually edit the constants used to draw the lop
+This command allows the user to manually edit the constants used to draw the lop
 Loomis-Wood plot.   This is necessary in
-the beginning of an assignment to get the assignment started.<span
-style='mso-spacerun:yes'>  After the assignment is started, one usually
-adjusts the constants via **Series | Fit Current Series**.<span
-style='mso-spacerun:yes'>  The change can be undone with **Series |
+the beginning of an assignment to get the assignment started.  After the assignment is started, one usually
+adjusts the constants via **Series | Fit Current Series**.  The change can be undone with **Series |
 Undo Last Fit**.
 
-<p class=Subtopic>Plots |
-Change Region...                      
-    (Shift-F12)        ChangeRegion()
+**Plots | Change Region...**                          (Shift-F12)        ChangeRegion()
 
-This
-command allows the user to select which monotonic region the plot
-displays.   This is necessary when working
-with series that involve band heads.   See
-<u><span style='color:blue'>Working with Band Heads</u><span
-style='color:black'> for more details.
+This command allows the user to select which monotonic region the plot
+displays.   This is necessary when working with series that involve band heads.  See [Working with Band Heads](#working-with-band-heads) for more details.
 
-<p class=Subtopic><o:p>&nbsp;</o:p>
 
-<p class=Subtopic>Series |
-Start a New Series...                
-    (F2)                  AddSeries()
+**Series | Start a New Series...**                     (F2)                  AddSeries()
 
-Starts
-a new series.   The user will be asked for
-a name and color for the new series.
+Starts a new series.   The user will be asked for a name and color for the new series.
 
-<p class=Subtopic>Series |
-Select a Series…                     
-    (F3)                  SelectSeries()
+**Series | Select a Series...**                     (F3)                  SelectSeries()
 
-Changes
-the current series.
+Changes the current series.
 
-<p class=Subtopic>Series |
-Delete a Series…                     
-    (F4)                  DeleteSeries()
+**Series | Delete a Series...**                         (F4)                  DeleteSeries()
 
-Deletes
-a series.
+Deletes a series.
 
-<p class=Subtopic>Series |
-Fit Current Series                    
-    (F5)                  Print
+**Series | Fit Current Series**                        (F5)                  Print
 FitSeries(GetCurrentSeriesNumber())
 
-Fits
-the current series.   Can be undone with **Series
-| Undo Last Fit**.
+Fits the current series.   Can be undone with **Series | Undo Last Fit**.
 
-<p class=Subtopic>Series |
-Undo Last Fit                           
-    (Shift-F5)          UndoFit()
+**Series | Undo Last Fit**                               (Shift-F5)          UndoFit()
 
-Reverts
-the constants used in the topmost Loomis-Wood plot to their<span
-style='mso-spacerun:yes'>  previous values.<span
-style='mso-spacerun:yes'>  (The Undo level is only one.)
+Reverts the constants used in the topmost Loomis-Wood plot to their previous values. (The Undo level is only one.)
 
-<p class=Subtopic>Series |
-M-Shift Current Series             
-    (F6)                  ShiftSeries(GetCurrentSeriesNumber(),0,1)
+**Series | M-Shift Current Series**                 (F6)                  ShiftSeries(GetCurrentSeriesNumber(),0,1)
 
-This
-command adjusts the assignment of _m_ for the current series and adjusts
+This command adjusts the assignment of _m_ for the current series and adjusts
 the current constants to reflect this change.
 
-<p class=Subtopic>Series |
-View Current Series…             
-    (F7)                  ViewSeries(GetCurrentSeriesNumber())
+**Series | View Current Series...**                 (F7)                  ViewSeries(GetCurrentSeriesNumber())
 
-This
-command creates a table containing the current series.<span
-style='mso-spacerun:yes'>  This table is not updated when new
-assignments are made, but is updated upon a fit.
+This command creates a table containing the current series.
+This table is not updated when new assignments are made, but is updated upon a fit.
 
-Please
-note that the data in the resulting table is not synchronized with the master
-line list.   .<span
-style='mso-spacerun:yes'>  Editing the data in this table will not
+Please note that the data in the resulting table is not synchronized with the master
+line list.  Editing the data in this table will not
 assign , unassign, mask, or unmask lines in the data set.
 
-<p class=Subtopic>Series |
-View Series List...                   
-    (F8)                  ViewSeriesList()
+**Series | View Series List...**                       (F8)                  ViewSeriesList()
 
-Same as
-**Data Sets | View Series List...**.
+Same as **Data Sets | View Series List...**.
 
-<p class=Subtopic><o:p>&nbsp;</o:p>
+## Keyboard Reference
 
-<p class=Subtopic>Keyboard
-Reference
+Key      | Command
+---------|-----------------------------------------
+F2       | Start a New Series...
+F3       | Select a Series…
+F4       | Delete a Series…
+F5       | FitCurrent Series
+Shift-F5 | Undo Last Fit
+F6       | M-Shift Current Series
+F7       | View Current Series…
+F8       | View Series List...
+F9       | Extract Assignments...
+F11      | Change M-axis Scaling...
+F12      | Edit Band Constants...
 
-<p class=Subtopic>F2                                                        
-    Start
-a New Series...
+The actions corresponding to the function keys are described above.
 
-<p class=Subtopic>F3                                                        
-    Select
-a Series…
-
-<p class=Subtopic>F4                                                        
-    Delete
-a Series…
-
-<p class=Subtopic>F5                                                        
-    Fit
-Current Series
-
-<p class=Subtopic>Shift-F5                                                
-    Undo
-Last Fit
-
-<p class=Subtopic>F6                                                        
-    M-Shift
-Current Series
-
-<p class=Subtopic>F7                                                        
-    View
-Current Series…
-
-<p class=Subtopic>F8                                                        
-    View
-Series List...
-
-<p class=Subtopic>F9                                                        
-    Extract
-Assignments...
-
-<p class=Subtopic>F11                                                       
-    Change
-M-axis Scaling...
-
-<p class=Subtopic>F12                                                       
-    Edit
-Band Constants...
-
-The
-actions corresponding to the function keys are described above.
-
-<p class=Subtopic>Enter                                                    
-    Assign
-Line
-
-Enter
-assigns the current line to the current series.  
-There is no menu command corresponding to this action.
-
-<p class=Subtopic>Delete (Ctrl-Backspace)                         
-    Unassign
-Line (From Current Series)
-
-Delete
-unassigns the current line from the current series.<span
-style='mso-spacerun:yes'>  There is no menu command corresponding to
-this action.
-
-<p class=Subtopic>Backspace                                            
-    Reserved
-
-<p class=Subtopic>Home                                                   
-    Reserved
-
-<p class=Subtopic>End                                                      
-    Reserved
-
-<p class=Subtopic>Up                                                        
-    Move
-Cursor Up
-
-<p class=Subtopic>Down                                                   
-    Move
-Cursor Down
-
-<p class=Subtopic>Left                                                      
-    Move
-Cursor Left
-
-<p class=Subtopic>Right                                                    
-    Move
-Cursor Right
-
-The
-cursor can also be moved by single-clicking a line with the mouse.
-
-<p class=Subtopic>PageUp/PageDn                                   
-    Scroll
-Up/Down
-
-The
-graph can also be scrolled using the **Change M-axis Scaling...** (F7)
-command.
-
-<p class=Subtopic>K                                                          
-    Toggle
-Loomis-Wood Fit Flag
-
-<p class=Subtopic>U                                                          
-    Toggle
-Upper State Fit Flag
-
-<p class=Subtopic>L                                                          
-    Toggle
-Lower State Fit Flag
-
-The
-Loomis-Wood fit Flag determines whether the add-in uses a line in a fit or
-not.   The other two fit flags are
-provided for external use.   There are no
-menu commands corresponding to K, U, or L but the flags can also be toggled
-with the listbox in the control bar of a Loomis-Wood plot.
+Key      | Command                                 |
+---------|-----------------------------------------|
+Enter    | Assign Line Enter assigns the current line to the current series.  There is no menu command corresponding to this action.
+Delete (Ctrl-Backspace) | Unassign Line (From Current Series) Delete unassigns the current line from the current series.  There is no menu command corresponding to this action. |
+Backspace| Reserved                                |
+Home     | Reserved                                |
+End      | Reserved                                |
+Up       | Move Cursor Up                          |
+Down     | Move Cursor Down                        |
+Left     | Move Cursor Left                        |
+Right    | Move Cursor Right                       |
+The cursor can also be moved by single-clicking a line with the mouse. ||
+PageUp/PageDn | Scroll Up/Down                     |
+The graph can also be scrolled using the **Change M-axis Scaling...** (F7) command. |
+K        | Toggle Loomis-Wood Fit Flag             |
+U        | Toggle Upper State Fit Flag             |
+L        | Toggle Lower State Fit Flag             |
+The Loomis-Wood fit Flag determines whether the add-in uses a line in a fit or not.   The other two fit flags are provided for external use.   There are no menu commands corresponding to K, U, or L but the flags can also be toggled with the listbox in the control bar of a Loomis-Wood plot. ||
 
 ### Loomis-Wood Toolbar
 
@@ -1017,233 +829,204 @@ The static functions are described (as needed) in the source code.
 
 ### Menu support functions:
 
-<p class=CodeIndented>static function/S OnLWmenuBuild()
+static function/S OnLWmenuBuild()
 
-<p class=CodeIndented>static function/S LWDynamicMenuItem()
+static function/S LWDynamicMenuItem()
 
-<p class=CodeIndented>static function About()
+static function About()
 
-<p class=Subtopic>General
-utility functions:
+### General utility functions:
 
-<p class=CodeIndented>static function BinarySearch2(w, y)
+static function BinarySearch2(w, y)
 
-<p class=CodeIndented>static function/S Real1DWaveList(arg1,arg2,arg3)
+static function/S Real1DWaveList(arg1,arg2,arg3)
 
-<p class=CodeIndented>static function/S FolderList(sourceFolderStr)
+static function/S FolderList(sourceFolderStr)
 
-<p class=CodeIndented>static function/S TextWave2List(theTextWave)
+static function/S TextWave2List(theTextWave)
 
-<p class=CodeIndented>static function/S DimLabels2List(w, dim)
+static function/S DimLabels2List(w, dim)
 
-<p class=CodeIndented>static function/S List2DimLabels(w, dim, list)
+static function/S List2DimLabels(w, dim, list)
 
-<p class=CodeIndented>static function/S StandardBandLabels(order)
+static function/S StandardBandLabels(order)
 
-<p class=CodeIndented>static function StandardBand2Poly(row, column, deltaJ)
+static function StandardBand2Poly(row, column, deltaJ)
 
-<p class=CodeIndented>static function poly2(coeff, order, theX)
+static function poly2(coeff, order, theX)
 
-<p class=CodeIndented>static function/C bound_poly(coeff, order, theX)
+static function/C bound_poly(coeff, order, theX)
 
-<p class=CodeIndented>static function CompareFunctions(f1, f2)
+static function CompareFunctions(f1, f2)
 
-<p class=Subtopic>Misc.
-Loomis-Wood functions:
+### Misc. Loomis-Wood functions:
 
-<p class=CodeIndented>static function isTopWinLWPlot(theWinType)
+static function isTopWinLWPlot(theWinType)
 
-<p class=CodeIndented>static function/S GetPlotList()
+static function/S GetPlotList()
 
-<p class=CodeIndented>static function/S GetPlotFolderList()
+static function/S GetPlotFolderList()
 
-<p class=CodeIndented>static function GetFolders(theWinType, DataSet,
-PlotFolder)
+static function GetFolders(theWinType, DataSet, PlotFolder)
 
-<p class=CodeIndented>static function ValidateSourceFolder (DataSet)
+static function ValidateSourceFolder (DataSet)
 
-<p class=Subtopic>Main
-Loomis-Wood interface functions:
+### Main Loomis-Wood interface functions:
 
-<p class=CodeIndented>function NewLWDataSet()
+function NewLWDataSet()
 
-<p class=CodeIndented>static function/S GetNewLWDataFolder()
+static function/S GetNewLWDataFolder()
 
-<p class=CodeIndented>static function GetPeakfinderWaves(Line_Frequency, Line_Intensity,
-Line_Width)
+static function GetPeakfinderWaves(Line_Frequency, Line_Intensity, Line_Width)
 
-<p class=CodeIndented>static function VerifyInputWaveDims(Line_Frequencies,
-Line_Intensities, Line_Widths)
+static function VerifyInputWaveDims(Line_Frequencies, Line_Intensities, Line_Widths)
 
-<p class=CodeIndented>static function
-GetNumLines(Line_Frequencies,Line_Intensities,Line_Widths)
+static function GetNumLines(Line_Frequencies,Line_Intensities,Line_Widths)
 
-<p class=CodeIndented>static function NewLinesFolder(SourceDF, LWDF)
+static function NewLinesFolder(SourceDF, LWDF)
 
-<p class=CodeIndented>static function NewSeriesFolder(DataSet)
+static function NewSeriesFolder(DataSet)
 
-<p class=CodeIndented>function DeleteLWDataSet(DataSet)
+function DeleteLWDataSet(DataSet)
 
-<p class=CodeIndented>function DeleteLWPlotFolder(PlotFolder)
+function DeleteLWPlotFolder(PlotFolder)
 
-<p class=CodeIndented>function ViewLineList()
+function ViewLineList()
 
-<p class=CodeIndented>function EditColors()
+function EditColors()
 
-<p class=CodeIndented>function NewLWPlot(DataSet, PlotFolder)
+function NewLWPlot(DataSet, PlotFolder)
 
-<p class=Subtopic>Data
-dependency functions:
+#### Data dependency functions:
 
-<p class=CodeIndented>function DoBandCoeffUpdate(BandCoeff)
+function DoBandCoeffUpdate(BandCoeff)
 
-<p class=CodeIndented>function DoSeriesOrderUpdate(Series_Order, CurrentSeries)
+function DoSeriesOrderUpdate(Series_Order, CurrentSeries)
 
-<p class=CodeIndented>function DoTriangleUpdate(LWm, Assignments, Series_Color,
-Series_Shape, StartM, EndM, Zoom)
+function DoTriangleUpdate(LWm, Assignments, Series_Color, Series_Shape, StartM, EndM, Zoom)
 
-<p class=Subtopic>Loomis-Wood
-plot hook functions:
+#### Loomis-Wood plot hook functions:
 
-<p class=CodeIndented>function LWHookFunction(s)
+function LWHookFunction(s)
 
-<p class=CodeIndented>function OrderSetVarProc(ctrlName,varNum,varStr,varName) :
-SetVariableControl
+function OrderSetVarProc(ctrlName,varNum,varStr,varName) : SetVariableControl
 
-<p class=CodeIndented>function
-CurrentSeriesPopupMenuControl(ctrlName,popNum,popStr) : PopupMenuControl
+function CurrentSeriesPopupMenuControl(ctrlName,popNum,popStr) : PopupMenuControl
 
-<p class=CodeIndented>function ListBoxProc(LB_Struct) : ListBoxControl
+function ListBoxProc(LB_Struct) : ListBoxControl
 
-<p class=Subtopic>Loomis-Wood
-plot event handlers:
+### Loomis-Wood plot event handlers:
 
-<p class=CodeIndented>static function HitTest(s)
+static function HitTest(s)
 
-<p class=CodeIndented>static function NearestPeak(theX, theY)
+static function NearestPeak(theX, theY)
 
-<p class=CodeIndented>static function VerticalScroll(Amount)
+static function VerticalScroll(Amount)
 
-<p class=CodeIndented>static function LinesPerFrame()
+static function LinesPerFrame()
 
-<p class=CodeIndented>static function UpdateCursor()
+static function UpdateCursor()
 
-<p class=CodeIndented>static function AssignmentString2ListBoxWaves(str,
-seriesNames, tw, sw)
+static function AssignmentString2ListBoxWaves(str, seriesNames, tw, sw)
 
-<p class=CodeIndented>static function MoveCursor(theP)
+static function MoveCursor(theP)
 
-<p class=CodeIndented>static function CursorPosition()
+static function CursorPosition()
 
-<p class=CodeIndented>static function CursorM()
+static function CursorM()
 
-<p class=CodeIndented>static function VMoveCursor(Amount)
+static function VMoveCursor(Amount)
 
-<p class=CodeIndented>static function HMoveCursor(Amount)
+static function HMoveCursor(Amount)
 
-<p class=CodeIndented>function ChangeRange(theMin, theMax)  //F11
+function ChangeRange(theMin, theMax)  //F11
 
-<p class=Subtopic>Series-related
-functions:
+#### Series-related functions:
 
-<p class=CodeIndented>function AddSeries() //
-F2
+function AddSeries() // F2
 
-<p class=CodeIndented>function SelectSeries() //
-F3
+function SelectSeries() // F3
 
-<p class=CodeIndented>static function ChangeCurrentSeries(theSeries)
+static function ChangeCurrentSeries(theSeries)
 
-<p class=CodeIndented>function DeleteSeries() //
-F4
+function DeleteSeries() // F4
 
-<p class=CodeIndented>function GetCurrentSeriesNumber()
+function GetCurrentSeriesNumber()
 
-<p class=CodeIndented>function/S FitSeries(theSeries)<span style='mso-tab-count:
-1'>   // F5
+function/S FitSeries(theSeries) // F5
 
-<p class=CodeIndented>function/S GetFitRes(s)
+function/S GetFitRes(s)
 
-<p class=CodeIndented>function FitAll()
+function FitAll()
 
-<p class=CodeIndented>function/S UndoFit() //
-Shift-F5
+function/S UndoFit() // Shift-F5
 
-<p class=CodeIndented>static function FetchSeries(theSeries)
+static function FetchSeries(theSeries)
 
-<p class=CodeIndented>function ShiftSeries(theSeries, theShift,
-autoFixConstants)   // F6
+function ShiftSeries(theSeries, theShift, autoFixConstants)   // F6
 
-<p class=CodeIndented>static function ShiftConstants(theShift)
+static function ShiftConstants(theShift)
 
-<p class=CodeIndented>function ViewSeries(theSeries)<span style='mso-tab-count:
-1'> // F7
+function ViewSeries(theSeries) // F7
 
-<p class=CodeIndented>function ViewSeriesList()  //
-F8
+function ViewSeriesList() // F8
 
-<p class=CodeIndented>function EditBandConstants()<span style='mso-tab-count:
-2'>      //F12
+function EditBandConstants() //F12
 
-<p class=CodeIndented>static function ChangeRegions()
+static function ChangeRegions()
 
-<p class=Subtopic>Assignment-related
-functions:
+### Assignment-related functions:
 
-<p class=CodeIndented>structure AssignmentStruct
+structure AssignmentStruct
 
-<p class=CodeIndented>static function ReadAssignment(theP, theSeries, s)
+static function ReadAssignment(theP, theSeries, s)
 
-<p class=CodeIndented>static function AssignLine2(s)
+static function AssignLine2(s)
 
-<p class=CodeIndented>static function AssignLine(theP, theSeries, theM, LWmask,
+static function AssignLine(theP, theSeries, theM, LWmask,
 USmask, LSmask, Notes)
 
-<p class=CodeIndented>static function UnAssignLine(theP, theSeries)
+static function UnAssignLine(theP, theSeries)
 
-<p class=CodeIndented>function ExtractAssignments(functionName)    // F9
+function ExtractAssignments(functionName)    // F9
 
-<p class=Subtopic>Structures:
+Structures:
 
-<p class=CodeIndented>structure SeriesStruct
+structure SeriesStruct
 
-<p class=CodeIndented>static function GetSeriesStruct(DataSet, s, [flag])
+static function GetSeriesStruct(DataSet, s, [flag])
 
-<p class=CodeIndented>structure LinesStruct
+structure LinesStruct
 
-<p class=CodeIndented>static function GetLinesStruct(DataSet, s, [flag])
+static function GetLinesStruct(DataSet, s, [flag])
 
-<p class=CodeIndented>structure AssignmentListStruct
+structure AssignmentListStruct
 
-<p class=CodeIndented>static function GetAssignmentListStruct(DataSet, s,
+static function GetAssignmentListStruct(DataSet, s,
 [flag])
 
-<p class=CodeIndented>structure SeriesFitStruct
+structure SeriesFitStruct
 
-<p class=CodeIndented>static function GetSeriesFitStruct(DataSet, s, [flag])
+static function GetSeriesFitStruct(DataSet, s, [flag])
 
-<p class=Subtopic>New
-stuff:
+### New stuff:
 
-<p class=CodeIndented>function SynchronizeSeries2Lines()
+function SynchronizeSeries2Lines()
 
-<p class=CodeIndented>function SynchronizeLines2Series()
+function SynchronizeLines2Series()
 
-<p class=CodeIndented>function UpdateLinesFolder(FreqTol)
+function UpdateLinesFolder(FreqTol)
 
-<p class=Subtopic>Structures
+## Structures
 
-The
-data contained in the Lines, Series, Assignments, and SeriesFit subfolders is
+The data contained in the Lines, Series, Assignments, and SeriesFit subfolders is
 accessible through structures.   Use the
 GetLinesStruct(), GetSeriesStruct(), GetAssignmentListStruct(), and
 GetSeriesFitStruct() functions to create a structure referencing these
 folders.   This greatly simplifies writing
 functions to access this data, and simplifies the code of the add-in as well.
 
-The
-add-in does not implement structures for the data in a plot subfolder.<span
-style='mso-spacerun:yes'>  The reason for this is that many of the
+The add-in does not implement structures for the data in a plot subfolder.  The reason for this is that many of the
 functions that use this data need fast response to prevent the add-in from
 becoming sluggish.   Since dereferencing a
 global data object involves a significant overhead, it is best to only
@@ -1251,162 +1034,147 @@ dereference (using NVAR, SVAR, and WAVE). the objects needed.
 
 ## Customization
 
-There are several function of the Add-In that the user may want to customize.<span
-style='mso-spacerun:yes'>  The most important is the Extract Assignments
+There are several function of the Add-In that the user may want to customize.  The most important is the Extract Assignments
 feature, which has already been discussed.  
-(See <u><span style='color:blue'>The Assignments Folder:</u><span
-style='color:black'>.)   There are several
+(See [The Assignments Folder]().)   There are several
 other function this user may want to customize.  
-Most of these can be changed using <u><span style='color:blue'>Function
-Overrides</u><span style='color:black'>, although you can edit the main
-procedure file if you want.   Functions
-the user may want to customize are:
+Most of these can be changed using [Function Overrides](), although you can edit the main
+procedure file if you want.   Functions the user may want to customize are:
 
-<p class=CodeIndented>static function/S StandardBandLabels(order)
+static function/S StandardBandLabels(order)
 
-<p class=CodeIndented>static function StandardBand2Poly(row, column, deltaJ)
+static function StandardBand2Poly(row, column, deltaJ)
 
-<p class=TopicBody style='margin-left:.5in'><span style='mso-bidi-font-family:
-"Times New Roman"'>These two functions create the Band2Poly, Poly2Band and
+These two functions create the Band2Poly, Poly2Band and
 BandCoeffLabels waves.   If one overrides
 these functions, you can alter the fitting constants for all new data sets in
 an entire experiment.   (You can also edit
 these waves manually on a per-data-set basis.)  
 For example, you may prefer to fit series in terms of _B_’ and _B_”
-instead of _B_” and <span style='font-family:Symbol;mso-bidi-font-family:
-Symbol'>D_B_.   Another
-example would be changing the fitting for <span style='font-family:Symbol;
-mso-bidi-font-family:Symbol'>D_J_ = 2 transitions.<span
-style='mso-spacerun:yes'>  If you want to change the fitting to a
-non-polynomial model, a lot more work is involved.<span
-style='mso-spacerun:yes'>  However it should be possible by editing any
+instead of _B_” and D_B_.   Another
+example would be changing the fitting for D_J_ = 2 transitions.  If you want to change the fitting to a
+non-polynomial model, a lot more work is involved. However it should be possible by editing any
 function that uses the PolyCoeff wave.
 
-<p class=CodeIndented>function/S GetFitRes(s)
+function/S GetFitRes(s)
 
-<p class=TopicBody style='margin-left:.5in'><span style='mso-bidi-font-family:
-"Times New Roman"'>Overriding this function allows the user to customize the
-output the fitting routine prints after every fit.
+Overriding this function allows the user to customize the output the fitting routine prints after every fit.
 
-<p class=Subtopic>Globalization
+### Globalization
 
-All
-text used in dialogs is contained in strconstants at the top of the procedure
-file.   If someone needs to translate the
-text, all that needs to be edited are these constants, and the menu that
-immediately follows these constants.
+All text used in dialogs is contained in strconstants at the top of the procedure file.   If someone needs to translate the text, all that needs to be edited are these constants, and the menu that immediately follows these constants.
 
 ## Revision Notes
 
-1.00
+### 1.00
      
-    Loomis-Wood Add-In first released.
+- Loomis-Wood Add-In first released.
 
-2.00         
+### 2.00         
 
-    LWA is no longer dependant on SetWindowExt XOP, but requires Igor 5.02.
-    LWA currently does not respond to wheel or double-click mouse events, because of this change.
-    However, it should be Mac compatible.
+- LWA is no longer dependant on SetWindowExt XOP, but requires Igor 5.02.
+  LWA currently does not respond to wheel or double-click mouse events, because of this change.
+  However, it should be Mac compatible.
 
-2.01         
+### 2.01         
 
-    Colors are now based upon a RGB color wave named M_Colors.
+- Colors are now based upon a RGB color wave named M_Colors.
         
-    The control bar of a Loomis-Wood plot is now a sub-window.
+- The control bar of a Loomis-Wood plot is now a sub-window.
                
-    A zoom feature was added.
+- A zoom feature was added.
                
-    Assignments are now tracked with text waves.
+- Assignments are now tracked with text waves.
                
-    More error handling was added to FitSeries.
+- More error handling was added to FitSeries.
      
-    Added Undo last fit.
+- Added Undo last fit.
                
-    All Make commands specify precision explicitly, preventing accidental use of single precision.
+- All Make commands specify precision explicitly, preventing accidental use of single precision.
 
-2.05
+### 2.05
      
-    Reorganized data folder structures:
+- Reorganized data folder structures:
                
-    Waves that previously began with “Peak_” are now in the Lines subfolder. Waves that previously began with "Series_" are in the Series subfolder.   All plot folders are now within a Plots subfolder instead of in the base LW data folder.
-
+- Waves that previously began with “Peak_” are now in the Lines subfolder.
+  Waves that previously began with "Series_" are in the Series subfolder.
+  All plot folders are now within a Plots subfolder instead of in the base LW data folder.
                
-    Added structures and functions to create structures so that coding with the new
-folder structure is more transparent.
+- Added structures and functions to create structures so that coding with the new folder structure is more transparent.
                
-    Reorganized Loomis-Wood menu.
+- Reorganized Loomis-Wood menu.
              
-    Converted control bar of Loomis-Wood graphs to a subwindow.
+- Converted control bar of Loomis-Wood graphs to a subwindow.
 
-2.06
+### 2.06
 
-    M_Colors renamed to just Colors and ColorNames wave removed.  The color names are now labels in the Colors wave.
+- M_Colors renamed to just Colors and ColorNames wave removed.  The color names are now labels in the Colors wave.
 
-    Added line breaks to strings used in dialogs.
+- Added line breaks to strings used in dialogs.
 
-    Added "Update Line List", "Synchronize Series to Lines", and "Synchronize Lines to Series" commands.
+- Added "Update Line List", "Synchronize Series to Lines", and "Synchronize Lines to Series" commands.
 
-    Rewrote code that creates Loomis-wood graph windows (in the NewLWplot function).
+- Rewrote code that creates Loomis-wood graph windows (in the NewLWplot function).
 
-    Implemented an assignment structure.
+- Implemented an assignment structure.
 
-    Added upper and lower state flags and note to assignments.
+- Added upper and lower state flags and note to assignments.
            
-    Added ListBox control to control bar.
+- Added ListBox control to control bar.
 
-    Added Create/Modify Comb waves to DoBandCoeffUpdate() function.
+- Added Create/Modify Comb waves to DoBandCoeffUpdate() function.
 
-    Added static GetFolders() function.
+- Added static GetFolders() function.
 
-    Added “Fit All” command.
+- Added “Fit All” command.
 
-    Added user enabled assignment function to “Extract Assignments” command.
+- Added user enabled assignment function to “Extract Assignments” command.
 
-2.07         
+### 2.07         
 
-    Reordered code and eliminated some old commented code.
+- Reordered code and eliminated some old commented code.
 
-    Added GetPlotList(), GetPlotFolderList()
+- Added GetPlotList(), GetPlotFolderList()
 
-    Implemented SeriesFit structure.   Modified FetchSeries(), ViewSeries(), and FitSeries()
+- Implemented SeriesFit structure.   Modified FetchSeries(), ViewSeries(), and FitSeries()
 
-    Edit Band Constants is now Undoable via UndoFit().
+- Edit Band Constants is now Undoable via UndoFit().
 
-    Added CompareFunctions() and FunctionList2().  Removed TestLWLabelProto() and LWLabelList()
+- Added CompareFunctions() and FunctionList2().  Removed TestLWLabelProto() and LWLabelList()
                
-    Added optional flag parameter to GetLinesStruct(), and GetSeriesStruct().  Removed GetLinesStruct2().
+- Added optional flag parameter to GetLinesStruct(), and GetSeriesStruct().  Removed GetLinesStruct2().
 
-    FIVEMAX_PEAKS_PER_PLOT can now be changed without recreating the Loomis-Wood plot
+- FIVEMAX_PEAKS_PER_PLOT can now be changed without recreating the Loomis-Wood plot
 
-    Added DoSeriesNameUpdate() and moved command that updates the Current Series popup from ChangeCurrentSeries() to DoSeriesNameUpdate().  Now the popup updates when Series:Name is edited.
+- Added DoSeriesNameUpdate() and moved command that updates the Current Series popup from ChangeCurrentSeries() to DoSeriesNameUpdate().  Now the popup updates when Series:Name is edited.
 
-    Edited DeleteSeries(). DeleteSeries() now uses SynchronizeLines2Series() simplifying the code.  DeleteSeries() also goes through all plots and adjusts CurrentSeries as needed.
+- Edited DeleteSeries(). DeleteSeries() now uses SynchronizeLines2Series() simplifying the code.  DeleteSeries() also goes through all plots and adjusts CurrentSeries as needed.
 
-    Added a Colors wave to the Assignments folder.
+- Added a Colors wave to the Assignments folder.
 
-2.08         
-    Table Windows are now named.
-    The name is the Data Set folder name + “_AL”, “_LL”, “_SL”, “_CS”, or “_CT”.
-    Each call to a view function no longer creates a new window.
+### 2.08         
+- Table Windows are now named.
+  The name is the Data Set folder name + “_AL”, “_LL”, “_SL”, “_CS”, or “_CT”.
+  Each call to a view function no longer creates a new window.
 
-    Fixed several problems relating to “backwards series” (d_nu__/ d_m_ < 0).
+- Fixed several problems relating to “backwards series” (dν/d_m_ < 0).
 
-    Killing Loomis-Wood plot now attempts to delete the plot folder.
-    This will quietly fail if the user has created any windows referencing the data in this folder.
+- Killing Loomis-Wood plot now attempts to delete the plot folder.
+  This will quietly fail if the user has created any windows referencing the data in this folder.
    
-    Implemented MatrixOp in several places for cleaner code.
+- Implemented MatrixOp in several places for cleaner code.
 
-    Changed LWLabelProto(), and modified ExtractAssignments() accordingly.
+- Changed LWLabelProto(), and modified ExtractAssignments() accordingly.
 
    
-    ExtractAssignments() now remembers last used Assignment Function.
+- ExtractAssignments() now remembers last used Assignment Function.
 
-    Added ChangeRegions() function and modified DoBandCoeffUpdate().
-    The Add-In now has a method to handle band heads.
+- Added ChangeRegions() function and modified DoBandCoeffUpdate().
+  The Add-In now has a method to handle band heads.
 
-    Added GetFitRes().
+- Added GetFitRes().
 
-    Series with Shape= -1 are now hidden.
+- Series with Shape= -1 are now hidden.
 
 ## To Do List
 * Feature to synchronize LW plot with spectrum plot. (Currently, this can be done manually by creating a dependency to the variables in the Plot folder.)
@@ -1417,10 +1185,11 @@ folder structure is more transparent.
 ## References
 
 F. W. Loomis and R. W. Wood _Phys. Rev._ 32, 223-236 (1928).
+doi:[10.1103/PhysRev.32.223](https://doi.org/10.1103/PhysRev.32.223)
 
 J. F. Scott and K. Narahari Rao _J. Mol. Spectrosc._ 20, 461-463 (1966).
+doi:[10.1016/0022-2852(66)90016-6](https://doi.org/10.1016/0022-2852(66)90016-6)
 
 Brenda P. Winnewisser, Jürgen Reinstädtler, Koichi M. T. Yamada , and Jörg Behrend, 
-_J. Mol. Spectrosc._ 136, 12 (1989)
-
-
+_J. Mol. Spectrosc._ 136, 12-16 (1989)
+doi:[10.1016/0022-2852(89)90214-2](https://doi.org/10.1016/0022-2852(89)90214-2)
