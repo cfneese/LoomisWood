@@ -1,4 +1,3 @@
-﻿
 # Loomis-Wood Manual
 
 Loomis-Wood Add-In
@@ -292,7 +291,7 @@ data set can be shown concurrently.   Four dependency formulas keep the data in
 	BandCoeffUpdate := DoBandCoeffUpdate(BandCoeff)
 	TriangleUpdate := DoTriangleUpdate(Line_LWm,::Lines:Assignments, ::Series:Color, ::Series:Shape, StartM, EndM, Zoom)
 	SeriesOrder := DoSeriesOrderUpdate(::Series:Order, CurrentSeries)
-	SeriesNameUpdate := DoSeriesNameUpdate(::Series:Name, CurrentSeries)`
+	SeriesNameUpdate := DoSeriesNameUpdate(::Series:Name, CurrentSeries)
 
 The use of dependencies to keep the Loomis-Wood plot accurate is important, since the
 data that trigger these dependencies are not necessarily changed programmatically.
